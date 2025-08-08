@@ -1,0 +1,46 @@
+name: Refresh Featured Places
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: "0 * * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  refresh-featured-places:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          cd web
+          npm ci
+
+      - name: Refresh featured places
+        run: |
+          cd web
+          bun run refresh-featured
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Featured places refresh failed!"
+          echo "Check the logs above for details."
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Featured places refreshed successfully!"
+          echo "Next refresh scheduled for $(date -d '+1 hour' '+%Y-%m-%d %H:%M:%S')"
