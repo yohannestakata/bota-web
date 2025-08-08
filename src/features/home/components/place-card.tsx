@@ -38,7 +38,7 @@ export default function PlaceCard({ place }: PlaceCardProps) {
             <p className="text-muted-foreground text-sm">{place.category}</p>
           </div>
           <div className="ml-2 flex items-center gap-1">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <Star className="h-4 w-4 fill-yellow-200 text-yellow-400" />
             <span className="text-sm font-medium">{place.rating}</span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import {
   CategoriesSection,
-  FeaturedReviews,
-  PopularPlaces,
+  RecentReviews,
+  FeaturedPlaces,
   Header,
   Footer,
 } from "@/features/home";
@@ -10,9 +10,9 @@ export default function Home() {
   return (
     <div>
       <Header />
-      <FeaturedReviews />
+      <RecentReviews />
       <CategoriesSection />
-      <PopularPlaces />
+      <FeaturedPlaces />
       <Footer />
     </div>
   );

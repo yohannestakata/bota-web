@@ -6,10 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "refresh-featured": "node scripts/refresh-featured-places.js"
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.12.0",
+    "@supabase/supabase-js": "^2.54.0",
     "lucide": "^0.536.0",
     "lucide-react": "^0.536.0",
     "next": "15.4.6",
