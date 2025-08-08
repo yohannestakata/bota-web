@@ -5,6 +5,11 @@ on:
     # Run every hour at minute 0
     - cron: "0 * * * *"
   workflow_dispatch: # Allow manual trigger from GitHub UI
+  push:
+    branches: [main, master]
+    paths:
+      - "supabase/migrations/**"
+      - "web/scripts/refresh-featured-places.js"
 
 jobs:
   refresh-featured-places:
@@ -14,14 +19,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: "18"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Refresh featured places
         run: bun run refresh-featured
