@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "refresh-featured": "node scripts/refresh-featured-places.js"
+    "refresh-featured": "bun run scripts/refresh-featured-places.js"
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.12.0",

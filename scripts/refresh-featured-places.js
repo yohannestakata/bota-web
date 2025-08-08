@@ -5,10 +5,10 @@
  * Run this periodically (e.g., every hour) to keep featured places up to date
  *
  * Usage:
- *   node scripts/refresh-featured-places.js
+ *   bun run refresh-featured
  *
  * Or add to cron:
- *   0 * * * * cd /path/to/project && node scripts/refresh-featured-places.js
+ *   0 * * * * cd /path/to/project/web && bun run refresh-featured
  */
 
 import { createClient } from "@supabase/supabase-js";

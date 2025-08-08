@@ -21,14 +21,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: |
-          cd web
-          npm ci
+        run: npm ci
 
       - name: Refresh featured places
-        run: |
-          cd web
-          bun run refresh-featured
+        run: bun run refresh-featured
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
