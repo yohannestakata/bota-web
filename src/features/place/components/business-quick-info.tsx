@@ -173,11 +173,11 @@ export default function BusinessQuickInfo({
 
           <div className="grid grid-cols-1 gap-2">
             <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
-              <ImagePlusIcon size={16} className="text-primary-foreground" />
+              <ImagePlusIcon size={16} className="text-muted-foreground" />
               Upload Photos/Video
             </button>
             <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
-              <PencilIcon size={16} className="text-primary-foreground" />
+              <PencilIcon size={16} className="text-muted-foreground" />
               Request Edit
             </button>
           </div>

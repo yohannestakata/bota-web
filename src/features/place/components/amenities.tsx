@@ -27,6 +27,7 @@ export default function Amenities({ amenities }: { amenities: Amenity[] }) {
               const Icon = Icons[iconName] as (props: {
                 className?: string;
                 strokeWidth?: number;
+                size?: number;
               }) => JSX.Element;
               return Icon ? (
                 <Icon size={24} strokeWidth={2} />
