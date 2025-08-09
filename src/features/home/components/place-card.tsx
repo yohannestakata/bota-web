@@ -1,15 +1,16 @@
-import { Star, MapPin, Users } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { RatingStars } from "@/components/ui/rating-stars";
 
 interface PlaceCardProps {
   place: {
-    id: number;
+    id: string; // use UUID
+    slug?: string;
     name: string;
     category: string;
     rating: number;
     reviewCount: number;
-    distance: string;
     image: string;
     tags: string[];
   };
@@ -18,7 +19,7 @@ interface PlaceCardProps {
 export default function PlaceCard({ place }: PlaceCardProps) {
   return (
     <Link
-      href={`/place/${place.id}`}
+      href={`/place/${place.slug || place.id}`}
       className="border-border overflow-hidden rounded-3xl border transition-all duration-200"
     >
       <div className="bg-muted relative flex aspect-video items-center justify-center rounded-t-2xl">
@@ -38,7 +39,7 @@ export default function PlaceCard({ place }: PlaceCardProps) {
             <p className="text-muted-foreground text-sm">{place.category}</p>
           </div>
           <div className="ml-2 flex items-center gap-1">
-            <Star className="h-4 w-4 fill-yellow-200 text-yellow-400" />
+            <RatingStars rating={place.rating} size={16} />
             <span className="text-sm font-medium">{place.rating}</span>
           </div>
         </div>
@@ -50,7 +51,7 @@ export default function PlaceCard({ place }: PlaceCardProps) {
           </div>
           <div className="flex items-center gap-1">
             <MapPin className="h-4 w-4" />
-            <span>{place.distance}</span>
+            <span>{place.category}</span>
           </div>
         </div>
 

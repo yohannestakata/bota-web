@@ -1,14 +1,11 @@
 import { supabase } from "./client";
+import type { PostgrestError } from "@supabase/supabase-js";
 import type {
   Place,
   PlaceWithStats,
-  FeaturedPlace,
   Category,
   Review,
-  MenuItem,
-  PlacePhoto,
-  MenuItemPhoto,
-  ReviewPhoto,
+  FeaturedPlaceListItem,
   ReviewStats,
   NearbyPlace,
   CuisineType,
@@ -72,6 +69,327 @@ export async function getPlaceWithDetails(
     place_stats: stats || undefined,
     category: place.categories?.[0],
   };
+}
+
+// Get place by slug with category and stats
+export async function getPlaceBySlugWithDetails(
+  slug: string,
+): Promise<(PlaceWithStats & { category?: Category }) | null> {
+  const { data: place, error: placeError } = await supabase
+    .from("places")
+    .select(
+      `
+      id, name, slug, description, address_line1, address_line2, city, state, postal_code, country,
+      phone, website_url, latitude, longitude, category_id, tags, business_hours, price_range,
+      owner_id, is_active, created_at, updated_at,
+      categories(id, name, slug, description, icon_name, created_at)
+    `,
+    )
+    .eq("slug", slug)
+    .single();
+
+  if (placeError) {
+    if ((placeError as PostgrestError).code === "PGRST116") return null;
+    throw placeError;
+  }
+
+  const { data: stats, error: statsError } = await supabase
+    .from("place_stats")
+    .select(
+      "place_id, review_count, average_rating, last_reviewed_at, photo_count",
+    )
+    .eq("place_id", place.id)
+    .single();
+
+  if (statsError && (statsError as PostgrestError).code !== "PGRST116")
+    throw statsError;
+
+  return {
+    ...place,
+    place_stats: stats || undefined,
+    category: place.categories?.[0],
+  } as PlaceWithStats & { category?: Category };
+}
+
+// Get place photos
+export async function getPlacePhotos(placeId: string, limit = 12) {
+  const { data, error } = await supabase
+    .from("place_photos")
+    .select("id, file_path, alt_text, created_at")
+    .eq("place_id", placeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+// Get reviews for a place, joined with author and stats via parallel queries
+export async function getReviewsForPlace(placeId: string, limit = 10) {
+  const { data: reviews, error: reviewsError } = await supabase
+    .from("reviews")
+    .select(
+      "id, place_id, author_id, rating, title, body, visited_at, created_at, updated_at",
+    )
+    .eq("place_id", placeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (reviewsError) throw reviewsError;
+
+  const reviewIds = (reviews || []).map((r) => r.id);
+  const authorIds = Array.from(
+    new Set((reviews || []).map((r) => r.author_id)),
+  );
+
+  const [statsResult, authorsResult] = await Promise.all([
+    reviewIds.length
+      ? supabase
+          .from("review_stats")
+          .select(
+            "review_id, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+          )
+          .in("review_id", reviewIds)
+      : Promise.resolve({ data: [], error: null } as const),
+    authorIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url, created_at, updated_at")
+          .in("id", authorIds)
+      : Promise.resolve({ data: [], error: null } as const),
+  ]);
+
+  if (statsResult.error) throw statsResult.error;
+  if (authorsResult.error) throw authorsResult.error;
+
+  const statsMap = new Map(
+    (statsResult.data || []).map((s) => [s.review_id, s]),
+  );
+  const authorsMap = new Map((authorsResult.data || []).map((a) => [a.id, a]));
+
+  return (reviews || []).map((r) => ({
+    ...r,
+    review_stats: statsMap.get(r.id) || undefined,
+    author: authorsMap.get(r.author_id) || undefined,
+  }));
+}
+
+// Batched replies fetch for multiple reviews, including authors and photos
+export async function getRepliesForReviewIds(reviewIds: string[]) {
+  if (!reviewIds.length)
+    return new Map<
+      string,
+      Array<{
+        id: string;
+        review_id: string;
+        author_id: string;
+        body: string;
+        created_at: string;
+        updated_at: string;
+        author?: Partial<Profile>;
+        photos?: { id: string; file_path: string; alt_text?: string | null }[];
+      }>
+    >();
+
+  const { data: replies, error: repliesError } = await supabase
+    .from("review_replies")
+    .select("id, review_id, author_id, body, created_at, updated_at")
+    .in("review_id", reviewIds)
+    .order("created_at", { ascending: true });
+  if (repliesError) throw repliesError;
+
+  const replyList = replies || [];
+  const replyIds = replyList.map((r) => r.id);
+  const authorIds = Array.from(new Set(replyList.map((r) => r.author_id)));
+
+  const [authorsResult, photosResult] = await Promise.all([
+    authorIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url, created_at, updated_at")
+          .in("id", authorIds)
+      : Promise.resolve({ data: [], error: null } as const),
+    replyIds.length
+      ? supabase
+          .from("review_reply_photos")
+          .select("id, reply_id, file_path, alt_text")
+          .in("reply_id", replyIds)
+      : Promise.resolve({ data: [], error: null } as const),
+  ]);
+
+  if (authorsResult.error) throw authorsResult.error;
+  if (photosResult.error) throw photosResult.error;
+
+  const authorsMap = new Map((authorsResult.data || []).map((a) => [a.id, a]));
+  const photosByReply = new Map<
+    string,
+    { id: string; file_path: string; alt_text?: string | null }[]
+  >();
+  for (const p of photosResult.data || []) {
+    const list = photosByReply.get(p.reply_id) || [];
+    list.push({
+      id: p.id,
+      file_path: p.file_path,
+      alt_text: p.alt_text ?? null,
+    });
+    photosByReply.set(p.reply_id, list);
+  }
+
+  const byReview = new Map<
+    string,
+    Array<{
+      id: string;
+      review_id: string;
+      author_id: string;
+      body: string;
+      created_at: string;
+      updated_at: string;
+      author?: Partial<Profile>;
+      photos?: { id: string; file_path: string; alt_text?: string | null }[];
+    }>
+  >();
+  for (const r of replyList) {
+    const enriched = {
+      ...r,
+      author: authorsMap.get(r.author_id) || undefined,
+      photos: photosByReply.get(r.id) || [],
+    };
+    const list = byReview.get(r.review_id) || [];
+    list.push(enriched);
+    byReview.set(r.review_id, list);
+  }
+
+  return byReview;
+}
+
+// Find similar places in the same category, excluding current place, joined with stats
+export async function getSimilarPlaces(
+  categoryId: number | undefined,
+  excludePlaceId: string,
+  limit = 6,
+) {
+  if (!categoryId) return [];
+
+  const [placesResult, statsResult] = await Promise.all([
+    supabase
+      .from("places")
+      .select(
+        "id, name, slug, category_id, tags, is_active, created_at, updated_at",
+      )
+      .eq("is_active", true)
+      .eq("category_id", categoryId)
+      .neq("id", excludePlaceId)
+      .limit(limit * 2),
+    supabase
+      .from("place_stats")
+      .select(
+        "place_id, review_count, average_rating, last_reviewed_at, photo_count",
+      ),
+  ]);
+
+  if (placesResult.error) throw placesResult.error;
+  if (statsResult.error) throw statsResult.error;
+
+  const statsMap = new Map(
+    (statsResult.data || []).map((s) => [s.place_id, s]),
+  );
+
+  return (placesResult.data || [])
+    .map((p) => ({
+      ...p,
+      place_stats: statsMap.get(p.id) || undefined,
+    }))
+    .sort(
+      (a, b) =>
+        (b.place_stats?.average_rating || 0) -
+        (a.place_stats?.average_rating || 0),
+    )
+    .slice(0, limit);
+}
+
+// Get normalized hours for a place (0=Sunday..6=Saturday)
+export async function getPlaceHours(placeId: string) {
+  const { data, error } = await supabase
+    .from("place_hours")
+    .select("day_of_week, open_time, close_time, is_closed, is_24_hours")
+    .eq("place_id", placeId)
+    .order("day_of_week");
+  if (error) throw error;
+  return data || [];
+}
+
+// Get amenities for a place
+export async function getPlaceAmenities(placeId: string) {
+  const { data, error } = await supabase
+    .from("place_amenities")
+    .select(
+      "place_id, amenity_type_id, value, amenity_types(id, key, name, icon_name)",
+    )
+    .eq("place_id", placeId);
+  if (error) throw error;
+  return (data || []).map((row) => ({
+    place_id: row.place_id,
+    amenity_type_id: row.amenity_type_id,
+    value: row.value,
+    // Supabase returns a single related object for one-to-one relationships
+    // not an array; use it directly
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    amenity: (row as any).amenity_types,
+  }));
+}
+
+// Get menu items for a place (for restaurants)
+export async function getPlaceMenu(placeId: string) {
+  // Fetch sections and items in parallel
+  const [sectionsRes, itemsRes] = await Promise.all([
+    supabase
+      .from("menu_sections")
+      .select("id, name, position")
+      .eq("place_id", placeId)
+      .order("position"),
+    supabase
+      .from("menu_items")
+      .select(
+        "id, section_id, name, description, price, currency, is_available, created_at, menu_item_photos(id, file_path, alt_text)",
+      )
+      .eq("place_id", placeId)
+      .order("name"),
+  ]);
+
+  if (sectionsRes.error) throw sectionsRes.error;
+  if (itemsRes.error) throw itemsRes.error;
+
+  type Section = { id: string; name: string; position?: number | null };
+  type Item = {
+    id: string;
+    section_id?: string | null;
+    name: string;
+    description?: string | null;
+    price?: number | null;
+    currency?: string | null;
+    is_available: boolean;
+    created_at: string;
+    menu_item_photos?: {
+      id: string;
+      file_path: string;
+      alt_text?: string | null;
+    }[];
+  };
+
+  const sections: Section[] = (sectionsRes.data || []) as Section[];
+  const items: Item[] = (itemsRes.data || []) as Item[];
+  const bySection = new Map<string, Item[]>();
+  for (const s of sections) bySection.set(s.id, []);
+  const ungrouped: Item[] = [];
+
+  for (const it of items) {
+    if (it.section_id && bySection.has(it.section_id)) {
+      (bySection.get(it.section_id) as Item[]).push(it);
+    } else {
+      ungrouped.push(it);
+    }
+  }
+
+  return { sections, itemsBySection: bySection, ungrouped };
 }
 
 // Get review with place and author details
@@ -161,73 +479,184 @@ export async function getPlaces(limit = 20): Promise<PlaceWithStats[]> {
 }
 
 // Featured places using materialized view with hybrid scoring algorithm
-export async function getFeaturedPlaces(limit = 6): Promise<FeaturedPlace[]> {
-  const { data, error } = await supabase
-    .from("featured_places")
-    .select("*")
-    .limit(limit);
+export async function getFeaturedPlaces(
+  limit = 6,
+): Promise<FeaturedPlaceListItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from("featured_places")
+      .select(
+        "id, name, slug, category_id, cover_image_path, tags, review_count, average_rating, last_reviewed_at, photo_count, featured_score",
+      )
+      .order("featured_score", { ascending: false })
+      .limit(limit);
 
-  if (error) throw error;
-  return data || [];
+    if (error) return await getFeaturedPlacesFallback(limit);
+
+    const primary = (data || []) as unknown as FeaturedPlaceListItem[];
+
+    // If the view returns fewer than requested, top up using fallback
+    if (primary.length < limit) {
+      const fallback = await getFeaturedPlacesFallback(limit);
+      const mergedMap = new Map<string, FeaturedPlaceListItem>();
+      for (const p of primary) mergedMap.set(p.id, p);
+      for (const f of fallback)
+        if (!mergedMap.has(f.id)) mergedMap.set(f.id, f);
+      return Array.from(mergedMap.values()).slice(0, limit);
+    }
+
+    return primary;
+  } catch {
+    return await getFeaturedPlacesFallback(limit);
+  }
+}
+
+// Fallback function to get featured places directly from places table
+async function getFeaturedPlacesFallback(
+  limit = 6,
+): Promise<FeaturedPlaceListItem[]> {
+  try {
+    // Get places and stats separately since place_stats is a view
+    const [placesResult, statsResult, categoriesResult] = await Promise.all([
+      supabase
+        .from("places")
+        .select("id, name, slug, category_id, tags, is_active")
+        .eq("is_active", true)
+        .limit(limit * 2), // Get more to filter by stats later
+      supabase
+        .from("place_stats")
+        .select(
+          "place_id, review_count, average_rating, last_reviewed_at, photo_count",
+        ),
+      supabase.from("categories").select("id, name"),
+    ]);
+
+    if (placesResult.error) throw placesResult.error;
+    if (statsResult.error) throw statsResult.error;
+    if (categoriesResult.error) throw categoriesResult.error;
+
+    const categories = categoriesResult.data || [];
+    const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+    const statsMap = new Map(
+      statsResult.data?.map((s) => [s.place_id, s]) || [],
+    );
+
+    // Filter places that have at least 2 reviews and join with stats
+    const placesWithStats = (placesResult.data || [])
+      .map((place) => {
+        const stats = statsMap.get(place.id);
+        return {
+          ...place,
+          stats,
+        };
+      })
+      .filter((place) => place.stats && place.stats.review_count >= 2)
+      .sort(
+        (a, b) =>
+          (b.stats?.average_rating || 0) - (a.stats?.average_rating || 0),
+      )
+      .slice(0, limit);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return placesWithStats.map((place: any) => ({
+      id: place.id,
+      slug: place.slug,
+      name: place.name,
+      category_id: place.category_id,
+      category_name: place.category_id
+        ? categoryMap.get(place.category_id)
+        : undefined,
+      cover_image_path: undefined, // Would need separate query for this
+      tags: place.tags || [],
+      review_count: place.stats?.review_count || 0,
+      average_rating: place.stats?.average_rating || 0,
+      last_reviewed_at: place.stats?.last_reviewed_at,
+      photo_count: place.stats?.photo_count || 0,
+      featured_score:
+        (place.stats?.average_rating || 0) * 0.4 +
+        Math.min((place.stats?.review_count || 0) / 10.0, 1.0) * 0.3,
+    })) as FeaturedPlaceListItem[];
+  } catch (error) {
+    console.error("Error in fallback query:", error);
+    return [];
+  }
 }
 
 // Recent reviews with stats, place, and author details
-export async function getRecentReviews(limit = 5): Promise<
-  (Review & {
+export async function getRecentReviews(limit = 5): Promise<{
+  data: (Review & {
     review_stats?: ReviewStats;
     place?: Partial<Place>;
     author?: Partial<Profile>;
-  })[]
-> {
-  // Get reviews first
-  const { data: reviews, error: reviewsError } = await supabase
-    .from("reviews")
+    category_name?: string;
+  })[];
+  error: {
+    code?: string;
+    message: string;
+    details?: string | null;
+    hint?: string | null;
+  } | null;
+}> {
+  const { data, error } = await supabase
+    .from("recent_reviews_enriched")
     .select(
-      `
-      id, place_id, author_id, title, body, rating, visited_at, owner_response, 
-      owner_response_at, owner_response_by, created_at, updated_at
-    `,
+      "review_id, place_id, author_id, rating, title, body, visited_at, owner_response, owner_response_at, owner_response_by, created_at, updated_at, place_name, place_slug, category_id, category_name, author_username, author_full_name, author_avatar_url, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
     )
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (reviewsError) throw reviewsError;
+  if (error)
+    return {
+      data: [],
+      error: {
+        code: (error as PostgrestError).code,
+        message: (error as PostgrestError).message,
+        details: (error as PostgrestError).details,
+        hint: (error as PostgrestError).hint,
+      },
+    };
 
-  // Get places and profiles separately to avoid relationship conflicts
-  const placeIds = [...new Set(reviews?.map((r) => r.place_id) || [])];
-  const authorIds = [...new Set(reviews?.map((r) => r.author_id) || [])];
-
-  const [placesResult, profilesResult, statsResult] = await Promise.all([
-    supabase
-      .from("places")
-      .select("id, name, slug, category_id, created_at")
-      .in("id", placeIds),
-    supabase
-      .from("profiles")
-      .select("id, username, full_name, avatar_url, created_at")
-      .in("id", authorIds),
-    supabase
-      .from("review_stats")
-      .select(
-        "review_id, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
-      ),
-  ]);
-
-  if (placesResult.error) throw placesResult.error;
-  if (profilesResult.error) throw profilesResult.error;
-  if (statsResult.error) throw statsResult.error;
-
-  // Join reviews with their related data
-  const reviewsWithStats = (reviews || []).map((review) => ({
-    ...review,
-    place: placesResult.data?.find((p) => p.id === review.place_id),
-    author: profilesResult.data?.find((p) => p.id === review.author_id),
-    review_stats:
-      statsResult.data?.find((stat) => stat.review_id === review.id) ||
-      undefined,
+  const mapped = (data || []).map((row) => ({
+    id: row.review_id,
+    place_id: row.place_id,
+    author_id: row.author_id,
+    rating: row.rating,
+    title: row.title,
+    body: row.body,
+    visited_at: row.visited_at,
+    owner_response: row.owner_response,
+    owner_response_at: row.owner_response_at,
+    owner_response_by: row.owner_response_by,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    place: {
+      id: row.place_id,
+      name: row.place_name,
+      slug: row.place_slug,
+      category_id: row.category_id,
+      is_active: true,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as Partial<Place>,
+    author: {
+      id: row.author_id,
+      username: row.author_username ?? undefined,
+      full_name: row.author_full_name ?? undefined,
+      avatar_url: row.author_avatar_url ?? undefined,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    } as Partial<Profile>,
+    review_stats: {
+      review_id: row.review_id,
+      total_reactions: row.total_reactions ?? 0,
+      likes_count: row.likes_count ?? 0,
+      loves_count: row.loves_count ?? 0,
+      mehs_count: row.mehs_count ?? 0,
+      dislikes_count: row.dislikes_count ?? 0,
+    } as ReviewStats,
   }));
 
-  return reviewsWithStats;
+  return { data: mapped, error: null };
 }
 
 // Nearby places using RPC

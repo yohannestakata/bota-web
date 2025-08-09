@@ -1,4 +1,5 @@
-import { Brand, NavigationMenu, UserActions, SearchBar } from ".";
+import { Brand, NavigationMenu, UserActions } from ".";
+import SearchBar from "@/components/search-bar";
 
 export default function Header() {
   return (

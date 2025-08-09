@@ -1,9 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Validate environment variables
+if (!supabaseUrl) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined");
+}
+
+if (!supabaseKey) {
+  throw new Error(
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined",
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -67,6 +78,24 @@ export interface FeaturedPlace extends Place {
   last_reviewed_at?: string;
   photo_count: number;
   featured_score: number;
+  category_name?: string;
+  cover_image_path?: string;
+}
+
+// Lightweight shape for featured places list queries
+export interface FeaturedPlaceListItem {
+  id: string;
+  slug: string;
+  name: string;
+  category_id?: number;
+  category_name?: string;
+  cover_image_path?: string;
+  tags?: string[];
+  review_count: number;
+  average_rating: number;
+  last_reviewed_at?: string;
+  photo_count: number;
+  featured_score: number;
 }
 
 export interface Review {
@@ -124,6 +153,24 @@ export interface ReviewPhoto {
   created_at: string;
 }
 
+export interface ReviewReply {
+  id: string;
+  review_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewReplyPhoto {
+  id: string;
+  reply_id: string;
+  author_id: string;
+  file_path: string;
+  alt_text?: string;
+  created_at: string;
+}
+
 export interface ReviewReaction {
   user_id: string;
   review_id: string;
@@ -162,4 +209,30 @@ export interface NearbyPlace {
   average_rating: number;
   review_count: number;
   distance_meters: number;
+}
+
+export interface AmenityType {
+  id: number;
+  key: string;
+  name: string;
+  icon_name?: string;
+  created_at: string;
+}
+
+export interface PlaceAmenity {
+  place_id: string;
+  amenity_type_id: number;
+  value: boolean;
+  created_at: string;
+  amenity?: AmenityType;
+}
+
+export interface PlaceHour {
+  place_id: string;
+  day_of_week: number; // 0-6
+  open_time?: string | null;
+  close_time?: string | null;
+  is_closed: boolean;
+  is_24_hours: boolean;
+  created_at: string;
 }

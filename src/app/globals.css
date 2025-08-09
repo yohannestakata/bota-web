@@ -72,9 +72,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-outfit);
+  font-family: var(--font-sans);
 }
 
-.aspect-thumbnail {
-  aspect-ratio: 3 / 2;
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
 }

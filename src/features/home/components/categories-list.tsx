@@ -1,16 +1,24 @@
 import { getCategories } from "@/lib/supabase/queries";
+import * as Icons from "lucide-react";
 import Link from "next/link";
 
 export default async function CategoriesList() {
   const categories = await getCategories();
 
   // Transform the data to match the expected format
-  const transformedCategories = categories.map((category) => ({
-    name: category.name,
-    icon: null, // We'll use the first letter instead
-    href: `/category/${category.slug}`,
-    description: category.description,
-  }));
+  const transformedCategories = categories.map((category) => {
+    const iconKey = (category.icon_name || "") as keyof typeof Icons;
+    const Icon = Icons[iconKey] as (props: {
+      className?: string;
+      strokeWidth?: number;
+    }) => JSX.Element;
+    return {
+      name: category.name,
+      icon: Icon || null,
+      href: `/category/${category.slug}`,
+      description: category.description,
+    };
+  });
 
   return (
     <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-6">
@@ -23,7 +31,7 @@ export default async function CategoriesList() {
           <div className="text-center">
             <div>
               {category.icon ? (
-                <category.icon className="mx-auto h-8 w-8" strokeWidth={1.5} />
+                <category.icon className="mx-auto h-8 w-8" strokeWidth={1.75} />
               ) : (
                 <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
                   <span className="text-sm font-semibold text-gray-600">
@@ -39,4 +47,3 @@ export default async function CategoriesList() {
     </div>
   );
 }
-

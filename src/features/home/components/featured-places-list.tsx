@@ -1,34 +1,50 @@
-import { getFeaturedPlaces, getAllCategories } from "@/lib/supabase/queries";
+import { getFeaturedPlaces } from "@/lib/supabase/queries";
 import PlaceCard from "./place-card";
 
 export default async function FeaturedPlacesList() {
-  const [places, categories] = await Promise.all([
-    getFeaturedPlaces(10),
-    getAllCategories(),
-  ]);
+  try {
+    const places = await getFeaturedPlaces(10);
 
-  // Transform the data to match the expected format
-  const transformedPlaces = places.map((place) => {
-    const category = categories.find((cat) => cat.id === place.category_id);
-
-    return {
-      id: parseInt(place.id.replace(/-/g, "").substring(0, 8), 16), // Convert UUID to number
+    // Shape data directly from the enriched view
+    const transformedPlaces = places.map((place) => ({
+      id: place.id, // keep UUID for stable routing
+      slug: place.slug,
       name: place.name,
-      category: category?.name || "Restaurant",
+      category: place.category_name || "",
       rating: place.average_rating || 0,
       reviewCount: place.review_count || 0,
-      distance: "0.5 km", // TODO: Calculate distance from user location (needs user location)
+      // Distance not available without geolocation; omit for now
       image:
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80", // Placeholder
-      tags: Array.isArray(place.tags) ? place.tags : ["Restaurant", "Food"], // Use actual tags from database
-    };
-  });
+        place.cover_image_path ||
+        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+      tags: Array.isArray(place.tags) ? place.tags : [],
+    }));
 
-  return (
-    <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-      {transformedPlaces.map((place) => (
-        <PlaceCard key={place.id} place={place} />
-      ))}
-    </div>
-  );
+    return (
+      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+        {transformedPlaces.length === 0 ? (
+          <div className="text-muted-foreground col-span-full text-center text-sm">
+            No featured places yet. Check back soon.
+          </div>
+        ) : (
+          transformedPlaces.map((place) => (
+            <PlaceCard key={place.id} place={place} />
+          ))
+        )}
+      </div>
+    );
+  } catch (error) {
+    console.error("Error loading featured places:", error);
+    return (
+      <div className="mt-3 text-center">
+        <div className="text-muted-foreground text-sm">
+          Unable to load featured places. Please check your connection and try
+          again.
+        </div>
+        <div className="text-muted-foreground mt-1 text-xs">
+          Error: {error instanceof Error ? error.message : "Unknown error"}
+        </div>
+      </div>
+    );
+  }
 }

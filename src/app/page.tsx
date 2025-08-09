@@ -17,3 +17,6 @@ export default function Home() {
     </div>
   );
 }
+
+// Revalidate this route every hour to align with featured view refresh cadence
+export const revalidate = 3600;

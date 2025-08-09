@@ -1,7 +1,6 @@
 export { default as Brand } from "./brand";
 export { default as NavigationMenu } from "./navigation-menu";
 export { default as UserActions } from "./user-actions";
-export { default as SearchBar } from "./search-bar";
 export { default as CategoriesSection } from "./categories-section";
 export { default as RecentReviews } from "./recent-reviews";
 export { default as FeaturedPlaces } from "./featured-places";

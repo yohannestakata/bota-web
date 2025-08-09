@@ -1,5 +1,6 @@
-import { Star, ThumbsUp, User, Heart, Meh, ThumbsDown } from "lucide-react";
+import { ThumbsUp, User, Heart, Meh, ThumbsDown } from "lucide-react";
 import Image from "next/image";
+import { RatingStars } from "@/components/ui/rating-stars";
 
 interface ReviewCardProps {
   review: {
@@ -26,6 +27,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <Image
           className="object-cover"
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
           src={review.image}
           alt={review.place}
         />
@@ -38,8 +40,8 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           </div>
 
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-medium">{review.rating}</span>
+            <RatingStars rating={review.rating} size={16} />
+            <span className="text-sm font-medium">{review.rating}</span>
           </div>
         </div>
 

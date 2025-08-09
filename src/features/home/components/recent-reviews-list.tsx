@@ -1,19 +1,13 @@
-import { getRecentReviews, getAllCategories } from "@/lib/supabase/queries";
+import { getRecentReviews } from "@/lib/supabase/queries";
 import ReviewCard from "./review-card";
 
 export default async function RecentReviewsList() {
-  const [reviews, categories] = await Promise.all([
-    getRecentReviews(5),
-    getAllCategories(),
-  ]);
+  const { data: reviews, error } = await getRecentReviews(5);
 
   // Transform the data to match the expected format
   const transformedReviews = reviews.map((review) => {
-    // Get place and category info from the review data
     const placeName = review.place?.name || "Restaurant Name";
-    const category =
-      categories.find((cat) => cat.id === review.place?.category_id)?.name ||
-      "Restaurant";
+    const category = review.category_name || "Restaurant";
     const userName =
       review.author?.full_name || review.author?.username || "User";
 
@@ -37,6 +31,11 @@ export default async function RecentReviewsList() {
 
   return (
     <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      {error ? (
+        <div className="text-muted-foreground col-span-full text-center text-sm">
+          Unable to load some review details. Showing cached/partial data.
+        </div>
+      ) : null}
       {transformedReviews.map((review) => (
         <ReviewCard key={review.id} review={review} />
       ))}
