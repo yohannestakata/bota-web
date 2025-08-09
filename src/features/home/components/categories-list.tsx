@@ -11,7 +11,7 @@ export default async function CategoriesList() {
     const Icon = Icons[iconKey] as (props: {
       className?: string;
       strokeWidth?: number;
-    }) => JSX.Element;
+    }) => React.JSX.Element;
     return {
       name: category.name,
       icon: Icon || null,

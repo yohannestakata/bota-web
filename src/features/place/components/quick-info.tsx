@@ -24,7 +24,7 @@ interface QuickInfoProps {
   };
 }
 
-function getPriceRangeDisplay(priceRange: number | null) {
+function getPriceRangeDisplay(priceRange: number | null | undefined) {
   if (!priceRange) return null;
 
   const ranges = {
@@ -140,4 +140,3 @@ export default function QuickInfo({ place }: QuickInfoProps) {
     </div>
   );
 }
-

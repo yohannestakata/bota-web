@@ -23,13 +23,12 @@ import { PlaceJsonLd } from "./structured-data";
 import SearchBar from "@/components/search-bar";
 import { ChevronLeftIcon, HeartIcon, Share2Icon } from "lucide-react";
 
-interface PageProps {
-  params: Promise<{ slug: string }> | { slug: string };
-}
-
-export default async function PlacePage({ params }: PageProps) {
-  const resolvedParams = params instanceof Promise ? await params : params;
-  const slug = resolvedParams.slug;
+export default async function PlacePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   console.log("[PlacePage] slug", slug);
 
   const place = await getPlaceBySlugWithDetails(slug);
@@ -285,10 +284,10 @@ export const revalidate = 300;
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string } | Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const resolved = params instanceof Promise ? await params : params;
-  const place = await getPlaceBySlugWithDetails(resolved.slug);
+  const { slug } = await params;
+  const place = await getPlaceBySlugWithDetails(slug);
   if (!place) return { title: "Place not found" };
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bota.local";
   const url = `${baseUrl}/place/${place.slug}`;
