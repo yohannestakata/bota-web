@@ -1,25 +1,28 @@
 import { notFound } from "next/navigation";
 // import Image from "next/image";
 import Link from "next/link";
-import {
-  getPlaceBySlugWithDetails,
-  getPlacePhotos,
-  getReviewsForPlace,
-  getSimilarPlaces,
-  getPlaceHours,
-  getPlaceAmenities,
-  getPlaceMenu,
-} from "@/lib/supabase/queries";
+import { Suspense } from "react";
+import { getPlaceBySlugWithDetails } from "@/lib/supabase/queries";
 import Gallery from "@/features/place/components/gallery";
-import Reviews from "@/features/place/components/reviews";
+// Reviews list is rendered via server wrapper
 import SimilarPlaces from "@/features/place/components/similar-places";
+// Section is used inside feature components; not needed here
+import Section from "@/features/place/components/section";
 import Hours from "@/features/place/components/hours";
 import Amenities from "@/features/place/components/amenities";
-import PlaceMap from "@/features/place/components/map";
 import Menu from "@/features/place/components/menu";
 import BusinessQuickInfo from "@/features/place/components/business-quick-info";
 
 import { PlaceJsonLd } from "./structured-data";
+import {
+  GallerySkeleton,
+  LocationHoursSkeleton,
+  AmenitiesSkeleton,
+  MenuSkeleton,
+  SimilarPlacesSkeleton,
+  ReviewsSkeleton,
+} from "@/features/place/components/skeletons";
+import Reviews from "@/features/place/components/reviews";
 import SearchBar from "@/components/search-bar";
 import { ChevronLeftIcon, HeartIcon, Share2Icon } from "lucide-react";
 
@@ -50,47 +53,6 @@ export default async function PlacePage({
 
   const avg = place.place_stats?.average_rating ?? 0;
   const reviews = place.place_stats?.review_count ?? 0;
-
-  const [photos, placeReviews, similar, hours, amenities, menuData] =
-    await Promise.all([
-      getPlacePhotos(place.id, 12).catch(() => []),
-      getReviewsForPlace(place.id, 8).catch(() => []),
-      getSimilarPlaces(place.category_id, place.id, 6).catch(() => []),
-      getPlaceHours(place.id).catch(() => []),
-      getPlaceAmenities(place.id).catch(() => []),
-      getPlaceMenu(place.id).catch(() => []),
-    ]);
-  console.log("[PlacePage] data counts", {
-    photos: photos.length,
-    reviews: placeReviews.length,
-    similar: similar.length,
-    hours: hours.length,
-    amenities: amenities.length,
-    menuSections:
-      (menuData as unknown as { sections?: unknown[] })?.sections?.length ?? 0,
-  });
-  if (!hours.length) {
-    console.warn("[PlacePage] no hours found for place", {
-      id: place.id,
-      slug,
-    });
-  }
-  if (!amenities.length) {
-    console.warn("[PlacePage] no amenities found for place", {
-      id: place.id,
-      slug,
-    });
-  }
-
-  // Fetch replies for these reviews and attach
-  const { getRepliesForReviewIds } = await import("@/lib/supabase/queries");
-  const repliesMap = await getRepliesForReviewIds(
-    placeReviews.map((r) => r.id),
-  ).catch(() => new Map());
-  const reviewsWithReplies = placeReviews.map((r) => ({
-    ...r,
-    replies: repliesMap.get(r.id) || [],
-  }));
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -151,10 +113,14 @@ export default async function PlacePage({
         </div>
       </div>
 
+      {/* Gallery */}
       <div className="mt-6">
-        <Gallery photos={photos} />
+        <Suspense fallback={<GallerySkeleton />}>
+          <Gallery placeId={place.id} />
+        </Suspense>
       </div>
 
+      {/* Main content */}
       <div className="mt-8 grid grid-cols-10 gap-24">
         <div className="col-span-6">
           {/* Description + key details */}
@@ -162,106 +128,52 @@ export default async function PlacePage({
             <p>{place.description}</p>
           </div>
 
-          {/* Overview removed; key details merged into description */}
+          {/* Location & Hours */}
+          <Section title="Location & Hours">
+            <Suspense fallback={<LocationHoursSkeleton />}>
+              <Hours
+                placeId={place.id}
+                latitude={
+                  place.latitude != null ? Number(place.latitude) : null
+                }
+                longitude={
+                  place.longitude != null ? Number(place.longitude) : null
+                }
+                name={place.name}
+              />
+            </Suspense>
+          </Section>
 
-          <section className="border-border border-b py-12">
-            <div className="text-foreground text-xl font-medium">
-              Location &amp; Hours
-            </div>
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              <div>
-                <Hours hours={hours} />
-              </div>
-              {place.latitude && place.longitude && (
-                <div className="h-full overflow-hidden rounded-3xl">
-                  <PlaceMap
-                    lat={Number(place.latitude)}
-                    lon={Number(place.longitude)}
-                    name={place.name}
-                  />
-                </div>
-              )}
-            </div>
-          </section>
+          {/* Amenities */}
+          <Section title="Amenities">
+            <Suspense fallback={<AmenitiesSkeleton />}>
+              <Amenities placeId={place.id} />
+            </Suspense>
+          </Section>
 
-          <section className="border-border border-b py-12">
-            <div className="text-foreground text-2xl font-medium">
-              Amenities
-            </div>
-            <div className="mt-6">
-              <Amenities amenities={amenities} />
-            </div>
-          </section>
+          {/* Menu */}
+          <Section title="Menu">
+            <Suspense fallback={<MenuSkeleton />}>
+              <Menu placeId={place.id} />
+            </Suspense>
+          </Section>
 
-          {(() => {
-            type Section = {
-              id: string;
-              name: string;
-              position?: number | null;
-            };
-            type Item = {
-              id: string;
-              name: string;
-              description?: string | null;
-              price?: number | null;
-              currency?: string | null;
-              is_available: boolean;
-              menu_item_photos?: {
-                id: string;
-                file_path: string;
-                alt_text?: string | null;
-              }[];
-            };
-            const m = menuData as unknown as {
-              sections?: Section[];
-              itemsBySection?: Map<string, Item[]>;
-              ungrouped?: Item[];
-            };
-            const sections = m.sections ?? [];
-            let itemsBySection: Map<string, Item[]>;
-            if (m.itemsBySection instanceof Map) {
-              itemsBySection = m.itemsBySection as Map<string, Item[]>;
-            } else {
-              itemsBySection = new (Map as {
-                new (): Map<string, Item[]>;
-              })();
-            }
-            const ungrouped = m.ungrouped ?? [];
+          {/* Similar Places */}
+          <Section title="Similar Places">
+            <Suspense fallback={<SimilarPlacesSkeleton />}>
+              <SimilarPlaces
+                categoryId={String(place.category_id)}
+                excludePlaceId={place.id}
+              />
+            </Suspense>
+          </Section>
 
-            // Show menu if there are any sections or ungrouped items
-            const hasMenuContent = sections.length > 0 || ungrouped.length > 0;
-
-            return hasMenuContent ? (
-              <section className="border-border border-b py-12">
-                <div className="text-foreground text-2xl font-medium">Menu</div>
-                <div className="mt-6">
-                  <Menu
-                    sections={sections}
-                    itemsBySection={itemsBySection}
-                    ungrouped={ungrouped}
-                  />
-                </div>
-              </section>
-            ) : null;
-          })()}
-
-          <section className="border-border border-b py-12">
-            <div className="text-foreground text-2xl font-medium">
-              Similar places
-            </div>
-            <div className="mt-6">
-              <SimilarPlaces places={similar} />
-            </div>
-          </section>
-
-          <section className="border-border border-b py-12" id="recent-reviews">
-            <div className="text-foreground text-2xl font-medium">
-              Recent reviews
-            </div>
-            <div className="mt-6">
-              <Reviews reviews={reviewsWithReplies} />
-            </div>
-          </section>
+          {/* Reviews */}
+          <Section title="Reviews">
+            <Suspense fallback={<ReviewsSkeleton />}>
+              <Reviews placeId={place.id} />
+            </Suspense>
+          </Section>
         </div>
 
         <div className="col-span-4">

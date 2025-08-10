@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getPlaceMenu } from "@/lib/supabase/queries";
 
 interface MenuItem {
   id: string;
@@ -14,20 +15,27 @@ interface MenuItem {
   }[];
 }
 
-export default function Menu({
-  sections,
-  itemsBySection,
-  ungrouped,
-}: {
-  sections: { id: string; name: string; position?: number | null }[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  itemsBySection: Map<string, any[]>;
-  items?: never;
-  ungrouped: MenuItem[];
-}) {
-  const hasContent =
-    (sections?.length || 0) > 0 || (ungrouped?.length || 0) > 0;
+type SectionType = { id: string; name: string; position?: number | null };
+
+export default async function Menu({ placeId }: { placeId: string }) {
+  const m = (await getPlaceMenu(placeId).catch(() => ({}))) as unknown as {
+    sections?: SectionType[];
+    itemsBySection?: Map<string, MenuItem[]>;
+    ungrouped?: MenuItem[];
+  };
+
+  const sections = m.sections ?? [];
+  let itemsBySection: Map<string, MenuItem[]>;
+  if (m.itemsBySection instanceof Map) {
+    itemsBySection = m.itemsBySection as Map<string, MenuItem[]>;
+  } else {
+    itemsBySection = new (Map as { new (): Map<string, MenuItem[]> })();
+  }
+  const ungrouped = m.ungrouped ?? [];
+
+  const hasContent = sections.length > 0 || ungrouped.length > 0;
   if (!hasContent) return null;
+
   return (
     <div>
       {sections?.map((section) => {

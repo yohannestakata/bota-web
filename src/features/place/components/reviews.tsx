@@ -5,8 +5,12 @@ import Link from "next/link";
 import { ThumbsUp, Heart, Meh, ThumbsDown, Reply } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { RatingStars } from "@/components/ui/rating-stars";
+import {
+  getRepliesForReviewIds,
+  getReviewsForPlace,
+} from "@/lib/supabase/queries";
 
-interface ReviewItemProps {
+export interface ReviewItemProps {
   review: {
     id: string;
     rating: number;
@@ -230,17 +234,24 @@ function ReviewItem({ review }: ReviewItemProps) {
   );
 }
 
-export default function Reviews({
-  reviews,
-}: {
-  reviews: ReviewItemProps["review"][];
-}) {
-  if (!reviews.length)
+export default async function Reviews({ placeId }: { placeId: string }) {
+  const placeReviews = await getReviewsForPlace(placeId, 8).catch(() => []);
+  const repliesMap = await getRepliesForReviewIds(
+    placeReviews.map((r) => r.id),
+  ).catch(() => new Map());
+  const reviewsWithReplies: ReviewItemProps["review"][] = placeReviews.map(
+    (r) => ({
+      ...r,
+      replies: repliesMap.get(r.id) || [],
+    }),
+  );
+
+  if (!reviewsWithReplies.length)
     return <div className="text-muted-foreground">No reviews yet.</div>;
 
   return (
     <div className="divide-border space-y-12 divide-y">
-      {reviews.map((r) => (
+      {reviewsWithReplies.map((r) => (
         <ReviewItem key={r.id} review={r} />
       ))}
     </div>

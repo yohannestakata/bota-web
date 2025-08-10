@@ -1,4 +1,5 @@
 "use client";
+
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 
@@ -35,3 +36,4 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
     </div>
   );
 }
+

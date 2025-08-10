@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { RatingStars } from "@/components/ui/rating-stars";
+import { getSimilarPlaces } from "@/lib/supabase/queries";
 
 interface SimilarPlacesProps {
-  places: {
-    id: string;
-    name: string;
-    slug: string;
-    place_stats?: {
-      average_rating: number;
-      review_count: number;
-    };
-  }[];
+  categoryId: string;
+  excludePlaceId: string;
 }
 
-export default function SimilarPlaces({ places }: SimilarPlacesProps) {
+export default async function SimilarPlaces({
+  categoryId,
+  excludePlaceId,
+}: SimilarPlacesProps) {
+  const places = await getSimilarPlaces(categoryId, excludePlaceId, 6).catch(
+    () => [],
+  );
   if (!places.length) return null;
   return (
     <div>

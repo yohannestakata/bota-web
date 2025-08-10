@@ -1,4 +1,5 @@
 import * as Icons from "lucide-react";
+import { getPlaceAmenities } from "@/lib/supabase/queries";
 
 interface Amenity {
   amenity?: {
@@ -10,7 +11,9 @@ interface Amenity {
   value: boolean;
 }
 
-export default function Amenities({ amenities }: { amenities: Amenity[] }) {
+export default async function Amenities({ placeId }: { placeId: string }) {
+  const amenities: Amenity[] = await getPlaceAmenities(placeId).catch(() => []);
+
   if (!amenities.length)
     return <div className="text-muted-foreground">No amenities listed.</div>;
   return (
