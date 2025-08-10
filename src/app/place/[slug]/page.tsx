@@ -162,7 +162,7 @@ export default async function PlacePage({
           <Section title="Similar Places">
             <Suspense fallback={<SimilarPlacesSkeleton />}>
               <SimilarPlaces
-                categoryId={String(place.category_id)}
+                categoryId={Number(place.category_id)}
                 excludePlaceId={place.id}
               />
             </Suspense>

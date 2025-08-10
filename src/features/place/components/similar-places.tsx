@@ -3,7 +3,7 @@ import { RatingStars } from "@/components/ui/rating-stars";
 import { getSimilarPlaces } from "@/lib/supabase/queries";
 
 interface SimilarPlacesProps {
-  categoryId: string;
+  categoryId: number;
   excludePlaceId: string;
 }
 
