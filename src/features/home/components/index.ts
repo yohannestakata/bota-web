@@ -1,13 +1,12 @@
 export { default as Brand } from "./brand";
 export { default as NavigationMenu } from "./navigation-menu";
+export { default as FilterMenu } from "./filter-menu";
 export { default as UserActions } from "./user-actions";
 export { default as CategoriesSection } from "./categories-section";
 export { default as RecentReviews } from "./recent-reviews";
-export { default as FeaturedPlaces } from "./featured-places";
 export { default as Footer } from "../../../components/layout/footer";
 export { default as Header } from "./header";
 export { default as ReviewCard } from "./review-card";
 export { default as PlaceCard } from "./place-card";
-export { default as FeaturedPlacesList } from "./featured-places-list";
 export { default as RecentReviewsList } from "./recent-reviews-list";
 export { default as CategoriesList } from "./categories-list";

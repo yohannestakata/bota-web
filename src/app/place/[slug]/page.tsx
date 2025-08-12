@@ -2,7 +2,12 @@ import { notFound } from "next/navigation";
 // import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { getPlaceBySlugWithDetails } from "@/lib/supabase/queries";
+import {
+  getPlaceBySlugWithDetails,
+  getPlacePhotoCategories,
+  getPlacePhotos,
+  getReviewsForPlace,
+} from "@/lib/supabase/queries";
 import Gallery from "@/features/place/components/gallery";
 // Reviews list is rendered via server wrapper
 import SimilarPlaces from "@/features/place/components/similar-places";
@@ -12,10 +17,12 @@ import Hours from "@/features/place/components/hours";
 import Amenities from "@/features/place/components/amenities";
 import Menu from "@/features/place/components/menu";
 import BusinessQuickInfo from "@/features/place/components/business-quick-info";
+import { RatingStars } from "@/components/ui/rating-stars";
+import { getPlaceHours } from "@/lib/supabase/queries";
+import type { HourRow } from "@/features/place/components/hours";
 
 import { PlaceJsonLd } from "./structured-data";
 import {
-  GallerySkeleton,
   LocationHoursSkeleton,
   AmenitiesSkeleton,
   MenuSkeleton,
@@ -24,15 +31,22 @@ import {
 } from "@/features/place/components/skeletons";
 import Reviews from "@/features/place/components/reviews";
 import SearchBar from "@/components/search-bar";
-import { ChevronLeftIcon, HeartIcon, Share2Icon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
+import { format } from "date-fns";
+
+export const experimental_ppr = true;
 
 export default async function PlacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ cat?: string }>;
 }) {
   const { slug } = await params;
   console.log("[PlacePage] slug", slug);
+  const { cat } = await searchParams;
+  const activeCategoryId = cat ? Number(cat) : null;
 
   const place = await getPlaceBySlugWithDetails(slug);
   if (!place || !place.is_active) {
@@ -53,6 +67,62 @@ export default async function PlacePage({
 
   const avg = place.place_stats?.average_rating ?? 0;
   const reviews = place.place_stats?.review_count ?? 0;
+
+  // Compute open/closed status from normalized hours if available
+  let isOpenNow: boolean | undefined = undefined;
+  try {
+    const hours: HourRow[] = await getPlaceHours(place.id);
+    if (hours && hours.length) {
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday
+      const row = hours.find((h) => h.day_of_week === currentDay);
+      if (row) {
+        if (row.is_24_hours) {
+          isOpenNow = true;
+        } else if (row.is_closed) {
+          isOpenNow = false;
+        } else if (row.open_time && row.close_time) {
+          const [oH, oM] = row.open_time.split(":").map((n) => Number(n));
+          const [cH, cM] = row.close_time.split(":").map((n) => Number(n));
+          const openMinutes = (oH || 0) * 60 + (oM || 0);
+          const closeMinutes = (cH || 0) * 60 + (cM || 0);
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+          if (closeMinutes >= openMinutes) {
+            // same-day close
+            isOpenNow = nowMinutes >= openMinutes && nowMinutes < closeMinutes;
+          } else {
+            // overnight (e.g., 18:00 – 02:00)
+            isOpenNow =
+              nowMinutes >= openMinutes ||
+              nowMinutes < (closeMinutes + 24 * 60) % (24 * 60);
+          }
+        }
+      }
+    }
+  } catch {
+    // Leave undefined if hours fetch fails
+  }
+
+  // Select a "top" review to feature: by total reactions, then rating, then recency
+  const topReview = await (async () => {
+    try {
+      const recent = await getReviewsForPlace(place.id, 6);
+      if (!recent.length) return null;
+      const sorted = [...recent].sort((a, b) => {
+        const ra = a.review_stats?.total_reactions || 0;
+        const rb = b.review_stats?.total_reactions || 0;
+        if (rb !== ra) return rb - ra;
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      });
+      return sorted[0];
+    } catch {
+      return null;
+    }
+  })();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -88,41 +158,143 @@ export default async function PlacePage({
         </div>
       </div>
 
-      <div className="flex items-baseline justify-between gap-2">
-        <h1 className="text-foreground text-3xl font-medium tracking-tight">
-          {place.name}
-        </h1>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-full px-2 py-1 underline underline-offset-4 transition-colors duration-150"
-            aria-label="Share"
-          >
-            <Share2Icon size={16} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Share</span>
-          </Link>
-          <Link
-            href="/"
-            className="text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-full px-2 py-1 underline underline-offset-4 transition-colors duration-150"
-            aria-label="Share"
-          >
-            <HeartIcon size={16} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Save</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Gallery */}
-      <div className="mt-6">
-        <Suspense fallback={<GallerySkeleton />}>
-          <Gallery placeId={place.id} />
-        </Suspense>
-      </div>
-
       {/* Main content */}
-      <div className="mt-8 grid grid-cols-10 gap-24">
+      <div className="mt-5 grid grid-cols-10 gap-24">
         <div className="col-span-6">
+          {/* Title and meta moved into left column */}
+          <h1 className="text-foreground text-4xl font-semibold tracking-tight">
+            {place.name}
+          </h1>
+          <div className="mt-3 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <RatingStars rating={avg} size={24} />
+              <span className="text-foreground font-medium">
+                {avg.toFixed(1)}
+              </span>
+              <span className="text-sm">
+                ({reviews} review{reviews !== 1 ? "s" : ""})
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              {isOpenNow !== undefined ? (
+                <span
+                  className={
+                    isOpenNow
+                      ? "font-medium text-green-600"
+                      : "font-medium text-red-600"
+                  }
+                >
+                  {isOpenNow ? "Open now" : "Closed"}
+                </span>
+              ) : (
+                <span>Hours not set</span>
+              )}
+              {(place.category?.name || place.price_range) && <span>•</span>}
+              {(place.category?.name || place.price_range) && (
+                <span>
+                  {place.category?.name}
+                  {place.category?.name && place.price_range ? " · " : ""}
+                  {place.price_range
+                    ? "$".repeat(
+                        Math.min(
+                          Math.max(Number(place.price_range) || 0, 1),
+                          4,
+                        ),
+                      )
+                    : ""}
+                </span>
+              )}
+              {(place.city || place.state) && <span>•</span>}
+              {(place.city || place.state) && (
+                <span>
+                  {[place.city, place.state].filter(Boolean).join(", ")}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Rating & Quick Info (mobile-first) */}
+          <div className="lg:hidden">
+            <BusinessQuickInfo
+              place={place}
+              averageRating={avg}
+              reviewCount={reviews}
+              isOpenNow={isOpenNow}
+            />
+          </div>
+
+          {/* Top review */}
+          {topReview ? (
+            <div className="border-border mt-4 rounded-3xl border p-6">
+              <div className="flex items-center gap-3.5">
+                <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-full font-medium">
+                  {(
+                    topReview.author?.full_name ||
+                    topReview.author?.username ||
+                    "?"
+                  )
+                    .toString()
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-foreground font-medium">
+                    {topReview.author?.full_name ||
+                      topReview.author?.username ||
+                      "User"}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      <RatingStars rating={topReview.rating} size={16} />
+                    </div>
+                    <span>•</span>
+                    <span>
+                      {format(
+                        new Date(topReview.visited_at || topReview.created_at),
+                        "LLLL yyyy",
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                {topReview.body ? (
+                  <p className="text-foreground mt-3 line-clamp-3 leading-relaxed">
+                    {topReview.body}
+                  </p>
+                ) : null}
+                <div className="mt-2">
+                  <a href="#reviews" className="font-medium underline">
+                    Show more
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Photos */}
+          <Section title="Photos">
+            {/** Prefetch initial gallery data server-side for crawlability */}
+            {await (async () => {
+              const [initialCategories, initialPhotos] = await Promise.all([
+                getPlacePhotoCategories(place.id).catch(() => []),
+                getPlacePhotos(
+                  place.id,
+                  12,
+                  activeCategoryId ?? undefined,
+                ).catch(() => []),
+              ]);
+              return (
+                <Gallery
+                  placeId={place.id}
+                  initialCategories={initialCategories}
+                  initialPhotos={initialPhotos}
+                  initialActiveCategoryId={activeCategoryId}
+                />
+              );
+            })()}
+          </Section>
+
           {/* Description + key details */}
           <div className="border-border border-b pb-12">
             <p>{place.description}</p>
@@ -169,6 +341,7 @@ export default async function PlacePage({
           </Section>
 
           {/* Reviews */}
+          <div id="reviews" />
           <Section title="Reviews">
             <Suspense fallback={<ReviewsSkeleton />}>
               <Reviews placeId={place.id} />
@@ -178,12 +351,17 @@ export default async function PlacePage({
 
         <div className="col-span-4">
           <div className="sticky top-12">
-            <BusinessQuickInfo
-              place={place}
-              averageRating={avg}
-              reviewCount={reviews}
-              isOpenNow={true} // TODO: Calculate based on current time and hours
-            />
+            <div className="hidden lg:block">
+              <BusinessQuickInfo
+                place={place}
+                averageRating={avg}
+                reviewCount={reviews}
+                isOpenNow={isOpenNow} // Calculated based on current time and hours
+                showRatingHeader={false}
+                showCategoryAndPrice={false}
+                showOpenStatus={false}
+              />
+            </div>
           </div>
         </div>
       </div>

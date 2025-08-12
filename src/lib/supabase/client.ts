@@ -103,7 +103,6 @@ export interface Review {
   place_id: string;
   author_id: string;
   rating: number;
-  title?: string;
   body?: string;
   visited_at?: string;
   owner_response?: string;
@@ -185,6 +184,14 @@ export interface ReviewStats {
   loves_count: number;
   mehs_count: number;
   dislikes_count: number;
+}
+
+export interface SearchHistoryRow {
+  id: string;
+  user_id: string;
+  query: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CuisineType {

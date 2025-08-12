@@ -1,20 +1,108 @@
-import { SearchIcon } from "lucide-react";
+"use client";
 
-export default function SearchBar() {
+import { useEffect, useMemo, useRef, useState } from "react";
+import { SearchIcon } from "lucide-react";
+import { getSearchHistory, saveSearchQuery } from "@/lib/supabase/queries";
+
+type SearchBarSize = "small" | "medium" | "large";
+
+export default function SearchBar({
+  size = "medium",
+}: {
+  size?: SearchBarSize;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [history, setHistory] = useState<Array<{ id: string; query: string }>>(
+    [],
+  );
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Prefetch user history if signed in; helpers handle anon user
+    void (async () => {
+      const rows = await getSearchHistory();
+      setHistory(rows.map((r) => ({ id: r.id, query: r.query })));
+    })();
+  }, []);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  const dims = useMemo(() => {
+    switch (size) {
+      case "small":
+        return { height: "h-10", text: "text-sm", padding: "px-2", icon: 18 };
+      case "large":
+        return { height: "h-16", text: "text-lg", padding: "px-3", icon: 24 };
+      default:
+        return { height: "h-12", text: "text-base", padding: "px-3", icon: 20 };
+    }
+  }, [size]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    await saveSearchQuery(q);
+    setOpen(false);
+    // TODO: Navigate to results page when implemented
+  }
+
   return (
-    <form className="border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex h-14 w-xl items-center rounded-full border bg-white shadow-lg duration-75 focus-within:ring-2 focus-within:ring-offset-2">
-      <input
-        type="search"
-        aria-label="Search for restaurants, bars, cafes, etc."
-        placeholder="Search for restaurants, bars, cafes, etc."
-        className="h-full w-full rounded-full bg-transparent px-6 focus:outline-none"
-      />
-      <button
-        type="submit"
-        className="bg-primary text-primary-foreground mr-2 size-fit rounded-full p-3"
+    <div className="relative" ref={containerRef}>
+      <form
+        onSubmit={onSubmit}
+        className={
+          `border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex w-full max-w-3xl items-center rounded-full border bg-white shadow-lg duration-75 focus-within:ring-2 focus-within:ring-offset-2 ` +
+          `${dims.height}`
+        }
       >
-        <SearchIcon className="size-5" strokeWidth={3} />
-      </button>
-    </form>
+        <SearchIcon className="text-muted-foreground ml-6" size={dims.icon} />
+        <input
+          type="search"
+          aria-label="Search for restaurants, bars, cafes, etc."
+          placeholder="Search for restaurants, bars, cafes, etc."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setOpen(true)}
+          className={`h-full w-full rounded-full bg-transparent ${dims.padding} ${dims.text} focus:outline-none`}
+        />
+        <button
+          type="submit"
+          className="bg-primary text-primary-foreground mr-3 size-fit rounded-full px-5 py-2.5 font-medium"
+        >
+          Search
+        </button>
+      </form>
+
+      {open && history.length > 0 && (
+        <div className="bg-popover border-border absolute z-10 mt-2 w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
+          <ul className="divide-border divide-y">
+            {history.map((h) => (
+              <li key={h.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery(h.query);
+                    setOpen(false);
+                  }}
+                  className="hover:bg-muted/60 flex w-full items-center gap-3 px-4 py-3 text-left"
+                >
+                  <SearchIcon className="text-muted-foreground" size={16} />
+                  <span className="truncate">{h.query}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }

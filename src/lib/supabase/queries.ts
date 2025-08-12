@@ -10,6 +10,7 @@ import type {
   NearbyPlace,
   CuisineType,
   Profile,
+  SearchHistoryRow,
 } from "./client";
 
 // Categories
@@ -112,15 +113,54 @@ export async function getPlaceBySlugWithDetails(
 }
 
 // Get place photos
-export async function getPlacePhotos(placeId: string, limit = 12) {
-  const { data, error } = await supabase
+export async function getPlacePhotos(
+  placeId: string,
+  limit = 12,
+  categoryId?: number | null,
+) {
+  let query = supabase
     .from("place_photos")
-    .select("id, file_path, alt_text, created_at")
+    .select("id, file_path, alt_text, created_at, photo_category_id")
     .eq("place_id", placeId)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (categoryId != null) {
+    query = query.eq("photo_category_id", categoryId);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return data || [];
+}
+
+// Get photo categories used by photos of a place with counts
+export async function getPlacePhotoCategories(placeId: string) {
+  const { data, error } = await supabase
+    .from("place_photos")
+    .select("photo_category_id, photo_categories(name)")
+    .eq("place_id", placeId);
+  if (error) throw error;
+  const rows = (data || []) as Array<{
+    photo_category_id: number | null;
+    photo_categories?: { name: string } | { name: string }[] | null;
+  }>;
+  const counts = new Map<
+    number | null,
+    { id: number | null; name: string; count: number }
+  >();
+  for (const row of rows) {
+    const id = row.photo_category_id;
+    const cat = row.photo_categories;
+    const catName = Array.isArray(cat) ? cat[0]?.name : cat?.name;
+    const resolvedName = catName ?? (id == null ? "Uncategorized" : "Category");
+    const existing = counts.get(id) || { id, name: resolvedName, count: 0 };
+    const next = {
+      id,
+      name: catName ?? existing.name,
+      count: existing.count + 1,
+    };
+    counts.set(id, next);
+  }
+  return Array.from(counts.values()).sort((a, b) => b.count - a.count);
 }
 
 // Get reviews for a place, joined with author and stats via parallel queries
@@ -128,7 +168,7 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
   const { data: reviews, error: reviewsError } = await supabase
     .from("reviews")
     .select(
-      "id, place_id, author_id, rating, title, body, visited_at, created_at, updated_at",
+      "id, place_id, author_id, rating, body, visited_at, created_at, updated_at",
     )
     .eq("place_id", placeId)
     .order("created_at", { ascending: false })
@@ -404,7 +444,7 @@ export async function getReviewWithDetails(reviewId: string): Promise<
     .from("reviews")
     .select(
       `
-      id, place_id, author_id, rating, title, body, visited_at, owner_response, 
+      id, place_id, author_id, rating, body, visited_at, owner_response, 
       owner_response_at, owner_response_by, created_at, updated_at,
       places(id, name, slug, category_id, created_at),
       profiles(id, username, full_name, avatar_url, created_at)
@@ -600,7 +640,7 @@ export async function getRecentReviews(limit = 5): Promise<{
   const { data, error } = await supabase
     .from("recent_reviews_enriched")
     .select(
-      "review_id, place_id, author_id, rating, title, body, visited_at, owner_response, owner_response_at, owner_response_by, created_at, updated_at, place_name, place_slug, category_id, category_name, author_username, author_full_name, author_avatar_url, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+      "review_id, place_id, author_id, rating, body, visited_at, owner_response, owner_response_at, owner_response_by, created_at, updated_at, place_name, place_slug, category_id, category_name, author_username, author_full_name, author_avatar_url, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
     )
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -621,7 +661,6 @@ export async function getRecentReviews(limit = 5): Promise<{
     place_id: row.place_id,
     author_id: row.author_id,
     rating: row.rating,
-    title: row.title,
     body: row.body,
     visited_at: row.visited_at,
     owner_response: row.owner_response,
@@ -657,6 +696,41 @@ export async function getRecentReviews(limit = 5): Promise<{
   }));
 
   return { data: mapped, error: null };
+}
+
+// Popular recent reviews (by reactions, then recency)
+export async function getRecentReviewsPopular(days = 7, limit = 9) {
+  const { data, error } = await supabase.rpc("recent_reviews_popular", {
+    in_days: days,
+    in_limit: limit,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
+// Nearby recent reviews by coordinates (meters radius)
+export async function getRecentReviewsNearby(
+  lat: number,
+  lon: number,
+  radiusMeters = 5000,
+  limit = 9,
+) {
+  const { data, error } = await supabase.rpc("recent_reviews_nearby", {
+    in_lat: lat,
+    in_lon: lon,
+    in_radius_meters: radiusMeters,
+    in_limit: limit,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getRecentReviewsFood(limit = 9) {
+  const { data, error } = await supabase.rpc("recent_reviews_food", {
+    in_limit: limit,
+  });
+  if (error) throw error;
+  return data || [];
 }
 
 // Nearby places using RPC
@@ -720,4 +794,34 @@ export async function searchPlaces(
     .slice(0, limit);
 
   return sortedData;
+}
+
+// Search history helpers
+export async function getSearchHistory(limit = 8): Promise<SearchHistoryRow[]> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) return [];
+  const { data, error } = await supabase
+    .from("search_history")
+    .select("id, user_id, query, created_at, updated_at")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data || []) as SearchHistoryRow[];
+}
+
+export async function saveSearchQuery(queryText: string): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return; // Do nothing if not signed in
+  await supabase
+    .from("search_history")
+    .upsert(
+      { user_id: user.id, query: queryText },
+      { onConflict: "user_id,query" },
+    );
 }

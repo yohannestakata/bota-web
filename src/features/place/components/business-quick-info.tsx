@@ -7,6 +7,8 @@ import {
   MessageCircleIcon,
   PencilIcon,
   ImagePlusIcon,
+  Share2Icon,
+  HeartIcon,
 } from "lucide-react";
 import { RatingStars } from "@/components/ui/rating-stars";
 
@@ -31,6 +33,9 @@ interface BusinessQuickInfoProps {
   averageRating?: number;
   reviewCount?: number;
   isOpenNow?: boolean;
+  showRatingHeader?: boolean;
+  showCategoryAndPrice?: boolean;
+  showOpenStatus?: boolean;
 }
 
 function getPriceRangeDisplay(priceRange: number | null | undefined) {
@@ -51,6 +56,9 @@ export default function BusinessQuickInfo({
   averageRating,
   reviewCount,
   isOpenNow,
+  showRatingHeader = true,
+  showCategoryAndPrice = true,
+  showOpenStatus = true,
 }: BusinessQuickInfoProps) {
   const priceRange = getPriceRangeDisplay(place.price_range);
 
@@ -66,43 +74,47 @@ export default function BusinessQuickInfo({
   return (
     <div className="border-border rounded-3xl border p-6 shadow-xl">
       {/* Rating Header */}
-      {averageRating !== undefined && reviewCount !== undefined && (
-        <div className="mb-6 flex flex-col items-center gap-1 text-center">
-          <span className="text-4xl font-medium">
-            {averageRating.toFixed(1)}
-          </span>
+      {showRatingHeader &&
+        averageRating !== undefined &&
+        reviewCount !== undefined && (
+          <div className="mb-6 flex flex-col items-center gap-1 text-center">
+            <span className="text-4xl font-medium">
+              {averageRating.toFixed(1)}
+            </span>
 
-          <RatingStars rating={averageRating} size={24} />
+            <RatingStars rating={averageRating} size={24} />
 
-          <span className="text-sm">
-            ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
-          </span>
-        </div>
-      )}
+            <span className="text-sm">
+              ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
+            </span>
+          </div>
+        )}
 
       <div className="space-y-4">
         {/* Category & Price Range */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TagIcon size={16} className="text-muted-foreground" />
-            <span className="text-sm">
-              {place.category?.name || "Business"}
-            </span>
-          </div>
-          {priceRange && (
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium text-green-600">
-                {priceRange.symbol}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {priceRange.label}
+        {showCategoryAndPrice && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TagIcon size={16} className="text-muted-foreground" />
+              <span className="text-sm">
+                {place.category?.name || "Business"}
               </span>
             </div>
-          )}
-        </div>
+            {priceRange && (
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium text-green-600">
+                  {priceRange.symbol}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {priceRange.label}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Open/Closed Status */}
-        {isOpenNow !== undefined && (
+        {showOpenStatus && isOpenNow !== undefined && (
           <div className="flex items-center gap-2">
             <ClockIcon size={16} className="text-muted-foreground" />
             <span
@@ -166,6 +178,16 @@ export default function BusinessQuickInfo({
 
         {/* Quick Actions */}
         <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
+              <Share2Icon size={16} className="text-muted-foreground" />
+              Share
+            </button>
+            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
+              <HeartIcon size={16} className="text-muted-foreground" />
+              Save
+            </button>
+          </div>
           <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-colors">
             <MessageCircleIcon size={16} className="text-primary-foreground" />
             Write a Review

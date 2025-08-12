@@ -4,10 +4,9 @@ export default function UserActions() {
   return (
     <ul className="flex items-center gap-8">
       <li>
-        <Link href="/">Add a place</Link>
-      </li>
-      <li>
-        <Link href="/">Sign in</Link>
+        <Link href="/" className="font-medium">
+          Sign in
+        </Link>
       </li>
     </ul>
   );

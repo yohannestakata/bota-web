@@ -10,7 +10,6 @@ export interface ReviewItemProps {
   review: {
     id: string;
     rating: number;
-    title?: string | null;
     body?: string | null;
     created_at: string;
     author?: {
@@ -90,9 +89,7 @@ function ReviewItem({ review }: ReviewItemProps) {
         </div>
       </div>
 
-      {review.title && (
-        <h4 className="text-foreground mt-3 font-medium">{review.title}</h4>
-      )}
+      {/* Title removed from schema; show only body */}
 
       {review.body ? (
         <p className="text-foreground mt-3 max-w-prose">{review.body}</p>

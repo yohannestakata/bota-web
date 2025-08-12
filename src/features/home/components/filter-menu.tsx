@@ -1,0 +1,77 @@
+"use client";
+
+import { Flame, MapPin } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+
+export default function FilterMenu({
+  items = [
+    { key: "popular", label: "Popular" },
+    { key: "nearby", label: "Nearby" },
+  ],
+  active,
+}: {
+  items?: { key?: string; label: string }[];
+  active?: string;
+}) {
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const iconFor = (key?: string) => {
+    if (key === "popular") return <Flame className="size-5" strokeWidth={2} />;
+    if (key === "nearby") return <MapPin className="size-5" strokeWidth={2} />;
+    return null;
+  };
+
+  // Default to popular
+  const activeKey = active ?? "popular";
+  const hrefFor = (key?: string) =>
+    key === "popular" ? "/" : `/?filter=${encodeURIComponent(key || "")}`;
+
+  function onNearbyClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    const lat = sp.get("lat");
+    const lon = sp.get("lon");
+    if (lat && lon) {
+      router.push(`/?filter=nearby&lat=${lat}&lon=${lon}`);
+      return;
+    }
+    if (!navigator.geolocation) {
+      router.push("/?filter=popular");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        router.push(`/?filter=nearby&lat=${latitude}&lon=${longitude}`);
+      },
+      () => router.push("/?filter=popular"),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
+  return (
+    <ul className="flex items-center justify-center gap-6">
+      {items.map(({ key, label }) => {
+        const isActive = (activeKey ?? undefined) === (key ?? undefined);
+        const href = hrefFor(key);
+        return (
+          <li key={key ?? "all"}>
+            <Link
+              href={href}
+              onClick={key === "nearby" ? onNearbyClick : undefined}
+              className={`flex items-center gap-2 text-sm font-medium ${
+                isActive
+                  ? "underline decoration-2 underline-offset-8"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {iconFor(key)}
+              {label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}

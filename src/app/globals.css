@@ -78,3 +78,7 @@ body {
 .aspect-portrait {
   aspect-ratio: 3 / 4;
 }
+
+.-aspect-portrait {
+  aspect-ratio: 3 / 2;
+}

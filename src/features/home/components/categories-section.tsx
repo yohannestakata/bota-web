@@ -3,8 +3,8 @@ import CategoriesList from "./categories-list";
 
 export default function CategoriesSection() {
   return (
-    <section className="container mx-auto px-24 py-8">
-      <h2 className="text-foreground text-2xl font-medium">
+    <section className="container mx-auto max-w-6xl px-4 py-12">
+      <h2 className="text-foreground text-2xl font-semibold">
         Explore by Category
       </h2>
       <Suspense

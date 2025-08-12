@@ -1,31 +1,91 @@
-import Image from "next/image";
-import { getPlacePhotos } from "@/lib/supabase/queries";
+"use client";
+
+import { useState } from "react";
+import GalleryTabs from "./gallery-tabs";
+import GalleryImages from "./gallery-images";
+import { useQuery } from "@tanstack/react-query";
 
 type Photo = {
   id: string;
   file_path: string;
   alt_text?: string | null;
   created_at?: string;
+  photo_category_id?: number | null;
 };
 
-export default async function Gallery({ placeId }: { placeId: string }) {
-  const photos: Photo[] = await getPlacePhotos(placeId, 12).catch(() => []);
+type CategoryCount = { id: number | null; name: string; count: number };
 
-  if (!photos?.length) return null;
+export default function Gallery({
+  placeId,
+  initialCategories,
+  initialPhotos,
+  initialActiveCategoryId = null,
+}: {
+  placeId: string;
+  initialCategories?: CategoryCount[];
+  initialPhotos?: Photo[];
+  initialActiveCategoryId?: number | null;
+}) {
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(
+    initialActiveCategoryId,
+  );
+  const { data: categoriesData } = useQuery({
+    queryKey: ["photoCategories", placeId],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/place/photo-categories?placeId=${placeId}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const json = (await res.json()) as {
+        categories: { id: number | null; name: string; count: number }[];
+      };
+      return json.categories || [];
+    },
+    staleTime: 5 * 60_000,
+    initialData: initialCategories,
+  });
+
+  const { data: photos = [], isFetching } = useQuery({
+    queryKey: ["placePhotos", placeId, activeCategoryId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("placeId", placeId);
+
+      if (activeCategoryId != null)
+        params.set("categoryId", String(activeCategoryId));
+
+      const res = await fetch(`/api/place/photos?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const json = (await res.json()) as { photos: Photo[] };
+      return json.photos || [];
+    },
+    staleTime: 60_000,
+    placeholderData: (prev) => prev as Photo[] | undefined,
+    ...(activeCategoryId === initialActiveCategoryId && initialPhotos
+      ? { initialData: initialPhotos as Photo[] }
+      : {}),
+  });
+
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {photos.slice(0, 4).map((p) => (
-        <div key={p.id} className="aspect-portrait relative overflow-hidden">
-          <Image
-            src={p.file_path}
-            alt={p.alt_text || "place photo"}
-            fill
-            className="rounded-3xl object-cover"
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            priority
-          />
-        </div>
-      ))}
+    <div>
+      <GalleryTabs
+        placeId={placeId}
+        activeCategoryId={activeCategoryId}
+        setActiveCategoryId={setActiveCategoryId}
+        initialCategories={categoriesData}
+      />
+
+      <div className="mt-3">
+        <GalleryImages
+          placeId={placeId}
+          activeCategoryId={activeCategoryId}
+          initialActiveCategoryId={initialActiveCategoryId}
+          initialPhotos={initialPhotos}
+        />
+      </div>
     </div>
   );
 }
