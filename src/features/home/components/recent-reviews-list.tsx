@@ -16,14 +16,37 @@ export default async function RecentReviewsList({
   lat?: number;
   lon?: number;
 }) {
-  let dataRows: any[] = [];
-  let error: any = null;
+  type RecentReviewUnified = {
+    id?: string;
+    review_id?: string;
+    place_id?: string;
+    author_id?: string;
+    rating: number;
+    body?: string;
+    created_at: string;
+    place?: { name?: string; slug?: string };
+    author?: { full_name?: string; username?: string; id?: string };
+    place_name?: string;
+    place_slug?: string;
+    category_name?: string;
+    author_username?: string;
+    author_full_name?: string;
+    review_stats?: {
+      likes_count?: number;
+      loves_count?: number;
+      mehs_count?: number;
+      dislikes_count?: number;
+    };
+  };
+
+  let dataRows: RecentReviewUnified[] = [];
+  let error: unknown = null;
   try {
     if (filter === "nearby" && lat != null && lon != null) {
       const LIMIT = 9;
       const radiusSteps = [5000, 7000, 10000, 15000];
       const seen = new Set<string>();
-      const collected: any[] = [];
+      const collected: RecentReviewUnified[] = [];
       for (const radius of radiusSteps) {
         const batch = await getRecentReviewsNearby(lat, lon, radius, LIMIT);
         for (const row of batch) {
@@ -48,8 +71,8 @@ export default async function RecentReviewsList({
       dataRows = await getRecentReviewsFood(9);
     }
   } catch (e) {
-    error = e as any;
-    dataRows = (await getRecentReviews(9)).data;
+    error = e;
+    dataRows = (await getRecentReviews(9)).data as RecentReviewUnified[];
   }
 
   // Transform the data to match the expected format
@@ -96,7 +119,7 @@ export default async function RecentReviewsList({
 
   return (
     <div className="mt-4 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {error ? (
+      {!!error ? (
         <div className="text-muted-foreground col-span-full text-center text-sm">
           Unable to load some review details. Showing cached/partial data.
         </div>
