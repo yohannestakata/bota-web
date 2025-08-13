@@ -53,10 +53,8 @@ export default function SettingsForm() {
   useEffect(() => {
     if (!user?.id) return;
     let mounted = true;
-    console.log("[AccountSettings] init", { userId: user.id });
     (async () => {
       setLoading(true);
-      console.log("[AccountSettings] fetch profile start");
       const { data, error } = await supabase
         .from("profiles")
         .select("id, username, full_name, avatar_url")
@@ -64,14 +62,11 @@ export default function SettingsForm() {
         .maybeSingle();
       if (!mounted) return;
       if (!error && data) {
-        console.log("[AccountSettings] fetch profile success", data);
         setProfile(data as Profile);
         reset({
           full_name: data.full_name || "",
           username: data.username || "",
         });
-      } else if (error) {
-        console.error("[AccountSettings] fetch profile error", error);
       }
       setLoading(false);
     })();
@@ -82,7 +77,6 @@ export default function SettingsForm() {
       const provider = (res.data.user?.app_metadata as { provider?: string })
         ?.provider;
       setAuthProvider(provider);
-      console.log("[AccountSettings] auth provider", provider);
     })();
     return () => {
       mounted = false;
@@ -94,7 +88,6 @@ export default function SettingsForm() {
   const onSubmit = async (values: FormValues) => {
     if (!user?.id) return;
     setSaving(true);
-    console.log("[AccountSettings] save profile", values);
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -104,7 +97,6 @@ export default function SettingsForm() {
       .eq("id", user.id);
     setSaving(false);
     if (!error) {
-      console.log("[AccountSettings] save profile success");
       setProfile((prev) =>
         prev
           ? {
@@ -116,7 +108,6 @@ export default function SettingsForm() {
       );
       notify("Profile updated", "success");
     } else {
-      console.error("[AccountSettings] save profile error", error);
       notify("Couldn’t save your changes. Please try again.", "error");
     }
   };
@@ -129,7 +120,6 @@ export default function SettingsForm() {
   const updateEmail = async () => {
     if (!email) return;
     setEmailUpdating(true);
-    console.log("[AccountSettings] update email", { email });
     const { error } = await supabase.auth.updateUser({ email });
     setEmailUpdating(false);
     if (error) notify(error.message || "Email update failed", "error");
@@ -140,9 +130,6 @@ export default function SettingsForm() {
   const updatePassword = async () => {
     if (!newPassword) return;
     setPasswordUpdating(true);
-    console.log("[AccountSettings] update password", {
-      length: newPassword.length,
-    });
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordUpdating(false);
     if (error) notify(error.message || "Password update failed", "error");
@@ -150,27 +137,15 @@ export default function SettingsForm() {
   };
 
   const deleteAccount = async (): Promise<boolean> => {
-    console.log("[AccountSettings] delete account start");
     const session = await supabase.auth.getSession();
     const access = session.data.session?.access_token;
-    if (!access) {
-      console.error("[AccountSettings] delete account error: no access token");
-      return false;
-    }
+    if (!access) return false;
     const res = await fetch("/api/account/delete", {
       method: "POST",
       headers: { Authorization: `Bearer ${access}` },
     });
-    if (!res.ok) {
-      let j: unknown = null;
-      try {
-        j = await res.json();
-      } catch {}
-      console.error("[AccountSettings] delete account failed", res.status, j);
-      return false;
-    }
+    if (!res.ok) return false;
     await supabase.auth.signOut();
-    console.log("[AccountSettings] delete account success, signed out");
     return true;
   };
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -181,7 +156,6 @@ export default function SettingsForm() {
       const ok = await deleteAccount();
       if (ok) {
         notify("Your account was deleted.", "success");
-        console.log("[AccountSettings] redirect after delete");
         window.setTimeout(() => {
           window.location.href = "/";
         }, 1200);
@@ -215,14 +189,10 @@ export default function SettingsForm() {
         folder: string;
       };
       if (!sigRes.ok) {
-        console.error("[AccountSettings] sign error", sig);
         notify("Upload not configured. Check server logs.", "error");
         return;
       }
       if (!sig.cloudName) {
-        console.error(
-          "[AccountSettings] Missing Cloudinary cloudName in signature response",
-        );
         notify("Upload not configured. Try again later.", "error");
         return;
       }
@@ -235,10 +205,6 @@ export default function SettingsForm() {
       form.append("folder", sig.folder);
       const cloud =
         sig.cloudName || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      console.log("[AccountSettings] uploading to Cloudinary", {
-        cloud,
-        folder: sig.folder,
-      });
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${cloud}/auto/upload`,
         {
@@ -251,7 +217,6 @@ export default function SettingsForm() {
         public_id: string;
       };
       if (!uploadRes.ok) {
-        console.error("[AccountSettings] Cloudinary upload error", uploadJson);
         notify("Upload failed. Please try again.", "error");
         return;
       }
@@ -363,14 +328,15 @@ export default function SettingsForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={authProvider && authProvider !== "email"}
+              disabled={Boolean(authProvider) && authProvider !== "email"}
               className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none disabled:opacity-60"
             />
             <button
               type="button"
               onClick={updateEmail}
               disabled={
-                emailUpdating || (authProvider && authProvider !== "email")
+                emailUpdating ||
+                (Boolean(authProvider) && authProvider !== "email")
               }
               className="rounded-md border px-3 py-2 text-sm"
             >

@@ -2,7 +2,6 @@
 
 import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/app/auth-context";
 import GoogleButton from "@/components/ui/google-button";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
@@ -17,7 +16,6 @@ export default function SignupPage() {
 }
 
 function SignupInner() {
-  const { signUp } = useAuth();
   const sp = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +38,7 @@ function SignupInner() {
       captchaRef.current?.resetCaptcha();
       setCaptchaToken(undefined);
     } catch {}
-    if (error) setError(error);
+    if (error) setError(error.message);
     setLoading(false);
   }
 

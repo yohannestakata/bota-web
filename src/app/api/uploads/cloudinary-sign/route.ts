@@ -36,26 +36,7 @@ cloudinary.config({
 
 export async function POST(req: Request) {
   try {
-    // Debug: log resolved configuration presence (no secrets)
-    console.log("[cloudinary-sign] config", {
-      cloudName: CLOUD_NAME,
-      apiKeySet: !!API_KEY,
-      apiSecretSet: !!API_SECRET,
-      fromUrl: !!process.env.CLOUDINARY_URL,
-      envCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
-      envCloudNameAlt: !!process.env.CLOUDINARY_NAME,
-      envPublicCloudName: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-      envPublicCloudNameAlt: !!process.env.NEXT_PUBLIC_CLOUDINARY_NAME,
-    });
-
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
-      console.error("[cloudinary-sign] missing config", {
-        missing: {
-          cloudName: !CLOUD_NAME,
-          apiKey: !API_KEY,
-          apiSecret: !API_SECRET,
-        },
-      });
       return NextResponse.json(
         { error: "Cloudinary is not fully configured" },
         { status: 500 },
@@ -94,13 +75,8 @@ export async function POST(req: Request) {
       cloudName: CLOUD_NAME,
       apiKey: API_KEY,
     } as const;
-    console.log("[cloudinary-sign] success", {
-      folder: result.folder,
-      cloud: result.cloudName,
-    });
     return NextResponse.json(result);
-  } catch (e) {
-    console.error("[cloudinary-sign] error", e);
+  } catch {
     return NextResponse.json(
       { error: "Failed to sign upload" },
       { status: 500 },

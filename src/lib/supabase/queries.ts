@@ -360,6 +360,137 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
   }));
 }
 
+// Profiles
+export async function getProfileByHandle(
+  handle: string,
+): Promise<Pick<
+  Profile,
+  "id" | "username" | "full_name" | "avatar_url" | "created_at"
+> | null> {
+  // Try username first, then fall back to id
+  const byUsername = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url, created_at")
+    .eq("username", handle)
+    .maybeSingle();
+  if (byUsername.data)
+    return byUsername.data as unknown as Pick<
+      Profile,
+      "id" | "username" | "full_name" | "avatar_url" | "created_at"
+    >;
+  const byId = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url, created_at")
+    .eq("id", handle)
+    .maybeSingle();
+  if (byId.data)
+    return byId.data as unknown as Pick<
+      Profile,
+      "id" | "username" | "full_name" | "avatar_url" | "created_at"
+    >;
+  return null;
+}
+
+export async function getUserReviewStats(userId: string): Promise<{
+  reviewCount: number;
+  averageRating: number;
+  totalReactions: number;
+}> {
+  const [{ count }, ratingsRes] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("author_id", userId),
+    supabase.from("reviews").select("id, rating").eq("author_id", userId),
+  ]);
+  const reviews = (ratingsRes.data || []) as { id: string; rating: number }[];
+  const reviewIds = reviews.map((r) => r.id);
+  const avg = reviews.length
+    ? reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / reviews.length
+    : 0;
+  const { data: statsRows } = await (reviewIds.length
+    ? supabase
+        .from("review_stats")
+        .select("review_id, total_reactions")
+        .in("review_id", reviewIds)
+    : Promise.resolve({
+        data: [] as Array<{ review_id: string; total_reactions: number }>,
+      }));
+  const reactions = (statsRows || []).reduce(
+    (sum, r) => sum + (Number(r.total_reactions) || 0),
+    0,
+  );
+  return {
+    reviewCount: count ?? reviews.length,
+    averageRating: Number(avg.toFixed(2)),
+    totalReactions: reactions,
+  };
+}
+
+export async function getReviewsByAuthor(userId: string, limit = 10) {
+  const { data: reviews, error: reviewsError } = await supabase
+    .from("reviews")
+    .select(
+      "id, place_id, author_id, rating, body, visited_at, created_at, updated_at, places(id, name, slug)",
+    )
+    .eq("author_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (reviewsError) throw reviewsError;
+  const reviewIds = (reviews || []).map((r) => r.id);
+  const [statsResult, photosResult] = await Promise.all([
+    reviewIds.length
+      ? supabase
+          .from("review_stats")
+          .select(
+            "review_id, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+          )
+          .in("review_id", reviewIds)
+      : Promise.resolve({ data: [], error: null } as const),
+    reviewIds.length
+      ? supabase
+          .from("review_photos")
+          .select("id, review_id, file_path, alt_text")
+          .in("review_id", reviewIds)
+      : Promise.resolve({ data: [], error: null } as const),
+  ]);
+  if (statsResult.error) throw statsResult.error;
+  if (photosResult.error) throw photosResult.error;
+  const statsMap = new Map(
+    (statsResult.data || []).map((s) => [s.review_id, s]),
+  );
+  const photosByReview = new Map<
+    string,
+    { id: string; file_path: string; alt_text?: string | null }[]
+  >();
+  for (const p of photosResult.data || []) {
+    const list = photosByReview.get(p.review_id) || [];
+    list.push({ id: p.id, file_path: p.file_path, alt_text: p.alt_text });
+    photosByReview.set(p.review_id, list);
+  }
+  type PlaceLite = { id: string; name: string; slug: string };
+  return (reviews || []).map((r) => {
+    const placeField = (r as unknown as { places?: PlaceLite[] | PlaceLite })
+      .places;
+    const place: PlaceLite | undefined = Array.isArray(placeField)
+      ? placeField[0]
+      : placeField;
+    return {
+      id: r.id,
+      place_id: r.place_id,
+      author_id: r.author_id,
+      rating: r.rating,
+      body: r.body,
+      visited_at: r.visited_at,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      place,
+      review_stats: statsMap.get(r.id) || undefined,
+      photos: photosByReview.get(r.id) || [],
+    };
+  });
+}
+
 // Batched replies fetch for multiple reviews, including authors and photos
 export async function getRepliesForReviewIds(reviewIds: string[]) {
   if (!reviewIds.length)

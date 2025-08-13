@@ -26,7 +26,7 @@ export default async function RecentReviewsList({
     rating: number;
     body?: string;
     created_at: string;
-    place?: { name?: string; slug?: string };
+    place?: { id?: string; name?: string; slug?: string };
     author?: { full_name?: string; username?: string; id?: string };
     place_name?: string;
     place_slug?: string;
