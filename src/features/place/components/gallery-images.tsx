@@ -44,8 +44,8 @@ export default function GalleryImages({
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-4 gap-2">
-        {photos.slice(0, 4).map((p) => (
+      <div className="grid grid-cols-3 gap-2">
+        {photos.slice(0, 3).map((p) => (
           <div key={p.id} className="aspect-portrait relative overflow-hidden">
             <Image
               src={p.file_path}

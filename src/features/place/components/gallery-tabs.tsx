@@ -75,7 +75,7 @@ export default function GalleryTabs({
                 });
               }}
               className={`relative pb-1 text-sm transition-colors ${
-                isActive ? "text-foreground" : "text-muted-foreground"
+                isActive ? "font-semibold" : "font-normal"
               }`}
             >
               {t.name}

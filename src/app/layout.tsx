@@ -4,7 +4,7 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Providers from "./providers";
 import Footer from "@/components/layout/footer";
-import { Brand, NavigationMenu, UserActions } from "@/features/home";
+import SiteHeader from "@/components/layout/site-header";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -31,13 +31,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${inter.className} bg-background antialiased`}
       >
-        <header>
-          <div className="relative container mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <Brand />
-            <NavigationMenu />
-            <UserActions />
-          </div>
-        </header>
+        <SiteHeader />
         <Providers>{children}</Providers>
         <Footer />
       </body>

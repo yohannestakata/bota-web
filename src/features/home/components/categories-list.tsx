@@ -21,26 +21,24 @@ export default async function CategoriesList() {
   });
 
   return (
-    <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-6">
+    <div className="mt-4 grid grid-cols-2 gap-12 md:grid-cols-5">
       {transformedCategories.map((category) => (
-        <Link
-          key={category.name}
-          href={category.href}
-          className="border-border rounded-3xl border p-6"
-        >
-          <div className="text-center">
+        <Link key={category.name} href={category.href} className="group">
+          <div className="flex items-center gap-4">
             <div>
               {category.icon ? (
                 <category.icon className="mx-auto h-8 w-8" strokeWidth={1.75} />
               ) : (
                 <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
-                  <span className="text-sm font-semibold text-gray-600">
+                  <span className="text-sm font-semibold underline-offset-4 group-hover:underline">
                     {category.name.charAt(0)}
                   </span>
                 </div>
               )}
             </div>
-            <h3 className="text-foreground mt-1">{category.name}</h3>
+            <h3 className="text-foreground mt-1 underline-offset-4 group-hover:underline">
+              {category.name}
+            </h3>
           </div>
         </Link>
       ))}

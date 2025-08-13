@@ -8,9 +8,12 @@ type SearchBarSize = "small" | "medium" | "large";
 
 export default function SearchBar({
   size = "medium",
+  elevated = true,
 }: {
   size?: SearchBarSize;
+  elevated?: boolean;
 }) {
+  const isSmall = size === "small";
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [history, setHistory] = useState<Array<{ id: string; query: string }>>(
@@ -38,7 +41,12 @@ export default function SearchBar({
   const dims = useMemo(() => {
     switch (size) {
       case "small":
-        return { height: "h-10", text: "text-sm", padding: "px-2", icon: 18 };
+        return {
+          height: "h-12",
+          text: "text-sm",
+          padding: "pl-4 pr-2",
+          icon: 18,
+        };
       case "large":
         return { height: "h-16", text: "text-lg", padding: "px-3", icon: 24 };
       default:
@@ -60,11 +68,14 @@ export default function SearchBar({
       <form
         onSubmit={onSubmit}
         className={
-          `border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex w-full max-w-3xl items-center rounded-full border bg-white shadow-lg duration-75 focus-within:ring-2 focus-within:ring-offset-2 ` +
-          `${dims.height}`
+          `border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex w-full max-w-3xl items-center rounded-full border bg-white duration-75 focus-within:ring-2 focus-within:ring-offset-2 ` +
+          `${dims.height} ` +
+          `${elevated ? "shadow-lg" : "shadow-none"}`
         }
       >
-        <SearchIcon className="text-muted-foreground ml-6" size={dims.icon} />
+        {!isSmall && (
+          <SearchIcon className="text-muted-foreground ml-6" size={dims.icon} />
+        )}
         <input
           type="search"
           aria-label="Search for restaurants, bars, cafes, etc."
@@ -74,12 +85,22 @@ export default function SearchBar({
           onFocus={() => setOpen(true)}
           className={`h-full w-full rounded-full bg-transparent ${dims.padding} ${dims.text} focus:outline-none`}
         />
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground mr-3 size-fit rounded-full px-5 py-2.5 font-medium"
-        >
-          Search
-        </button>
+        {isSmall ? (
+          <button
+            type="submit"
+            aria-label="Search"
+            className="bg-primary text-primary-foreground my-3 mr-1 grid aspect-square size-10 place-items-center rounded-full"
+          >
+            <SearchIcon size={16} />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="bg-primary text-primary-foreground mr-3 size-fit rounded-full px-5 py-2.5 font-medium"
+          >
+            Search
+          </button>
+        )}
       </form>
 
       {open && history.length > 0 && (

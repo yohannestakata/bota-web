@@ -144,20 +144,6 @@ export default async function PlacePage({
         }}
       />
 
-      <div className="relative mt-4 flex h-14 items-center justify-between">
-        <Link
-          href="/"
-          className="text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-full p-2 transition-colors duration-150"
-          aria-label="Back"
-        >
-          <ChevronLeftIcon size={24} />
-        </Link>
-
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <SearchBar />
-        </div>
-      </div>
-
       {/* Main content */}
       <div className="mt-5 grid grid-cols-10 gap-24">
         <div className="col-span-6">
@@ -350,7 +336,7 @@ export default async function PlacePage({
         </div>
 
         <div className="col-span-4">
-          <div className="sticky top-12">
+          <div className="sticky top-28">
             <div className="hidden lg:block">
               <BusinessQuickInfo
                 place={place}

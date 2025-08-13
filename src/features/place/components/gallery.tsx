@@ -71,14 +71,16 @@ export default function Gallery({
 
   return (
     <div>
-      <GalleryTabs
-        placeId={placeId}
-        activeCategoryId={activeCategoryId}
-        setActiveCategoryId={setActiveCategoryId}
-        initialCategories={categoriesData}
-      />
+      <div className="px-2">
+        <GalleryTabs
+          placeId={placeId}
+          activeCategoryId={activeCategoryId}
+          setActiveCategoryId={setActiveCategoryId}
+          initialCategories={categoriesData}
+        />
+      </div>
 
-      <div className="mt-3">
+      <div className="mt-5">
         <GalleryImages
           placeId={placeId}
           activeCategoryId={activeCategoryId}
