@@ -34,7 +34,10 @@ function LoginInner() {
 
   return (
     <div className="container mx-auto max-w-md px-4 py-16">
-      <h1 className="mb-6 text-3xl font-semibold">Sign in</h1>
+      <h1 className="mb-2 text-3xl font-semibold">Welcome back</h1>
+      <p className="text-muted-foreground mb-6 text-sm">
+        Sign in to pick up where you left off.
+      </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm">Email</label>
@@ -62,7 +65,7 @@ function LoginInner() {
           disabled={loading}
           className="bg-primary text-primary-foreground w-full rounded-md px-4 py-2 font-medium disabled:opacity-60"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Signing you in…" : "Sign in"}
         </button>
       </form>
       <div className="text-muted-foreground my-4 text-center text-sm">or</div>
@@ -82,9 +85,9 @@ function LoginInner() {
         }}
       />
       <p className="text-muted-foreground mt-4 text-sm">
-        Don&apos;t have an account?{" "}
+        New here?{" "}
         <Link href="/signup" className="underline">
-          Sign up
+          Create an account
         </Link>
       </p>
     </div>

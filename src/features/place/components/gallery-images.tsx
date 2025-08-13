@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 import { useQuery } from "@tanstack/react-query";
 
 type Photo = {
@@ -48,7 +49,7 @@ export default function GalleryImages({
         {photos.slice(0, 3).map((p) => (
           <div key={p.id} className="aspect-portrait relative overflow-hidden">
             <Image
-              src={p.file_path}
+              src={buildCloudinaryUrl(p.file_path, { w: 600, crop: "fill" })}
               alt={p.alt_text || "place photo"}
               fill
               className="rounded-3xl object-cover"

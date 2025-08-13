@@ -82,8 +82,8 @@ export default function SearchBar({
         )}
         <input
           type="search"
-          aria-label="Search for restaurants, bars, cafes, etc."
-          placeholder="Search for restaurants, bars, cafes, etc."
+          aria-label="Search restaurants, bars, cafes…"
+          placeholder="Search restaurants, bars, cafes…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}

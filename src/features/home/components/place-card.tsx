@@ -1,6 +1,7 @@
 import { MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 import { RatingStars } from "@/components/ui/rating-stars";
 
 interface PlaceCardProps {
@@ -27,7 +28,7 @@ export default function PlaceCard({ place }: PlaceCardProps) {
           className="object-cover"
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          src={place.image}
+          src={buildCloudinaryUrl(place.image, { w: 960, crop: "fill" })}
           alt={place.name}
         />
       </div>
@@ -48,7 +49,10 @@ export default function PlaceCard({ place }: PlaceCardProps) {
         <div className="text-muted-foreground mt-2 flex items-center gap-4 px-3 text-sm">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{place.reviewCount} reviews</span>
+            <span>
+              {place.reviewCount}{" "}
+              {place.reviewCount === 1 ? "review" : "reviews"}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <MapPin className="h-4 w-4" />

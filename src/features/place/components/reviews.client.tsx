@@ -110,6 +110,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                     fill
                     sizes="(max-width: 640px) 160px, 160px"
                     className="object-cover"
+                    unoptimized={false}
                   />
                 </div>
               ))}

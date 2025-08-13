@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/auth-context";
 import GoogleButton from "@/components/ui/google-button";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignupPage() {
   return (
@@ -22,19 +23,33 @@ function SignupInner() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await signUp(email, password);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { captchaToken },
+    });
+    // Reset captcha after attempt
+    try {
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(undefined);
+    } catch {}
     if (error) setError(error);
     setLoading(false);
   }
 
   return (
     <div className="container mx-auto max-w-md px-4 py-16">
-      <h1 className="mb-6 text-3xl font-semibold">Create account</h1>
+      <h1 className="mb-2 text-3xl font-semibold">Create your account</h1>
+      <p className="text-muted-foreground mb-6 text-sm">
+        Join Bota in a few quick steps.
+      </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm">Email</label>
@@ -56,13 +71,20 @@ function SignupInner() {
             className="border-input bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
           />
         </div>
+        <div>
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+            onVerify={(token) => setCaptchaToken(token)}
+          />
+        </div>
         {error && <p className="text-destructive text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading}
           className="bg-primary text-primary-foreground w-full rounded-md px-4 py-2 font-medium disabled:opacity-60"
         >
-          {loading ? "Signing up..." : "Sign up"}
+          {loading ? "Creating your account…" : "Sign up"}
         </button>
       </form>
       <div className="text-muted-foreground my-4 text-center text-sm">or</div>

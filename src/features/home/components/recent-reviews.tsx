@@ -16,11 +16,10 @@ export default function RecentReviews({
       <div className="flex items-center justify-between px-2">
         <h2 className="text-foreground text-2xl font-semibold">
           {filter === "nearby"
-            ? "Nearby"
-            : filter === "popular"
-              ? "Popular"
-              : "Recent"}{" "}
-          Reviews
+            ? "Nearby reviews"
+            : filter === "trending"
+              ? "Trending reviews"
+              : "Recent reviews"}
         </h2>
         <div>
           <FilterMenu active={filter} />

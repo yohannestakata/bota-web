@@ -3,6 +3,8 @@ import {
   getRecentReviewsNearby,
   getRecentReviewsPopular,
   getRecentReviewsFood,
+  getFirstPhotosForReviewIds,
+  getLatestCoverForPlaceIds,
 } from "@/lib/supabase/queries";
 import RecentReviewItem from "./recent-review-item";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -64,8 +66,8 @@ export default async function RecentReviewsList({
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
       dataRows = collected.slice(0, LIMIT);
-    } else if (filter === "popular") {
-      dataRows = await getRecentReviewsPopular(7, 9); // popular this week
+    } else if (filter === "trending") {
+      dataRows = await getRecentReviewsPopular(7, 9); // trending this week
     } else if (filter === "recent" || !filter) {
       // default: most recent overall
       dataRows = (await getRecentReviews(9)).data as RecentReviewUnified[];
@@ -79,6 +81,17 @@ export default async function RecentReviewsList({
   }
 
   // Transform the data to match the expected format
+  const reviewIds = dataRows
+    .map((r) => String(r.id ?? r.review_id ?? ""))
+    .filter(Boolean) as string[];
+  const placeIds = dataRows
+    .map((r) => r.place?.id || r.place_id)
+    .filter(Boolean) as string[];
+  const [photoMap, coverMap] = await Promise.all([
+    getFirstPhotosForReviewIds(reviewIds).catch(() => new Map()),
+    getLatestCoverForPlaceIds(placeIds).catch(() => new Map()),
+  ]);
+
   const transformedReviews = dataRows.map((review) => {
     const placeName =
       review.place?.name || review.place_name || "Restaurant Name";
@@ -91,6 +104,10 @@ export default async function RecentReviewsList({
       "User";
 
     const idStr = String(review.id ?? review.review_id ?? "");
+    const rid = String(review.id ?? review.review_id ?? "");
+    const pid = (review.place?.id || review.place_id) as string | undefined;
+    const reviewPhoto = rid ? photoMap.get(rid) : undefined;
+    const cover = pid ? coverMap.get(pid) : undefined;
     return {
       id: idStr
         ? parseInt(idStr.replace(/-/g, "").substring(0, 8), 16)
@@ -116,7 +133,9 @@ export default async function RecentReviewsList({
       dislikes: review.review_stats?.dislikes_count || 0,
       comments: 0, // TODO: Add comments table and count
       image:
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80", // Placeholder
+        reviewPhoto?.file_path ||
+        cover ||
+        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
     };
   });
 

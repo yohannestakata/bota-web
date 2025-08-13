@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 export default function FilterMenu({
   items = [
     { key: "recent", label: "Recent" },
-    { key: "popular", label: "Popular" },
+    { key: "trending", label: "Trending" },
     { key: "nearby", label: "Nearby" },
   ],
   active,
@@ -20,7 +20,7 @@ export default function FilterMenu({
 
   const iconFor = (key?: string) => {
     if (key === "recent") return <Clock className="size-5" strokeWidth={2} />;
-    if (key === "popular") return <Flame className="size-5" strokeWidth={2} />;
+    if (key === "trending") return <Flame className="size-5" strokeWidth={2} />;
     if (key === "nearby") return <MapPin className="size-5" strokeWidth={2} />;
     return null;
   };

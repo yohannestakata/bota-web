@@ -9,6 +9,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  setAvatarUrl: (url: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -20,6 +21,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     avatarUrl?: string | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfileAvatar = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", userId)
+        .maybeSingle();
+      if (data?.avatar_url) {
+        setUser((prev) =>
+          prev ? { ...prev, avatarUrl: data.avatar_url } : prev,
+        );
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -42,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return nextUser;
           });
           setIsLoading(false);
+          void fetchProfileAvatar(claimsResult.data.claims.sub);
           return;
         }
       } catch {}
@@ -65,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
       setIsLoading(false);
+      if (data.user?.id) void fetchProfileAvatar(data.user.id);
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(
@@ -84,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           return next;
         });
+        if (session?.user?.id) void fetchProfileAvatar(session.user.id);
       },
     );
 
@@ -110,6 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signOut: async () => {
         await supabase.auth.signOut();
+      },
+      setAvatarUrl: (url: string | null) => {
+        setUser((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
       },
     }),
     [user, isLoading],

@@ -5,7 +5,7 @@ export default function CategoriesSection() {
   return (
     <section className="container mx-auto max-w-6xl px-4 py-12">
       <h2 className="text-foreground text-2xl font-semibold">
-        Explore by Category
+        Browse by category
       </h2>
       <Suspense
         fallback={

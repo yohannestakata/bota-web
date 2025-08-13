@@ -158,7 +158,7 @@ export default async function PlacePage({
                       : "font-medium text-red-600"
                   }
                 >
-                  {isOpenNow ? "Open now" : "Closed"}
+                  {isOpenNow ? "Open now" : "Closed for now"}
                 </span>
               ) : (
                 <span>Hours not set</span>
@@ -239,7 +239,7 @@ export default async function PlacePage({
                 ) : null}
                 <div className="mt-2">
                   <a href="#reviews" className="font-medium underline">
-                    Show more
+                    Read the full review
                   </a>
                 </div>
               </div>

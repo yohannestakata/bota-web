@@ -12,7 +12,6 @@ import type {
   Profile,
   SearchHistoryRow,
   ReviewPhoto,
-  MenuItem,
 } from "./client";
 
 // Categories
@@ -171,6 +170,7 @@ export async function createReview(
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("Not authenticated");
+  // Rely on DB trigger to create profiles; do not insert from client
   const { data, error } = await supabase
     .from("reviews")
     .insert({
@@ -200,38 +200,65 @@ export async function uploadReviewPhoto(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
-  // Store in Supabase Storage bucket "public"
-  const fileName = `${reviewId}/${Date.now()}-${file.name}`;
-  const upload = await supabase.storage.from("public").upload(fileName, file, {
-    upsert: true,
+
+  // 1) Ask our server to sign a Cloudinary upload
+  const base = process.env.CLOUDINARY_UPLOAD_FOLDER || "uploads";
+  const kind = opts?.menuItemId ? "menus" : "reviews";
+  const folder = `${base}/${kind}/${reviewId}`;
+  const signRes = await fetch("/api/uploads/cloudinary-sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder }),
   });
-  if (upload.error) throw upload.error;
-  const publicUrl = supabase.storage
-    .from("public")
-    .getPublicUrl(upload.data.path).data.publicUrl;
+  if (!signRes.ok) throw new Error("Failed to sign upload");
+  const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+
+  // 2) Upload directly to Cloudinary
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", apiKey);
+  form.append("timestamp", String(timestamp));
+  form.append("signature", signature);
+  form.append("folder", folder);
+
+  const uploadRes = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    {
+      method: "POST",
+      body: form,
+    },
+  );
+  if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
+  const uploaded = (await uploadRes.json()) as {
+    secure_url: string;
+    public_id: string;
+  };
+
+  // 3) Persist row in our DB
   const { data, error } = await supabase
     .from("review_photos")
     .insert({
       review_id: reviewId,
       author_id: user.id,
-      file_path: publicUrl,
+      file_path: uploaded.secure_url,
+      // Consider adding a cloud_public_id column to store uploaded.public_id
       alt_text: opts?.altText ?? null,
       photo_category_id: opts?.photoCategoryId ?? null,
     })
     .select("*")
     .single();
   if (error) throw error;
-  // Optionally also link to a menu item by creating a menu_item_photos row
+
+  // Optionally link to a menu item photo record
   if (opts?.menuItemId) {
-    await supabase
-      .from("menu_item_photos")
-      .insert({
-        menu_item_id: opts.menuItemId,
-        author_id: user.id,
-        file_path: publicUrl,
-        alt_text: opts?.altText ?? null,
-      });
+    await supabase.from("menu_item_photos").insert({
+      menu_item_id: opts.menuItemId,
+      author_id: user.id,
+      file_path: uploaded.secure_url,
+      alt_text: opts?.altText ?? null,
+    });
   }
+
   return data as unknown as ReviewPhoto;
 }
 
@@ -284,7 +311,7 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
     new Set((reviews || []).map((r) => r.author_id)),
   );
 
-  const [statsResult, authorsResult] = await Promise.all([
+  const [statsResult, authorsResult, photosResult] = await Promise.all([
     reviewIds.length
       ? supabase
           .from("review_stats")
@@ -299,20 +326,37 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
           .select("id, username, full_name, avatar_url, created_at, updated_at")
           .in("id", authorIds)
       : Promise.resolve({ data: [], error: null } as const),
+    reviewIds.length
+      ? supabase
+          .from("review_photos")
+          .select("id, review_id, file_path, alt_text")
+          .in("review_id", reviewIds)
+      : Promise.resolve({ data: [], error: null } as const),
   ]);
 
   if (statsResult.error) throw statsResult.error;
   if (authorsResult.error) throw authorsResult.error;
+  if (photosResult.error) throw photosResult.error;
 
   const statsMap = new Map(
     (statsResult.data || []).map((s) => [s.review_id, s]),
   );
   const authorsMap = new Map((authorsResult.data || []).map((a) => [a.id, a]));
+  const photosByReview = new Map<
+    string,
+    { id: string; file_path: string; alt_text?: string | null }[]
+  >();
+  for (const p of photosResult.data || []) {
+    const list = photosByReview.get(p.review_id) || [];
+    list.push({ id: p.id, file_path: p.file_path, alt_text: p.alt_text });
+    photosByReview.set(p.review_id, list);
+  }
 
   return (reviews || []).map((r) => ({
     ...r,
     review_stats: statsMap.get(r.id) || undefined,
     author: authorsMap.get(r.author_id) || undefined,
+    photos: photosByReview.get(r.id) || [],
   }));
 }
 
@@ -621,6 +665,108 @@ export async function getPlaces(limit = 20): Promise<PlaceWithStats[]> {
   return placesWithStats;
 }
 
+// Places by category with stats and latest cover image
+export async function getPlacesByCategory(
+  categoryId: number,
+  page = 1,
+  pageSize = 12,
+  sort: "rating" | "recent" = "rating",
+): Promise<
+  Array<
+    PlaceWithStats & {
+      cover_image_path?: string;
+    }
+  >
+> {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: placesData, error: placesError } = await supabase
+    .from("places")
+    .select(
+      "id, name, slug, category_id, tags, is_active, created_at, updated_at",
+    )
+    .eq("is_active", true)
+    .eq("category_id", categoryId)
+    .range(from, to);
+  if (placesError) throw placesError;
+  const placeIds = (placesData || []).map((p) => p.id);
+
+  const [statsRes, photosRes] = await Promise.all([
+    placeIds.length
+      ? supabase
+          .from("place_stats")
+          .select(
+            "place_id, review_count, average_rating, last_reviewed_at, photo_count",
+          )
+          .in("place_id", placeIds)
+      : Promise.resolve({ data: [], error: null } as const),
+    placeIds.length
+      ? supabase
+          .from("place_photos")
+          .select("place_id, file_path, created_at")
+          .in("place_id", placeIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null } as const),
+  ]);
+
+  if (statsRes.error) throw statsRes.error;
+  if (photosRes.error) throw photosRes.error;
+
+  const statsMap = new Map(
+    (statsRes.data || []).map((s) => [s.place_id as string, s]),
+  );
+  const coverMap = new Map<string, string>();
+  for (const row of photosRes.data || []) {
+    const pid = row.place_id as string;
+    if (!coverMap.has(pid)) coverMap.set(pid, row.file_path as string);
+  }
+
+  const enriched = (placesData || []).map((p) => ({
+    ...p,
+    place_stats: statsMap.get(p.id) || undefined,
+    cover_image_path: coverMap.get(p.id),
+  }));
+
+  const sorted = enriched.sort((a, b) => {
+    if (sort === "recent") {
+      const at = new Date(
+        a.place_stats?.last_reviewed_at || a.updated_at,
+      ).getTime();
+      const bt = new Date(
+        b.place_stats?.last_reviewed_at || b.updated_at,
+      ).getTime();
+      return bt - at;
+    }
+    // rating
+    return (
+      (b.place_stats?.average_rating || 0) -
+      (a.place_stats?.average_rating || 0)
+    );
+  });
+
+  return sorted;
+}
+
+export async function getPlacesByCategoryPaged(
+  categoryId: number,
+  page = 1,
+  pageSize = 12,
+  sort: "rating" | "recent" = "rating",
+): Promise<{
+  data: Array<PlaceWithStats & { cover_image_path?: string }>;
+  total: number;
+}> {
+  const { count } = await supabase
+    .from("places")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+    .eq("category_id", categoryId);
+
+  const data = await getPlacesByCategory(categoryId, page, pageSize, sort);
+  return { data, total: count ?? 0 };
+}
+
 // Featured places using materialized view with hybrid scoring algorithm
 export async function getFeaturedPlaces(
   limit = 6,
@@ -799,6 +945,54 @@ export async function getRecentReviews(limit = 5): Promise<{
   }));
 
   return { data: mapped, error: null };
+}
+
+// Helper: get first photo per review for a set of review ids
+export async function getFirstPhotosForReviewIds(
+  reviewIds: string[],
+): Promise<
+  Map<string, { id: string; file_path: string; alt_text?: string | null }>
+> {
+  if (!reviewIds.length) return new Map();
+  const { data, error } = await supabase
+    .from("review_photos")
+    .select("id, review_id, file_path, alt_text, created_at")
+    .in("review_id", reviewIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const map = new Map<
+    string,
+    { id: string; file_path: string; alt_text?: string | null }
+  >();
+  for (const p of data || []) {
+    if (!map.has(p.review_id)) {
+      map.set(p.review_id, {
+        id: p.id,
+        file_path: p.file_path,
+        alt_text: p.alt_text,
+      });
+    }
+  }
+  return map;
+}
+
+// Helper: get latest cover photo per place id for fallback
+export async function getLatestCoverForPlaceIds(
+  placeIds: string[],
+): Promise<Map<string, string>> {
+  if (!placeIds.length) return new Map();
+  const { data, error } = await supabase
+    .from("place_photos")
+    .select("place_id, file_path, created_at")
+    .in("place_id", placeIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const map = new Map<string, string>();
+  for (const row of data || []) {
+    const pid = row.place_id as string;
+    if (!map.has(pid)) map.set(pid, row.file_path as string);
+  }
+  return map;
 }
 
 // Popular recent reviews (by reactions, then recency)

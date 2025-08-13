@@ -40,7 +40,7 @@ export default function UserActions() {
                   href="/account"
                   className="hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-2 text-sm"
                 >
-                  Settings
+                  Account settings
                 </Link>
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="bg-border/60 my-1 h-px" />

@@ -3,7 +3,12 @@
 import { useAuth } from "@/app/auth-context";
 import { createReview, uploadReviewPhoto } from "@/lib/supabase/queries";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { StarRating } from "./star-rating";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -21,11 +26,34 @@ export default function AddReviewForm({
 }) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [rating, setRating] = useState<number>(5);
-  const [body, setBody] = useState("");
-  const [visitedAt, setVisitedAt] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const schema = z.object({
+    rating: z.number().min(1).max(5),
+    visitedAt: z.string().min(1),
+    body: z.string().max(2000).optional().or(z.literal("")),
+  });
+
+  type FormValues = z.infer<typeof schema>;
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { rating: 5, visitedAt: today, body: "" },
+  });
+
+  const rating = watch("rating");
+  // Access values to avoid unused warnings when not referenced elsewhere
+  watch("visitedAt");
+  watch("body");
 
   // Local queue of files to upload with optional links
   type PendingFile = {
@@ -78,19 +106,19 @@ export default function AddReviewForm({
     e.preventDefault();
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const onSubmit = handleSubmit(async (values) => {
     if (!user) return;
     setSubmitting(true);
     setError(null);
     try {
       const review = await createReview(
         placeId,
-        rating,
-        body.trim(),
-        visitedAt ? new Date(visitedAt).toISOString().slice(0, 10) : null,
+        values.rating,
+        (values.body || "").trim(),
+        values.visitedAt
+          ? new Date(values.visitedAt).toISOString().slice(0, 10)
+          : null,
       );
-      // Upload files sequentially to keep it simple
       for (const pf of files) {
         await uploadReviewPhoto(review.id, pf.file, {
           altText: pf.altText || undefined,
@@ -104,62 +132,63 @@ export default function AddReviewForm({
     } finally {
       setSubmitting(false);
     }
-  }
-
-  const canSubmit = useMemo(
-    () => rating >= 1 && rating <= 5 && body.trim().length > 0,
-    [rating, body],
-  );
+  });
 
   if (!user) return null;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <div className="grid gap-4">
-        <label className="text-sm">Rating</label>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          value={rating}
-          onChange={(e) => setRating(Number(e.target.value))}
-        />
-        <div className="text-sm">{rating} / 5</div>
+    <form onSubmit={onSubmit} className="space-y-8">
+      <div className="space-y-6">
+        <div>
+          <div className="text-sm font-medium">Rate your experience</div>
+          <div className="mt-2">
+            <StarRating
+              value={rating}
+              onChange={(v) => setValue("rating", v)}
+            />
+          </div>
+          {errors.rating && (
+            <p className="text-destructive mt-1 text-xs">
+              {errors.rating.message as string}
+            </p>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm">Last visit</label>
+          <input
+            type="date"
+            {...register("visitedAt")}
+            className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
+          />
+          {errors.visitedAt && (
+            <p className="text-destructive mt-1 text-xs">
+              {errors.visitedAt.message as string}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm">When did you visit?</label>
-        <input
-          type="date"
-          value={visitedAt}
-          onChange={(e) => setVisitedAt(e.target.value)}
-          className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm">Your review</label>
+      <div className="space-y-2">
+        <label className="text-sm">Tell us more (optional)</label>
         <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
           rows={5}
           placeholder="Share your experience..."
+          {...register("body")}
           className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
         />
         {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
       </div>
 
       <div>
-        <label className="mb-2 block text-sm">
-          Photos (drag and drop or pick)
-        </label>
+        <label className="mb-2 block text-sm">Photos (optional)</label>
         <div
           onDrop={onDrop}
           onDragOver={onDragOver}
-          className="border-border bg-muted/30 mb-2 rounded-lg border p-6 text-center"
+          className="border-border mb-2 rounded-lg border-2 border-dotted p-6 text-center"
         >
-          <p>Drag and drop images here</p>
-          <p className="text-muted-foreground text-sm">PNG, JPG up to ~5MB</p>
+          <p>Drag and drop photos</p>
+          <p className="text-muted-foreground text-sm">PNG or JPG up to ~5MB</p>
           <div className="mt-3">
             <button
               type="button"
@@ -182,13 +211,17 @@ export default function AddReviewForm({
         {files.length > 0 && (
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {files.map((pf) => (
-              <li key={pf.id} className="border-border rounded-lg border p-3">
+              <li key={pf.id} className="rounded-lg border p-3">
                 <div className="flex items-start gap-3">
-                  <img
-                    src={pf.previewUrl}
-                    alt="preview"
-                    className="h-20 w-28 rounded object-cover"
-                  />
+                  <div className="relative h-20 w-28 overflow-hidden rounded">
+                    <Image
+                      src={pf.previewUrl}
+                      alt="preview"
+                      fill
+                      sizes="112px"
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex-1 space-y-2">
                     <div>
                       <label className="mb-1 block text-xs">Alt text</label>
@@ -284,10 +317,10 @@ export default function AddReviewForm({
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={!canSubmit || submitting}
+          disabled={submitting}
           className="bg-primary text-primary-foreground rounded-md px-5 py-2 font-medium disabled:opacity-60"
         >
-          {submitting ? "Submitting..." : "Post review"}
+          {submitting ? "Posting your review…" : "Post review"}
         </button>
         <button
           type="button"
