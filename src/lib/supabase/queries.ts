@@ -11,6 +11,8 @@ import type {
   CuisineType,
   Profile,
   SearchHistoryRow,
+  ReviewPhoto,
+  MenuItem,
 } from "./client";
 
 // Categories
@@ -22,6 +24,31 @@ export async function getCategories(): Promise<Category[]> {
 
   if (error) throw error;
   return data || [];
+}
+
+// List all photo categories
+export async function getPhotoCategories(): Promise<
+  { id: number; name: string }[]
+> {
+  const { data, error } = await supabase
+    .from("photo_categories")
+    .select("id, name")
+    .order("name");
+  if (error) throw error;
+  return (data || []) as { id: number; name: string }[];
+}
+
+// Flat list of menu items for a place (id + name)
+export async function getMenuItemsForPlace(
+  placeId: string,
+): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("id, name")
+    .eq("place_id", placeId)
+    .order("name");
+  if (error) throw error;
+  return (data || []) as { id: string; name: string }[];
 }
 
 // Cuisine types
@@ -130,6 +157,82 @@ export async function getPlacePhotos(
   const { data, error } = await query;
   if (error) throw error;
   return data || [];
+}
+
+// Create a review and optional initial photos
+export async function createReview(
+  placeId: string,
+  rating: number,
+  body: string,
+  visitedAt: string | null,
+): Promise<Review> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
+  const { data, error } = await supabase
+    .from("reviews")
+    .insert({
+      place_id: placeId,
+      author_id: user.id,
+      rating,
+      body,
+      visited_at: visitedAt,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as unknown as Review;
+}
+
+// Upload a review photo file to storage and record row
+export async function uploadReviewPhoto(
+  reviewId: string,
+  file: File,
+  opts?: {
+    altText?: string;
+    photoCategoryId?: number | null;
+    menuItemId?: string | null;
+  },
+): Promise<ReviewPhoto> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  // Store in Supabase Storage bucket "public"
+  const fileName = `${reviewId}/${Date.now()}-${file.name}`;
+  const upload = await supabase.storage.from("public").upload(fileName, file, {
+    upsert: true,
+  });
+  if (upload.error) throw upload.error;
+  const publicUrl = supabase.storage
+    .from("public")
+    .getPublicUrl(upload.data.path).data.publicUrl;
+  const { data, error } = await supabase
+    .from("review_photos")
+    .insert({
+      review_id: reviewId,
+      author_id: user.id,
+      file_path: publicUrl,
+      alt_text: opts?.altText ?? null,
+      photo_category_id: opts?.photoCategoryId ?? null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  // Optionally also link to a menu item by creating a menu_item_photos row
+  if (opts?.menuItemId) {
+    await supabase
+      .from("menu_item_photos")
+      .insert({
+        menu_item_id: opts.menuItemId,
+        author_id: user.id,
+        file_path: publicUrl,
+        alt_text: opts?.altText ?? null,
+      });
+  }
+  return data as unknown as ReviewPhoto;
 }
 
 // Get photo categories used by photos of a place with counts

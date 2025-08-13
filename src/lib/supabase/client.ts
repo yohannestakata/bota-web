@@ -149,6 +149,7 @@ export interface ReviewPhoto {
   author_id: string;
   file_path: string;
   alt_text?: string;
+  photo_category_id?: number | null;
   created_at: string;
 }
 

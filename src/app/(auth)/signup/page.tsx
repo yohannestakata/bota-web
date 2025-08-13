@@ -70,11 +70,12 @@ function SignupInner() {
         text="Sign up with Google"
         onClick={async () => {
           const redirect = sp.get("redirect") || "/";
-          const origin = window.location.origin;
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
           await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-              redirectTo: `${origin}/auth/callback?redirect=${encodeURIComponent(
+              redirectTo: `${appUrl}/auth/callback?redirect=${encodeURIComponent(
                 redirect,
               )}`,
             },
