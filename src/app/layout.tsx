@@ -31,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${inter.className} bg-background antialiased`}
       >
-        <SiteHeader />
-        <Providers>{children}</Providers>
-        <Footer />
+        <Providers>
+          <SiteHeader />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
