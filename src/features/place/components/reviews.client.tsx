@@ -2,9 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ThumbsUp, Heart, Meh, ThumbsDown, Reply } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { RatingStars } from "@/components/ui/rating-stars";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/app/auth-context";
 
 export interface ReviewItemProps {
   review: {
@@ -45,6 +49,13 @@ export interface ReviewItemProps {
 }
 
 function ReviewItem({ review }: ReviewItemProps) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [postBusy, setPostBusy] = useState(false);
+  const [replies, setReplies] = useState(review.replies || []);
+
   const name = review.author?.full_name || review.author?.username || "User";
   const avatar =
     review.author?.avatar_url ||
@@ -150,6 +161,15 @@ function ReviewItem({ review }: ReviewItemProps) {
         </button>
         <button
           type="button"
+          onClick={() => {
+            if (!user) {
+              const redirect =
+                typeof window !== "undefined" ? window.location.pathname : "/";
+              router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
+              return;
+            }
+            setIsReplying((v) => !v);
+          }}
           className="ml-auto inline-flex items-center gap-1 rounded-xl px-2 py-1 hover:underline"
         >
           <Reply className="h-3.5 w-3.5" />
@@ -157,9 +177,89 @@ function ReviewItem({ review }: ReviewItemProps) {
         </button>
       </div>
 
-      {review.replies && review.replies.length ? (
+      {isReplying ? (
+        <div className="mt-4">
+          <textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Write a reply..."
+            rows={3}
+            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+          />
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              disabled={postBusy || !replyText.trim()}
+              onClick={async () => {
+                if (!user || !replyText.trim()) return;
+                setPostBusy(true);
+                try {
+                  const { data: inserted, error } = await supabase
+                    .from("review_replies")
+                    .insert({
+                      review_id: review.id,
+                      author_id: user.id,
+                      body: replyText.trim(),
+                    })
+                    .select(
+                      "id, review_id, author_id, body, created_at, updated_at",
+                    )
+                    .single();
+                  if (error) throw error;
+                  let authorProfile:
+                    | {
+                        id: string;
+                        username?: string | null;
+                        full_name?: string | null;
+                        avatar_url?: string | null;
+                      }
+                    | undefined;
+                  const { data: prof } = await supabase
+                    .from("profiles")
+                    .select("id, username, full_name, avatar_url")
+                    .eq("id", user.id)
+                    .maybeSingle();
+                  if (prof) authorProfile = prof as typeof authorProfile;
+                  setReplies((prev) => [
+                    ...prev,
+                    {
+                      ...(inserted as unknown as NonNullable<
+                        ReviewItemProps["review"]["replies"]
+                      >[number]),
+                      author: authorProfile,
+                      photos: [],
+                    },
+                  ]);
+                  setReplyText("");
+                  setIsReplying(false);
+                } catch {
+                  // silently ignore for now; could add toast later
+                } finally {
+                  setPostBusy(false);
+                }
+              }}
+              className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm disabled:opacity-60"
+            >
+              {postBusy ? "Posting..." : "Post"}
+            </button>
+            <button
+              type="button"
+              disabled={postBusy}
+              onClick={() => {
+                setIsReplying(false);
+                setReplyText("");
+              }}
+              className="rounded-md border px-3 py-1 text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {replies && replies.length ? (
         <div className="mt-6 space-y-3">
-          {review.replies.map((rep) => {
+          {replies.map((rep) => {
             const rname =
               rep.author?.full_name || rep.author?.username || "User";
             const ravatar =
