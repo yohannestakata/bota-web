@@ -15,14 +15,14 @@ export default function UserActions() {
             <DropdownMenu.Trigger asChild>
               <button
                 aria-label="User menu"
-                className="hover:ring-foreground/20 focus:ring-foreground/30 inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-1 ring-transparent transition focus:ring-2 focus:outline-none"
+                className="hover:ring-foreground/20 focus:ring-foreground/30 inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full ring-1 ring-transparent transition focus:ring-2 focus:outline-none"
               >
                 <Image
                   src={user.avatarUrl || "/vercel.svg"}
                   alt={user.email || "User"}
                   width={36}
                   height={36}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover"
                 />
               </button>
             </DropdownMenu.Trigger>

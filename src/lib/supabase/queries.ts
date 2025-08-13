@@ -802,14 +802,18 @@ export async function getSearchHistory(limit = 8): Promise<SearchHistoryRow[]> {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
-  if (authError || !user) return [];
+  if (authError || !user) {
+    return [];
+  }
   const { data, error } = await supabase
     .from("search_history")
     .select("id, user_id, query, created_at, updated_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(limit);
-  if (error) return [];
+  if (error) {
+    return [];
+  }
   return (data || []) as SearchHistoryRow[];
 }
 

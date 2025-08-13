@@ -20,14 +20,18 @@ export default function SearchBar({
     [],
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const enableHistory =
+    process.env.NEXT_PUBLIC_ENABLE_SEARCH_HISTORY === "true";
 
   useEffect(() => {
     // Prefetch user history if signed in; helpers handle anon user
-    void (async () => {
-      const rows = await getSearchHistory();
-      setHistory(rows.map((r) => ({ id: r.id, query: r.query })));
-    })();
-  }, []);
+    if (enableHistory) {
+      void (async () => {
+        const rows = await getSearchHistory();
+        setHistory(rows.map((r) => ({ id: r.id, query: r.query })));
+      })();
+    }
+  }, [enableHistory]);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -58,7 +62,7 @@ export default function SearchBar({
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
-    await saveSearchQuery(q);
+    if (enableHistory) await saveSearchQuery(q);
     setOpen(false);
     // TODO: Navigate to results page when implemented
   }

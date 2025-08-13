@@ -59,6 +59,7 @@ export default async function Menu({ placeId }: { placeId: string }) {
                           src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
                           alt={item.menu_item_photos[0].alt_text || item.name}
                           fill
+                          sizes="64px"
                           className="object-cover"
                         />
                       </div>
@@ -102,6 +103,7 @@ export default async function Menu({ placeId }: { placeId: string }) {
                         src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
                         alt={item.menu_item_photos[0].alt_text || item.name}
                         fill
+                        sizes="64px"
                         className="object-cover"
                       />
                     </div>

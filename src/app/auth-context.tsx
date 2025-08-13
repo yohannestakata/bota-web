@@ -26,15 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       // Prefer getClaims when available for faster local verification
       try {
-        // @ts-expect-error: getClaims may not be in older SDKs
-        const claimsResult = await (supabase.auth as any).getClaims?.();
+        const claimsResult = await supabase.auth.getClaims?.();
+
         if (claimsResult?.data?.claims?.sub && mounted) {
-          setUser({
-            id: claimsResult.data.claims.sub,
-            email: claimsResult.data.claims.email,
-            avatarUrl:
+          setUser((prev) => {
+            const avatarFromClaims =
               (claimsResult.data.claims.avatar_url as string | undefined) ??
-              null,
+              null;
+            const nextUser = {
+              id: claimsResult.data.claims.sub,
+              email: claimsResult.data.claims.email,
+              avatarUrl: avatarFromClaims ?? prev?.avatarUrl ?? null,
+            } as const;
+
+            return nextUser;
           });
           setIsLoading(false);
           return;
@@ -42,31 +47,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
 
       const { data } = await supabase.auth.getUser();
+
       if (!mounted) return;
-      setUser(
-        data.user
+      setUser((prev) => {
+        const next = data.user
           ? {
               id: data.user.id,
               email: data.user.email,
-              avatarUrl: (data.user.user_metadata as any)?.avatar_url ?? null,
+              avatarUrl:
+                (data.user.user_metadata as { avatar_url?: string })
+                  ?.avatar_url ??
+                prev?.avatarUrl ??
+                null,
             }
-          : null,
-      );
+          : null;
+
+        return next;
+      });
       setIsLoading(false);
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setUser(
-          session?.user
+        setUser((prev) => {
+          const next = session?.user
             ? {
                 id: session.user.id,
                 email: session.user.email,
                 avatarUrl:
-                  (session.user.user_metadata as any)?.avatar_url ?? null,
+                  (session.user.user_metadata as { avatar_url?: string })
+                    ?.avatar_url ??
+                  prev?.avatarUrl ??
+                  null,
               }
-            : null,
-        );
+            : null;
+
+          return next;
+        });
       },
     );
 

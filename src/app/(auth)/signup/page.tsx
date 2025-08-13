@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/auth-context";
 import GoogleButton from "@/components/ui/google-button";
@@ -8,6 +8,14 @@ import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupInner />
+    </Suspense>
+  );
+}
+
+function SignupInner() {
   const { signUp } = useAuth();
   const sp = useSearchParams();
   const [email, setEmail] = useState("");

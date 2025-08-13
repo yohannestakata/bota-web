@@ -44,7 +44,6 @@ export default async function PlacePage({
   searchParams: Promise<{ cat?: string }>;
 }) {
   const { slug } = await params;
-  console.log("[PlacePage] slug", slug);
   const { cat } = await searchParams;
   const activeCategoryId = cat ? Number(cat) : null;
 
@@ -53,17 +52,6 @@ export default async function PlacePage({
     console.warn("[PlacePage] place not found or inactive", { slug });
     return notFound();
   }
-  console.log("[PlacePage] place loaded", {
-    id: place.id,
-    name: place.name,
-    category_id: place.category_id,
-    hasPhone: Boolean(place.phone),
-    hasWebsite: Boolean(place.website_url),
-    coords: {
-      lat: place.latitude,
-      lon: place.longitude,
-    },
-  });
 
   const avg = place.place_stats?.average_rating ?? 0;
   const reviews = place.place_stats?.review_count ?? 0;

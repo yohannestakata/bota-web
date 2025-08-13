@@ -26,6 +26,7 @@ export default function PlaceCard({ place }: PlaceCardProps) {
         <Image
           className="object-cover"
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           src={place.image}
           alt={place.name}
         />
