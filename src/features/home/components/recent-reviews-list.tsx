@@ -66,8 +66,11 @@ export default async function RecentReviewsList({
       dataRows = collected.slice(0, LIMIT);
     } else if (filter === "popular") {
       dataRows = await getRecentReviewsPopular(7, 9); // popular this week
+    } else if (filter === "recent" || !filter) {
+      // default: most recent overall
+      dataRows = (await getRecentReviews(9)).data as RecentReviewUnified[];
     } else {
-      // default: most recent food places (restaurants/cafes)
+      // fallback: most recent food places
       dataRows = await getRecentReviewsFood(9);
     }
   } catch (e) {

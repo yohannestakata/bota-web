@@ -1,11 +1,12 @@
 "use client";
 
-import { Flame, MapPin } from "lucide-react";
+import { Flame, MapPin, Clock } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function FilterMenu({
   items = [
+    { key: "recent", label: "Recent" },
     { key: "popular", label: "Popular" },
     { key: "nearby", label: "Nearby" },
   ],
@@ -18,15 +19,18 @@ export default function FilterMenu({
   const sp = useSearchParams();
 
   const iconFor = (key?: string) => {
+    if (key === "recent") return <Clock className="size-5" strokeWidth={2} />;
     if (key === "popular") return <Flame className="size-5" strokeWidth={2} />;
     if (key === "nearby") return <MapPin className="size-5" strokeWidth={2} />;
     return null;
   };
 
-  // Default to popular
-  const activeKey = active ?? "popular";
-  const hrefFor = (key?: string) =>
-    key === "popular" ? "/" : `/?filter=${encodeURIComponent(key || "")}`;
+  // Default to recent
+  const activeKey = active ?? "recent";
+  const hrefFor = (key?: string) => {
+    if (key === "recent") return "/";
+    return `/?filter=${encodeURIComponent(key || "")}`;
+  };
 
   function onNearbyClick(e: React.MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
@@ -37,7 +41,7 @@ export default function FilterMenu({
       return;
     }
     if (!navigator.geolocation) {
-      router.push("/?filter=popular");
+      router.push("/");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -45,7 +49,7 @@ export default function FilterMenu({
         const { latitude, longitude } = pos.coords;
         router.push(`/?filter=nearby&lat=${latitude}&lon=${longitude}`);
       },
-      () => router.push("/?filter=popular"),
+      () => router.push("/"),
       { enableHighAccuracy: true, timeout: 8000 },
     );
   }

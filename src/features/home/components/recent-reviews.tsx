@@ -13,16 +13,21 @@ export default function RecentReviews({
 }) {
   return (
     <section className="container mx-auto max-w-6xl px-4 py-16">
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-2">
         <h2 className="text-foreground text-2xl font-semibold">
-          Recent Reviews
+          {filter === "nearby"
+            ? "Nearby"
+            : filter === "popular"
+              ? "Popular"
+              : "Recent"}{" "}
+          Reviews
         </h2>
         <div>
           <FilterMenu active={filter} />
         </div>
       </div>
       <Suspense
-        key={filter ?? "popular"}
+        key={filter ?? "recent"}
         fallback={
           <div className="mt-4 grid animate-pulse gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
