@@ -111,12 +111,45 @@ export default async function PlacePage({
     }
   })();
 
+  // Breadcrumb JSON-LD
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/`,
+      },
+      place.category?.name
+        ? {
+            "@type": "ListItem",
+            position: 2,
+            name: place.category?.name,
+            item: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/category/${place.category?.slug}`,
+          }
+        : undefined,
+      {
+        "@type": "ListItem",
+        position: place.category?.name ? 3 : 2,
+        name: place.name,
+        item: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/place/${place.slug}`,
+      },
+    ].filter(Boolean),
+  } as const;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      {/* OpenGraph / Twitter handled by generateMetadata; JSON-LD below */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <PlaceJsonLd
         name={place.name}
         description={place.description}
-        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://bota.local"}/place/${place.slug}`}
+        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/place/${place.slug}`}
         averageRating={avg}
         reviewCount={reviews}
         address={{
@@ -129,6 +162,14 @@ export default async function PlacePage({
           postalCode: place.postal_code || undefined,
           addressCountry: place.country || undefined,
         }}
+        telephone={place.phone || undefined}
+        priceRange={place.price_range || undefined}
+        geo={{
+          latitude: place.latitude != null ? Number(place.latitude) : undefined,
+          longitude:
+            place.longitude != null ? Number(place.longitude) : undefined,
+        }}
+        image={undefined}
       />
 
       {/* Main content */}
@@ -352,11 +393,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const place = await getPlaceBySlugWithDetails(slug);
   if (!place) return { title: "Place not found" };
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bota.local";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com";
   const url = `${baseUrl}/place/${place.slug}`;
-  const title = `${place.name} – Bota`;
-  const description = place.description || "Place details on Bota";
-  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(place.name)}`;
+  const title = `${place.name}`;
+  const description =
+    place.description ||
+    `${place.name} — discover reviews, photos, menu, hours, and location.`;
+  const ogImage = `${baseUrl}/place/${place.slug}/opengraph-image`;
   return {
     title,
     description,

@@ -1341,6 +1341,40 @@ export async function saveSearchQuery(queryText: string): Promise<void> {
     );
 }
 
+// All active place slugs for sitemap generation (batched paging)
+export async function getAllActivePlaceSlugs(limitPerPage = 1000): Promise<
+  Array<{
+    slug: string;
+    updated_at?: string | null;
+    created_at?: string | null;
+  }>
+> {
+  const results: Array<{
+    slug: string;
+    updated_at?: string | null;
+    created_at?: string | null;
+  }> = [];
+  let from = 0;
+  for (;;) {
+    const to = from + limitPerPage - 1;
+    const { data, error } = await supabase
+      .from("places")
+      .select("slug, updated_at, created_at")
+      .eq("is_active", true)
+      .range(from, to);
+    if (error) throw error;
+    const batch = (data || []) as Array<{
+      slug: string;
+      updated_at?: string | null;
+      created_at?: string | null;
+    }>;
+    results.push(...batch);
+    if (batch.length < limitPerPage) break;
+    from += limitPerPage;
+  }
+  return results;
+}
+
 // Review reactions
 export type ReactionType = "like" | "love" | "meh" | "dislike";
 

@@ -5,6 +5,10 @@ export function PlaceJsonLd({
   averageRating,
   reviewCount,
   address,
+  telephone,
+  priceRange,
+  geo,
+  image,
 }: {
   name: string;
   description?: string | null;
@@ -18,13 +22,32 @@ export function PlaceJsonLd({
     postalCode?: string;
     addressCountry?: string;
   };
+  telephone?: string | null;
+  priceRange?: string | number | null;
+  geo?: { latitude?: number | null; longitude?: number | null };
+  image?: string | string[] | null;
 }) {
   const data = {
     "@context": "https://schema.org",
-    "@type": "Restaurant",
+    // Default to LocalBusiness to cover non-restaurant categories; search engines can infer more specific types
+    "@type": "LocalBusiness",
     name,
     description: description || undefined,
     url,
+    image: image || undefined,
+    telephone: telephone || undefined,
+    priceRange:
+      typeof priceRange === "number"
+        ? "$".repeat(Math.min(Math.max(priceRange || 0, 1), 4))
+        : priceRange || undefined,
+    geo:
+      geo && (geo.latitude || geo.longitude)
+        ? {
+            "@type": "GeoCoordinates",
+            latitude: geo.latitude || undefined,
+            longitude: geo.longitude || undefined,
+          }
+        : undefined,
     aggregateRating:
       averageRating && reviewCount
         ? {

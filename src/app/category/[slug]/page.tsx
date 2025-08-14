@@ -10,6 +10,42 @@ import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const cats = await getAllCategories();
+  const category = cats.find((c) => c.slug === slug);
+  if (!category) return { title: "Category not found" };
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+  const url = `${baseUrl}/category/${category.slug}`;
+  const title = `${category.name} places in Ethiopia`;
+  const description =
+    category.description ||
+    `Discover the best ${category.name.toLowerCase()} in Ethiopia with photos, menus, and reviews.`;
+  const og = `${baseUrl}/category/${category.slug}/opengraph-image`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      images: [{ url: og, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [og],
+    },
+  } satisfies import("next").Metadata;
+}
+
 export default async function CategoryPage({
   params,
   searchParams,
@@ -43,6 +79,25 @@ export default async function CategoryPage({
         <p className="text-muted-foreground mb-6 text-sm">
           {category.description}
         </p>
+      ) : null}
+
+      {/* SEO: ItemList schema for category listing */}
+      {places.length > 0 ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              itemListElement: places.map((p, idx) => ({
+                "@type": "ListItem",
+                position: idx + 1,
+                url: `${process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com"}/place/${p.slug}`,
+                name: p.name,
+              })),
+            }),
+          }}
+        />
       ) : null}
 
       {places.length === 0 ? (
