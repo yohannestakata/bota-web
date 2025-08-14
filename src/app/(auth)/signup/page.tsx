@@ -6,6 +6,7 @@ import GoogleButton from "@/components/ui/google-button";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 
 export default function SignupPage() {
   return (
@@ -38,7 +39,7 @@ function SignupInner() {
       captchaRef.current?.resetCaptcha();
       setCaptchaToken(undefined);
     } catch {}
-    if (error) setError(error.message);
+    if (error) setError(getFriendlyAuthErrorMessage(error));
     setLoading(false);
   }
 

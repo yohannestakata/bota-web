@@ -24,6 +24,22 @@ export async function getCategories(): Promise<Category[]> {
   if (error) throw error;
   return data || [];
 }
+// Faster user id retrieval using claims when asymmetric JWTs are enabled
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const { data } = await supabase.auth.getClaims();
+    const sub = (data as unknown as { sub?: string })?.sub;
+    if (sub) return sub;
+  } catch {}
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // List all photo categories
 export async function getPhotoCategories(): Promise<
@@ -158,6 +174,80 @@ export async function getPlacePhotos(
   return data || [];
 }
 
+// Upload a place photo file to storage and record row
+export async function uploadPlacePhoto(
+  placeId: string,
+  file: File,
+  opts?: {
+    altText?: string;
+    photoCategoryId?: number | null;
+    menuItemId?: string | null;
+  },
+) {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("Not authenticated");
+
+  // 1) Ask our server to sign a Cloudinary upload
+  const base = process.env.CLOUDINARY_UPLOAD_FOLDER || "uploads";
+  const kind = opts?.menuItemId ? "menus" : "places";
+  const folder = `${base}/${kind}/${placeId}`;
+  const signRes = await fetch("/api/uploads/cloudinary-sign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder }),
+  });
+  if (!signRes.ok) throw new Error("Failed to sign upload");
+  const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+
+  // 2) Upload directly to Cloudinary
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", apiKey);
+  form.append("timestamp", String(timestamp));
+  form.append("signature", signature);
+  form.append("folder", folder);
+
+  // Note: currently supporting images for place uploads
+  const uploadRes = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    {
+      method: "POST",
+      body: form,
+    },
+  );
+  if (!uploadRes.ok) throw new Error("Cloudinary upload failed");
+  const uploaded = (await uploadRes.json()) as {
+    secure_url: string;
+    public_id: string;
+  };
+
+  // 3) Persist row in our DB
+  const { data, error } = await supabase
+    .from("place_photos")
+    .insert({
+      place_id: placeId,
+      author_id: userId,
+      file_path: uploaded.secure_url,
+      alt_text: opts?.altText ?? null,
+      photo_category_id: opts?.photoCategoryId ?? null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  // Optionally link to a menu item photo record as well
+  if (opts?.menuItemId) {
+    await supabase.from("menu_item_photos").insert({
+      menu_item_id: opts.menuItemId,
+      author_id: userId,
+      file_path: uploaded.secure_url,
+      alt_text: opts?.altText ?? null,
+    });
+  }
+
+  return data;
+}
+
 // Create a review and optional initial photos
 export async function createReview(
   placeId: string,
@@ -165,17 +255,14 @@ export async function createReview(
   body: string,
   visitedAt: string | null,
 ): Promise<Review> {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) throw new Error("Not authenticated");
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("Not authenticated");
   // Rely on DB trigger to create profiles; do not insert from client
   const { data, error } = await supabase
     .from("reviews")
     .insert({
       place_id: placeId,
-      author_id: user.id,
+      author_id: userId,
       rating,
       body,
       visited_at: visitedAt,
@@ -296,9 +383,9 @@ export async function getPlacePhotoCategories(placeId: string) {
 // Get reviews for a place, joined with author and stats via parallel queries
 export async function getReviewsForPlace(placeId: string, limit = 10) {
   const { data: reviews, error: reviewsError } = await supabase
-    .from("reviews")
+    .from("reviews_with_my_reaction")
     .select(
-      "id, place_id, author_id, rating, body, visited_at, created_at, updated_at",
+      "id, place_id, author_id, rating, body, visited_at, created_at, updated_at, my_reaction",
     )
     .eq("place_id", placeId)
     .order("created_at", { ascending: false })
@@ -357,6 +444,9 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
     review_stats: statsMap.get(r.id) || undefined,
     author: authorsMap.get(r.author_id) || undefined,
     photos: photosByReview.get(r.id) || [],
+    my_reaction:
+      (r as unknown as { my_reaction?: ReactionType | null }).my_reaction ??
+      null,
   }));
 }
 
@@ -1226,17 +1316,12 @@ export async function searchPlaces(
 
 // Search history helpers
 export async function getSearchHistory(limit = 8): Promise<SearchHistoryRow[]> {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return [];
-  }
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
   const { data, error } = await supabase
     .from("search_history")
     .select("id, user_id, query, created_at, updated_at")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(limit);
   if (error) {
@@ -1246,14 +1331,99 @@ export async function getSearchHistory(limit = 8): Promise<SearchHistoryRow[]> {
 }
 
 export async function saveSearchQuery(queryText: string): Promise<void> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return; // Do nothing if not signed in
+  const userId = await getCurrentUserId();
+  if (!userId) return; // Do nothing if not signed in
   await supabase
     .from("search_history")
     .upsert(
-      { user_id: user.id, query: queryText },
+      { user_id: userId, query: queryText },
       { onConflict: "user_id,query" },
     );
+}
+
+// Review reactions
+export type ReactionType = "like" | "love" | "meh" | "dislike";
+
+export async function setReviewReaction(
+  reviewId: string,
+  reaction: ReactionType | null,
+): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  if (reaction == null) {
+    const { error } = await supabase
+      .from("review_reactions")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("review_id", reviewId);
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await supabase.from("review_reactions").upsert(
+    {
+      user_id: user.id,
+      review_id: reviewId,
+      reaction_type: reaction,
+    },
+    { onConflict: "user_id,review_id" },
+  );
+  if (error) throw error;
+}
+
+// Place edit requests
+export type PlaceEditRequest = {
+  id: string;
+  place_id: string;
+  author_id: string;
+  request_type: "correction" | "closure" | "duplicate" | "other";
+  proposed_changes: Record<string, unknown>;
+  message?: string | null;
+  evidence_url?: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function createPlaceEditRequest(input: {
+  placeId: string;
+  requestType: PlaceEditRequest["request_type"];
+  proposedChanges: Record<string, unknown>;
+  message?: string;
+  evidenceUrl?: string;
+}): Promise<PlaceEditRequest> {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("Not authenticated");
+  const { data, error } = await supabase
+    .from("place_edit_requests")
+    .insert({
+      place_id: input.placeId,
+      author_id: userId,
+      request_type: input.requestType,
+      proposed_changes: input.proposedChanges,
+      message: input.message ?? null,
+      evidence_url: input.evidenceUrl ?? null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as unknown as PlaceEditRequest;
+}
+
+export async function getMyPlaceEditRequests(placeId: string) {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("place_edit_requests")
+    .select("id, place_id, author_id, request_type, status, created_at")
+    .eq("place_id", placeId)
+    .eq("author_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }

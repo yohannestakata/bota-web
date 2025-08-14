@@ -5,7 +5,7 @@ import { isAccessTokenValid } from "@/lib/auth/token";
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
-  const protectedPaths = ["/place/add", "/reviews/add", "/account"];
+  const protectedPaths = ["/place/", "/place/add", "/reviews/add", "/account"];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   if (!isProtected) return NextResponse.next();
 
@@ -22,6 +22,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/place/add", "/reviews/add", "/account/:path*"],
+  matcher: [
+    "/place/add",
+    "/place/:path*/photos/add",
+    "/place/:path*/request-edit",
+    "/reviews/add",
+    "/account/:path*",
+  ],
 };
-

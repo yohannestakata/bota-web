@@ -9,6 +9,7 @@ import { useAuth } from "@/app/auth-context";
 import { supabase } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/toast";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 
 const schema = z.object({
   full_name: z.string().max(120).optional().or(z.literal("")),
@@ -97,6 +98,15 @@ export default function SettingsForm() {
       .eq("id", user.id);
     setSaving(false);
     if (!error) {
+      // Also push to auth metadata to reduce future overwrites from providers
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            username: values.username,
+            full_name: values.full_name || undefined,
+          },
+        });
+      } catch {}
       setProfile((prev) =>
         prev
           ? {
@@ -122,7 +132,11 @@ export default function SettingsForm() {
     setEmailUpdating(true);
     const { error } = await supabase.auth.updateUser({ email });
     setEmailUpdating(false);
-    if (error) notify(error.message || "Email update failed", "error");
+    if (error)
+      notify(
+        getFriendlyAuthErrorMessage(error) || "Email update failed",
+        "error",
+      );
     else notify("Check your inbox to confirm your new email.", "success");
   };
 
@@ -132,7 +146,11 @@ export default function SettingsForm() {
     setPasswordUpdating(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordUpdating(false);
-    if (error) notify(error.message || "Password update failed", "error");
+    if (error)
+      notify(
+        getFriendlyAuthErrorMessage(error) || "Password update failed",
+        "error",
+      );
     else notify("Password updated.", "success");
   };
 
@@ -231,6 +249,12 @@ export default function SettingsForm() {
         );
         // Optimistic update for nav/avatar consumers
         setAvatarUrl(uploadJson.secure_url);
+        // Also store in auth metadata to resist provider refresh overwrite
+        try {
+          await supabase.auth.updateUser({
+            data: { avatar_url: uploadJson.secure_url },
+          });
+        } catch {}
         notify("Photo updated", "success");
       } else {
         notify("Upload failed. Please try again.", "error");

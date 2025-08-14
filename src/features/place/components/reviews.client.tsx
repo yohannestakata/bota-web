@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThumbsUp, Heart, Meh, ThumbsDown, Reply } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/app/auth-context";
+import { setReviewReaction, type ReactionType } from "@/lib/supabase/queries";
 
 export interface ReviewItemProps {
   review: {
@@ -16,6 +17,7 @@ export interface ReviewItemProps {
     rating: number;
     body?: string | null;
     created_at: string;
+    my_reaction?: ReactionType | null;
     author?: {
       id: string;
       full_name?: string | null;
@@ -55,6 +57,26 @@ function ReviewItem({ review }: ReviewItemProps) {
   const [replyText, setReplyText] = useState("");
   const [postBusy, setPostBusy] = useState(false);
   const [replies, setReplies] = useState(review.replies || []);
+  const propReaction = review.my_reaction ?? null;
+  const [myReaction, setMyReaction] = useState<ReactionType | null>(
+    propReaction,
+  );
+  const [optimisticCounts, setOptimisticCounts] = useState<
+    Record<ReactionType, number>
+  >({
+    like: review.review_stats?.likes_count ?? 0,
+    love: review.review_stats?.loves_count ?? 0,
+    meh: review.review_stats?.mehs_count ?? 0,
+    dislike: review.review_stats?.dislikes_count ?? 0,
+  });
+
+  // Keep local state in sync with parent-provided my_reaction (e.g., after client hydration)
+  useEffect(() => {
+    if (propReaction !== myReaction) {
+      setMyReaction(propReaction);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propReaction, review.id]);
 
   const name = review.author?.full_name || review.author?.username || "User";
   const avatar =
@@ -130,52 +152,106 @@ function ReviewItem({ review }: ReviewItemProps) {
         </div>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          className="border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1"
-        >
-          <ThumbsUp className="h-3.5 w-3.5" />
-          <span>{review.review_stats?.likes_count ?? 0}</span>
-        </button>
-        <button
-          type="button"
-          className="border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1"
-        >
-          <Heart className="h-3.5 w-3.5" />
-          <span>{review.review_stats?.loves_count ?? 0}</span>
-        </button>
-        <button
-          type="button"
-          className="border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1"
-        >
-          <Meh className="h-3.5 w-3.5" />
-          <span>{review.review_stats?.mehs_count ?? 0}</span>
-        </button>
-        <button
-          type="button"
-          className="border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1"
-        >
-          <ThumbsDown className="h-3.5 w-3.5" />
-          <span>{review.review_stats?.dislikes_count ?? 0}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (!user) {
-              const redirect =
-                typeof window !== "undefined" ? window.location.pathname : "/";
-              router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
-              return;
-            }
-            setIsReplying((v) => !v);
-          }}
-          className="ml-auto inline-flex items-center gap-1 rounded-xl px-2 py-1 hover:underline"
-        >
-          <Reply className="h-3.5 w-3.5" />
-          <span>Reply</span>
-        </button>
-      </div>
+      {user ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {(
+            [
+              { key: "like", icon: ThumbsUp },
+              { key: "love", icon: Heart },
+              { key: "meh", icon: Meh },
+              { key: "dislike", icon: ThumbsDown },
+            ] as const
+          ).map(({ key, icon: Icon }) => {
+            const active = myReaction === (key as ReactionType);
+            const count = optimisticCounts[key as ReactionType];
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1 ${active ? "bg-muted" : ""}`}
+                onClick={async () => {
+                  if (!user) {
+                    const redirect =
+                      typeof window !== "undefined"
+                        ? window.location.pathname
+                        : "/";
+                    router.push(
+                      `/login?redirect=${encodeURIComponent(redirect)}`,
+                    );
+                    return;
+                  }
+                  const wasActive = myReaction === (key as ReactionType);
+                  const next: ReactionType | null = wasActive
+                    ? null
+                    : (key as ReactionType);
+                  setMyReaction(next);
+                  setOptimisticCounts((prev) => {
+                    const delta: Record<string, number> = {
+                      like: 0,
+                      love: 0,
+                      meh: 0,
+                      dislike: 0,
+                    };
+                    if (myReaction) delta[myReaction] -= 1;
+                    if (next) delta[next] += 1;
+                    return {
+                      like: prev.like + delta.like,
+                      love: prev.love + delta.love,
+                      meh: prev.meh + delta.meh,
+                      dislike: prev.dislike + delta.dislike,
+                    };
+                  });
+                  try {
+                    await setReviewReaction(review.id, next);
+                  } catch {
+                    // revert
+                    setMyReaction(
+                      wasActive ? (key as ReactionType) : myReaction,
+                    );
+                    setOptimisticCounts((prev) => {
+                      const delta: Record<string, number> = {
+                        like: 0,
+                        love: 0,
+                        meh: 0,
+                        dislike: 0,
+                      };
+                      if (next) delta[next] -= 1;
+                      if (myReaction) delta[myReaction] += 1;
+                      return {
+                        like: prev.like + delta.like,
+                        love: prev.love + delta.love,
+                        meh: prev.meh + delta.meh,
+                        dislike: prev.dislike + delta.dislike,
+                      };
+                    });
+                  }
+                }}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{count}</span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              if (!user) {
+                const redirect =
+                  typeof window !== "undefined"
+                    ? window.location.pathname
+                    : "/";
+                router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
+                return;
+              }
+              setIsReplying((v) => !v);
+            }}
+            className="ml-auto inline-flex items-center gap-1 rounded-xl px-2 py-1 hover:underline"
+          >
+            <Reply className="h-3.5 w-3.5" />
+            <span>Reply</span>
+          </button>
+        </div>
+      ) : null}
 
       {isReplying ? (
         <div className="mt-4">
@@ -333,14 +409,63 @@ export default function ReviewsClient({
 }: {
   reviews: ReviewItemProps["review"][];
 }) {
+  const { user } = useAuth();
+  const [myMap, setMyMap] = useState<
+    Map<string, "like" | "love" | "meh" | "dislike">
+  >(new Map());
+
+  const pendingIds = useMemo(
+    () =>
+      reviews
+        .filter(
+          (r) => (r as { my_reaction?: string | null }).my_reaction == null,
+        )
+        .map((r) => r.id),
+    [reviews],
+  );
+
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) return;
+      if (!pendingIds.length) return;
+      try {
+        const { data } = await supabase
+          .from("review_reactions")
+          .select("review_id, reaction_type")
+          .eq("user_id", user.id)
+          .in("review_id", pendingIds);
+        if (data && data.length) {
+          const m = new Map<string, "like" | "love" | "meh" | "dislike">();
+          for (const row of data as Array<{
+            review_id: string;
+            reaction_type: "like" | "love" | "meh" | "dislike";
+          }>) {
+            m.set(row.review_id, row.reaction_type);
+          }
+          setMyMap(m);
+        }
+      } catch {}
+    })();
+  }, [user?.id, pendingIds]);
+
   if (!reviews.length)
     return <div className="text-muted-foreground">No reviews yet.</div>;
 
   return (
     <div className="divide-border space-y-12 divide-y">
-      {reviews.map((r) => (
-        <ReviewItem key={r.id} review={r} />
-      ))}
+      {reviews.map((r) => {
+        const withServer = r as ReviewItemProps["review"] & {
+          my_reaction?: "like" | "love" | "meh" | "dislike" | null;
+        };
+        const override = myMap.get(r.id) ?? withServer.my_reaction ?? null;
+        const next: ReviewItemProps["review"] & {
+          my_reaction?: typeof override;
+        } = {
+          ...r,
+          my_reaction: override,
+        };
+        return <ReviewItem key={r.id} review={next} />;
+      })}
     </div>
   );
 }

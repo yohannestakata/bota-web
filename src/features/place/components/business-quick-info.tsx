@@ -1,3 +1,5 @@
+"use client";
+
 import {
   MapPinIcon,
   PhoneIcon,
@@ -11,11 +13,18 @@ import {
   HeartIcon,
 } from "lucide-react";
 import { RatingStars } from "@/components/ui/rating-stars";
+import { useToast } from "@/components/ui/toast";
+import { useAuth } from "@/app/auth-context";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { getFriendlyErrorMessage } from "@/lib/errors";
+import Link from "next/link";
 
 interface BusinessQuickInfoProps {
   place: {
     id: string;
     name: string;
+    slug?: string;
     phone?: string | null;
     website_url?: string | null;
     address_line1?: string | null;
@@ -61,6 +70,10 @@ export default function BusinessQuickInfo({
   showOpenStatus = true,
 }: BusinessQuickInfoProps) {
   const priceRange = getPriceRangeDisplay(place.price_range);
+  const { notify } = useToast();
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const address = [
     [place.address_line1, place.address_line2].filter(Boolean).join(" "),
@@ -70,6 +83,93 @@ export default function BusinessQuickInfo({
     .filter(Boolean)
     .slice(0, 2)
     .join(" · ");
+
+  const onShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: place.name, url });
+        return;
+      }
+    } catch {}
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        notify("Link copied", "success");
+        return;
+      }
+    } catch {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      notify("Link copied", "success");
+      return;
+    } catch {
+      try {
+        // Last-resort fallback
+        window.prompt("Copy this link", url);
+      } catch {}
+      notify("Something went wrong—please try again.", "error");
+    }
+  };
+
+  const onSave = async () => {
+    if (!user) {
+      notify("Please sign in to continue.", "error");
+      return;
+    }
+    // Optimistic toggle
+    const next = !isSaved;
+    setIsSaved(next);
+    setSaving(true);
+    try {
+      if (next) {
+        const { error } = await supabase
+          .from("favorite_places")
+          .upsert({ user_id: user.id, place_id: place.id });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("favorite_places")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", place.id);
+        if (error) throw error;
+      }
+    } catch (err) {
+      // Revert optimistic change on failure
+      setIsSaved((v) => !v);
+      notify(getFriendlyErrorMessage(err), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load initial saved state
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!user?.id) return;
+      const { data, error } = await supabase
+        .from("favorite_places")
+        .select("place_id")
+        .eq("user_id", user.id)
+        .eq("place_id", place.id)
+        .maybeSingle();
+      if (!active) return;
+      if (!error && data) setIsSaved(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user?.id, place.id]);
 
   return (
     <div className="border-border rounded-3xl border p-6 shadow-xl">
@@ -179,29 +279,52 @@ export default function BusinessQuickInfo({
         {/* Quick Actions */}
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
+            <button
+              type="button"
+              onClick={onShare}
+              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors"
+            >
               <Share2Icon size={16} className="text-muted-foreground" />
               Share
             </button>
-            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
-              <HeartIcon size={16} className="text-muted-foreground" />
-              Save
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-colors disabled:opacity-60 ${isSaved ? "border-red-200 bg-red-50 text-red-700" : "border-border hover:bg-muted border"}`}
+            >
+              <HeartIcon
+                size={16}
+                className={isSaved ? "text-red-600" : "text-muted-foreground"}
+              />
+              {isSaved ? "Saved" : "Save"}
             </button>
           </div>
-          <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-colors">
+
+          <Link
+            href={place.slug ? `/reviews/add/${place.slug}` : "/reviews/add"}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium transition-colors"
+          >
             <MessageCircleIcon size={16} className="text-primary-foreground" />
             Write a Review
-          </button>
+          </Link>
 
           <div className="grid grid-cols-1 gap-2">
-            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
+            <Link
+              href={place.slug ? `/place/${place.slug}/photos/add` : "/"}
+              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors"
+            >
               <ImagePlusIcon size={16} className="text-muted-foreground" />
               Upload Photos/Video
-            </button>
-            <button className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors">
+            </Link>
+
+            <Link
+              href={place.slug ? `/place/${place.slug}/request-edit` : "/"}
+              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 font-medium transition-colors"
+            >
               <PencilIcon size={16} className="text-muted-foreground" />
               Request Edit
-            </button>
+            </Link>
           </div>
         </div>
       </div>

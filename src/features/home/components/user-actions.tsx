@@ -37,6 +37,15 @@ export default function UserActions() {
               <DropdownMenu.Separator className="bg-border/60 my-1 h-px" />
               <DropdownMenu.Item asChild>
                 <Link
+                  href="/favorites"
+                  className="hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-2 text-sm"
+                >
+                  Favorites
+                </Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator className="bg-border/60 my-1 h-px" />
+              <DropdownMenu.Item asChild>
+                <Link
                   href="/account"
                   className="hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-2 text-sm"
                 >

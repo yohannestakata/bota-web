@@ -1,14 +1,16 @@
-"use client";
-
 import Image from "next/image";
 import { RatingStars } from "@/components/ui/rating-stars";
 import Link from "next/link";
-import { ThumbsUp, Heart, Meh, ThumbsDown, User } from "lucide-react";
+import { User } from "lucide-react";
+import ReviewReactions from "@/features/reviews/components/review-reactions.client";
 
 export interface RecentReviewItemData {
   id: number;
+  reviewId?: string;
+  myReaction?: "like" | "love" | "meh" | "dislike" | null;
   placeSlug?: string;
   authorHandle?: string;
+  avatarUrl?: string;
   place: string;
   category: string;
   rating: number;
@@ -31,8 +33,20 @@ export default function RecentReviewItem({
   return (
     <div className="border-border rounded-3xl border p-6">
       <div className="mt-2 flex items-center gap-3.5">
-        <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-          <User size={12} className="text-muted-foreground" />
+        <div className="bg-muted relative size-12 overflow-hidden rounded-full">
+          {review.avatarUrl ? (
+            <Image
+              src={review.avatarUrl}
+              alt={review.user}
+              fill
+              sizes="48px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center">
+              <User size={12} className="text-muted-foreground" />
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <Link
@@ -73,35 +87,19 @@ export default function RecentReviewItem({
 
         <p className="text-foreground mt-1 line-clamp-2">{review.review}</p>
 
-        <div className="mt-3 flex items-center gap-1">
-          <span
-            className="hover:bg-muted inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm"
-            title="Like"
-          >
-            <ThumbsUp size={16} />
-            <span className=""> {review.likes}</span>
-          </span>
-          <span
-            className="hover:bg-muted inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm"
-            title="Love"
-          >
-            <Heart size={16} />
-            <span className=""> {review.loves}</span>
-          </span>
-          <span
-            className="hover:bg-muted inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm"
-            title="Meh"
-          >
-            <Meh size={16} />
-            <span className=""> {review.mehs}</span>
-          </span>
-          <span
-            className="hover:bg-muted inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm"
-            title="Dislike"
-          >
-            <ThumbsDown size={16} />
-            <span className=""> {review.dislikes}</span>
-          </span>
+        <div className="mt-3">
+          <ReviewReactions
+            reviewId={review.reviewId || String(review.id)}
+            initialCounts={{
+              like: review.likes,
+              love: review.loves,
+              meh: review.mehs,
+              dislike: review.dislikes,
+            }}
+            initialMyReaction={review.myReaction ?? null}
+            compact
+            size={16}
+          />
         </div>
       </div>
     </div>

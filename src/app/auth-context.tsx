@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 
 type AuthContextValue = {
   user: { id: string; email?: string | null; avatarUrl?: string | null } | null;
@@ -121,11 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email,
           password,
         });
-        return { error: error?.message };
+        return {
+          error: error ? getFriendlyAuthErrorMessage(error) : undefined,
+        };
       },
       signUp: async (email: string, password: string) => {
         const { error } = await supabase.auth.signUp({ email, password });
-        return { error: error?.message };
+        return {
+          error: error ? getFriendlyAuthErrorMessage(error) : undefined,
+        };
       },
       signOut: async () => {
         await supabase.auth.signOut();

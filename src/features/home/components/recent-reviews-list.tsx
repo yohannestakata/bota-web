@@ -33,6 +33,7 @@ export default async function RecentReviewsList({
     category_name?: string;
     author_username?: string;
     author_full_name?: string;
+    my_reaction?: "like" | "love" | "meh" | "dislike" | null;
     review_stats?: {
       likes_count?: number;
       loves_count?: number;
@@ -93,6 +94,11 @@ export default async function RecentReviewsList({
   ]);
 
   const transformedReviews = dataRows.map((review) => {
+    console.log("[RecentReviewsList] row", {
+      rid: review.id ?? review.review_id,
+      my_reaction: (review as unknown as { my_reaction?: string | null })
+        .my_reaction,
+    });
     const placeName =
       review.place?.name || review.place_name || "Restaurant Name";
     const category = review.category_name || "Restaurant";
@@ -102,6 +108,10 @@ export default async function RecentReviewsList({
       review.author_full_name ||
       review.author_username ||
       "User";
+    const avatarUrl =
+      (review.author as { avatar_url?: string } | undefined)?.avatar_url ||
+      (review as { author_avatar_url?: string }).author_avatar_url ||
+      undefined;
 
     const idStr = String(review.id ?? review.review_id ?? "");
     const rid = String(review.id ?? review.review_id ?? "");
@@ -112,6 +122,7 @@ export default async function RecentReviewsList({
       id: idStr
         ? parseInt(idStr.replace(/-/g, "").substring(0, 8), 16)
         : Math.floor(Math.random() * 1e8),
+      reviewId: rid,
       placeSlug: review.place?.slug || review.place_slug || "",
       authorHandle:
         review.author?.username ||
@@ -124,6 +135,7 @@ export default async function RecentReviewsList({
       rating: review.rating,
       review: review.body || "Great experience!",
       user: userName,
+      avatarUrl,
       date: formatDistanceToNowStrict(new Date(review.created_at), {
         addSuffix: true,
       }),
@@ -136,6 +148,7 @@ export default async function RecentReviewsList({
         reviewPhoto?.file_path ||
         cover ||
         "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+      myReaction: review.my_reaction ?? null,
     };
   });
 
