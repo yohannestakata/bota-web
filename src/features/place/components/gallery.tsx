@@ -47,28 +47,6 @@ export default function Gallery({
     initialData: initialCategories,
   });
 
-  const { data: photos = [], isFetching } = useQuery({
-    queryKey: ["placePhotos", placeId, activeCategoryId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set("placeId", placeId);
-
-      if (activeCategoryId != null)
-        params.set("categoryId", String(activeCategoryId));
-
-      const res = await fetch(`/api/place/photos?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const json = (await res.json()) as { photos: Photo[] };
-      return json.photos || [];
-    },
-    staleTime: 60_000,
-    placeholderData: (prev) => prev as Photo[] | undefined,
-    ...(activeCategoryId === initialActiveCategoryId && initialPhotos
-      ? { initialData: initialPhotos as Photo[] }
-      : {}),
-  });
-
   return (
     <div>
       <div className="px-2">

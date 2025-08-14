@@ -46,7 +46,6 @@ export default function SettingsForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     reset,
     formState: { errors, isDirty },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });

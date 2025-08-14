@@ -67,7 +67,9 @@ export default function RequestEditForm({
     (async () => {
       try {
         const rows = await getMyPlaceEditRequests(placeId);
-        setMyRequests(rows as any);
+        setMyRequests(
+          rows as Array<{ id: string; status: string; created_at: string }>,
+        );
       } catch {}
     })();
   }, [placeId]);
@@ -116,11 +118,13 @@ export default function RequestEditForm({
         setIsSearching(true);
         const results = await searchPlaces(q, 6);
         setDuplicateResults(
-          (results || []).map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-          })),
+          (results || []).map(
+            (p: { id: string; name: string; slug: string }) => ({
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+            }),
+          ),
         );
       } catch {
         setDuplicateResults([]);

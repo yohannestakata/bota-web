@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 // import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import {
   getPlaceBySlugWithDetails,
@@ -30,8 +29,8 @@ import {
   ReviewsSkeleton,
 } from "@/features/place/components/skeletons";
 import Reviews from "@/features/place/components/reviews";
-import SearchBar from "@/components/search-bar";
-import { ChevronLeftIcon } from "lucide-react";
+// import SearchBar from "@/components/search-bar";
+// import { ChevronLeftIcon } from "lucide-react";
 import { format } from "date-fns";
 
 export const experimental_ppr = true;

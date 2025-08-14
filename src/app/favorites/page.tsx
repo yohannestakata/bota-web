@@ -41,9 +41,9 @@ export default function FavoritesPage() {
         .order("created_at", { ascending: false });
       if (!active) return;
       if (!error && data) {
-        const rows = (data as any[])
-          .map((r) => r.place)
-          .filter(Boolean) as FavPlace[];
+        const rows = (data as Array<{ place?: unknown }>)
+          .map((r) => r.place as FavPlace | undefined)
+          .filter((p): p is FavPlace => Boolean(p));
         setFavorites(rows);
       } else {
         setFavorites([]);
