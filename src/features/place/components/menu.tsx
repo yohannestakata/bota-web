@@ -1,36 +1,70 @@
 import Image from "next/image";
 import { getPlaceMenu } from "@/lib/supabase/queries";
+import { MenuItemWithPhotos, MenuSection } from "@/lib/types/database";
 
-interface MenuItem {
-  id: string;
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  currency?: string | null;
-  is_available: boolean;
-  menu_item_photos?: {
-    id: string;
-    file_path: string;
-    alt_text?: string | null;
-  }[];
-}
-
-type SectionType = { id: string; name: string; position?: number | null };
-
-export default async function Menu({ placeId }: { placeId: string }) {
-  const m = (await getPlaceMenu(placeId).catch(() => ({}))) as unknown as {
-    sections?: SectionType[];
-    itemsBySection?: Map<string, MenuItem[]>;
-    ungrouped?: MenuItem[];
+export default async function Menu({
+  placeId,
+  menu,
+}: {
+  placeId?: string;
+  menu?: {
+    sections?: MenuSection[];
+    items?: MenuItemWithPhotos[];
+    itemsBySection?: Map<string, MenuItemWithPhotos[]>;
+    ungrouped?: MenuItemWithPhotos[];
+  };
+}) {
+  // If menu is provided, use it; otherwise fetch from placeId
+  let m: {
+    sections?: MenuSection[];
+    items?: MenuItemWithPhotos[];
+    itemsBySection?: Map<string, MenuItemWithPhotos[]>;
+    ungrouped?: MenuItemWithPhotos[];
   };
 
-  const sections = m.sections ?? [];
-  let itemsBySection: Map<string, MenuItem[]>;
-  if (m.itemsBySection instanceof Map) {
-    itemsBySection = m.itemsBySection as Map<string, MenuItem[]>;
+  if (menu) {
+    m = menu;
+  } else if (placeId) {
+    m = (await getPlaceMenu(placeId).catch(() => ({}))) as unknown as {
+      sections?: MenuSection[];
+      itemsBySection?: Map<string, MenuItemWithPhotos[]>;
+      ungrouped?: MenuItemWithPhotos[];
+    };
   } else {
-    itemsBySection = new (Map as { new (): Map<string, MenuItem[]> })();
+    m = {
+      sections: [],
+      itemsBySection: new Map(),
+      ungrouped: [],
+    };
   }
+
+  const sections = m.sections ?? [];
+  let itemsBySection: Map<string, MenuItemWithPhotos[]>;
+
+  // Handle RPC data format (sections + items arrays) vs old format (itemsBySection Map)
+  if (m.itemsBySection instanceof Map) {
+    // Old format with itemsBySection Map
+    itemsBySection = m.itemsBySection as Map<string, MenuItemWithPhotos[]>;
+  } else if (m.items && Array.isArray(m.items)) {
+    // RPC format with sections and items arrays - organize items by section
+    itemsBySection = new Map();
+    const items = m.items as MenuItemWithPhotos[];
+
+    // Group items by section_id
+    items.forEach((item) => {
+      const sectionId = (item as MenuItemWithPhotos & { section_id?: string })
+        .section_id;
+      if (sectionId) {
+        if (!itemsBySection.has(sectionId)) {
+          itemsBySection.set(sectionId, []);
+        }
+        itemsBySection.get(sectionId)!.push(item);
+      }
+    });
+  } else {
+    itemsBySection = new Map();
+  }
+
   const ungrouped = m.ungrouped ?? [];
 
   const hasContent = sections.length > 0 || ungrouped.length > 0;

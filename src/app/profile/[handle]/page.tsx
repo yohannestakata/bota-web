@@ -57,7 +57,7 @@ export default async function ProfilePage({
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border p-4">
           <div className="text-muted-foreground text-xs">Reviews</div>
-          <div className="text-2xl font-semibold">{stats.reviewCount}</div>
+          <div className="text-2xl font-semibold">{stats.totalReviews}</div>
         </div>
         <div className="rounded-2xl border p-4">
           <div className="text-muted-foreground text-xs">Avg rating</div>
@@ -119,5 +119,3 @@ export default async function ProfilePage({
     </div>
   );
 }
-
-

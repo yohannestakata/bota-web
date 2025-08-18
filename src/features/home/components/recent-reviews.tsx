@@ -12,9 +12,9 @@ export default function RecentReviews({
   lon?: number;
 }) {
   return (
-    <section className="container mx-auto max-w-6xl px-4 py-16">
+    <section className="container mx-auto mt-16 max-w-6xl px-4">
       <div className="flex items-center justify-between px-2">
-        <h2 className="text-foreground text-2xl font-semibold">
+        <h2 className="text-foreground text-xl font-bold">
           {filter === "nearby"
             ? "Nearby reviews"
             : filter === "trending"

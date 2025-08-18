@@ -39,6 +39,7 @@ export interface ReviewItemProps {
       body: string;
       created_at: string;
       updated_at: string;
+      is_owner?: boolean;
       author?: {
         id: string;
         full_name?: string | null;
@@ -62,7 +63,7 @@ function ReviewItem({ review }: ReviewItemProps) {
     propReaction,
   );
   const [optimisticCounts, setOptimisticCounts] = useState<
-    Record<ReactionType, number>
+    Record<Exclude<ReactionType, null>, number>
   >({
     like: review.review_stats?.likes_count ?? 0,
     love: review.review_stats?.loves_count ?? 0,
@@ -163,7 +164,7 @@ function ReviewItem({ review }: ReviewItemProps) {
             ] as const
           ).map(({ key, icon: Icon }) => {
             const active = myReaction === (key as ReactionType);
-            const count = optimisticCounts[key as ReactionType];
+            const count = optimisticCounts[key as Exclude<ReactionType, null>];
             return (
               <button
                 key={key}
@@ -202,7 +203,11 @@ function ReviewItem({ review }: ReviewItemProps) {
                     };
                   });
                   try {
-                    await setReviewReaction(review.id, next);
+                    await setReviewReaction({
+                      reviewId: review.id,
+                      reactionType: next,
+                      userId: user.id,
+                    });
                   } catch {
                     // revert
                     setMyReaction(
@@ -362,12 +367,19 @@ function ReviewItem({ review }: ReviewItemProps) {
 
                 <div className="min-w-0 flex-1">
                   <div>
-                    <Link
-                      href={`/profile/${rep.author?.username || rep.author?.id || "user"}`}
-                      className="text-foreground font-medium hover:underline"
-                    >
-                      {rname}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/profile/${rep.author?.username || rep.author?.id || "user"}`}
+                        className="text-foreground font-medium hover:underline"
+                      >
+                        {rname}
+                      </Link>
+                      {rep.is_owner && (
+                        <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+                          Owner
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 text-sm">
                       {new Date(rep.created_at).toLocaleDateString()}
                     </div>

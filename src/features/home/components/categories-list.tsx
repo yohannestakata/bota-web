@@ -21,7 +21,7 @@ export default async function CategoriesList() {
   });
 
   return (
-    <div className="mt-4 grid grid-cols-2 gap-12 md:grid-cols-5">
+    <div className="mt-5 grid grid-cols-2 gap-10 md:grid-cols-5">
       {transformedCategories.map((category) => (
         <Link key={category.name} href={category.href} className="group">
           <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-import { getPlaceHours } from "@/lib/supabase/queries";
+// import { getPlaceHours } from "@/lib/supabase/queries";
 import Map from "./map";
 
 export interface HourRow {
@@ -20,22 +20,25 @@ const DAYS = [
 ];
 
 export default async function Hours({
-  placeId,
+  // placeId,
   latitude,
   longitude,
   name,
+  hours,
 }: {
-  placeId: string;
+  placeId?: string;
   latitude?: number | null;
   longitude?: number | null;
   name: string;
+  hours?: HourRow[];
 }) {
-  const hours: HourRow[] = await getPlaceHours(placeId).catch(() => []);
+  // If hours are provided, use them; otherwise fetch from placeId
+  // const hoursData = hours || (placeId ? await getPlaceHours(placeId).catch(() => []) : []);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div>
-        {!hours.length ? (
+        {!hours || !hours.length ? (
           <div className="text-muted-foreground">Hours not set.</div>
         ) : (
           <table className="w-full">
@@ -77,7 +80,7 @@ export default async function Hours({
         )}
       </div>
       {latitude && longitude ? (
-        <div className="h-full overflow-hidden rounded-3xl">
+        <div className="h-full min-h-72 overflow-hidden rounded-3xl">
           <Map lat={Number(latitude)} lon={Number(longitude)} name={name} />
         </div>
       ) : null}

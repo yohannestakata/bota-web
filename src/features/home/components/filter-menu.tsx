@@ -64,10 +64,8 @@ export default function FilterMenu({
             <Link
               href={href}
               onClick={key === "nearby" ? onNearbyClick : undefined}
-              className={`flex items-center gap-2 text-sm font-medium ${
-                isActive
-                  ? "underline decoration-2 underline-offset-8"
-                  : "text-muted-foreground hover:text-foreground"
+              className={`flex items-center gap-2 font-medium ${
+                isActive && "underline decoration-2 underline-offset-8"
               }`}
             >
               {iconFor(key)}

@@ -1,24 +1,30 @@
 import Link from "next/link";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { getSimilarPlaces } from "@/lib/supabase/queries";
+import { PlaceWithStats } from "@/lib/types/database";
 
 interface SimilarPlacesProps {
-  categoryId: number;
-  excludePlaceId: string;
+  categoryId?: number;
+  excludePlaceId?: string;
+  places?: PlaceWithStats[];
 }
 
 export default async function SimilarPlaces({
   categoryId,
   excludePlaceId,
+  places,
 }: SimilarPlacesProps) {
-  const places = await getSimilarPlaces(categoryId, excludePlaceId, 6).catch(
-    () => [],
-  );
-  if (!places.length) return null;
+  // If places are provided, use them; otherwise fetch from categoryId and excludePlaceId
+  const placesData =
+    places ||
+    (categoryId && excludePlaceId
+      ? await getSimilarPlaces(categoryId, excludePlaceId, 6).catch(() => [])
+      : []);
+  if (!placesData.length) return null;
   return (
     <div>
       <div className="grid gap-2 md:grid-cols-2">
-        {places.map((p) => (
+        {placesData.map((p) => (
           <Link
             key={p.id}
             href={`/place/${p.slug}`}

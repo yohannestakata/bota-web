@@ -30,7 +30,7 @@ export function RatingStars({
             <StarIcon
               key={index}
               size={size}
-              className={`fill-amber-50 text-amber-600 ${!isFilled && "opacity-40"}`}
+              className={`text-amber-600 ${!isFilled ? "fill-amber-200 opacity-40" : "fill-amber-600 opacity-100"}`}
             />
           );
         })}

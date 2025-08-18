@@ -47,6 +47,45 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --radius: var(--radius);
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-xs--letter-spacing: 0.01em;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-sm--letter-spacing: 0.005em;
+  --text-base: 1rem;
+  --text-base--line-height: 1.25rem;
+  --text-base--letter-spacing: 0em;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5rem;
+  --text-lg--letter-spacing: -0.005em;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-xl--letter-spacing: -0.01em;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-2xl--letter-spacing: -0.015em;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.75rem;
+  --text-4xl--letter-spacing: -0.025em;
+  --text-5xl: 2.75rem;
+  --text-5xl--line-height: 3.25rem;
+  --text-5xl--letter-spacing: -0.03em;
+  --text-6xl: 3.375rem;
+  --text-6xl--line-height: 4rem;
+  --text-6xl--letter-spacing: -0.035em;
+  --text-7xl: 4.125rem;
+  --text-7xl--line-height: 4.875rem;
+  --text-7xl--letter-spacing: -0.04em;
+  --text-8xl: 5rem;
+  --text-8xl--line-height: 5.875rem;
+  --text-8xl--letter-spacing: -0.045em;
+  --text-9xl: 6.125rem;
+  --text-9xl--line-height: 7.125rem;
+  --text-9xl--letter-spacing: -0.05em;
 }
 
 @theme inline {
@@ -59,6 +98,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  @apply text-base;
 }
 
 .aspect-portrait {

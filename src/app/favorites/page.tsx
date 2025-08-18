@@ -6,21 +6,12 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/app/auth-context";
 import { useToast } from "@/components/ui/toast";
 import { getFriendlyErrorMessage } from "@/lib/errors";
-
-type FavPlace = {
-  id: string;
-  name: string;
-  slug: string;
-  city?: string | null;
-  state?: string | null;
-  description?: string | null;
-  price_range?: number | null;
-};
+import { FavoritePlace, Branch, Place } from "@/lib/types/database";
 
 export default function FavoritesPage() {
   const { user, isLoading } = useAuth();
   const { notify } = useToast();
-  const [favorites, setFavorites] = useState<FavPlace[]>([]);
+  const [favorites, setFavorites] = useState<FavoritePlace[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,17 +24,34 @@ export default function FavoritesPage() {
       }
       setLoading(true);
       const { data, error } = await supabase
-        .from("favorite_places")
+        .from("favorite_branches")
         .select(
-          `place:places(id, name, slug, city, state, description, category_id, price_range)`,
+          `branch:branches(id, name, slug, city, state, description, price_range, place_id),
+           place:places(id, name, slug, description, category_id)`,
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (!active) return;
       if (!error && data) {
-        const rows = (data as Array<{ place?: unknown }>)
-          .map((r) => r.place as FavPlace | undefined)
-          .filter((p): p is FavPlace => Boolean(p));
+        const rows = (
+          data as unknown as Array<{ branch?: Branch; place?: Place }>
+        )
+          .map((r) => {
+            const branch = r.branch;
+            const place = r.place;
+            if (!branch || !place) return undefined;
+            return {
+              id: branch.id,
+              name: branch.name,
+              slug: branch.slug,
+              city: branch.city,
+              state: branch.state,
+              description: branch.description,
+              category_id: place.category_id,
+              price_range: branch.price_range,
+            } as FavoritePlace;
+          })
+          .filter((p): p is FavoritePlace => Boolean(p));
         setFavorites(rows);
       } else {
         setFavorites([]);
@@ -61,10 +69,10 @@ export default function FavoritesPage() {
     setFavorites((f) => f.filter((p) => p.id !== placeId));
     try {
       const { error } = await supabase
-        .from("favorite_places")
+        .from("favorite_branches")
         .delete()
         .eq("user_id", user.id)
-        .eq("place_id", placeId);
+        .eq("branch_id", placeId);
       if (error) throw error;
     } catch (err) {
       setFavorites(prev);

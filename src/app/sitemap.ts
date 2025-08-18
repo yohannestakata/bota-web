@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {}
 
   const placeRoutes: MetadataRoute.Sitemap = places.map((p) => {
-    const lm = p.updated_at || p.created_at || new Date().toISOString();
+    const lm = p.updated_at || new Date().toISOString();
     return {
       url: `${baseUrl}/place/${p.slug}`,
       changeFrequency: "weekly",

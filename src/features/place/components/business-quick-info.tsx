@@ -39,12 +39,25 @@ interface BusinessQuickInfoProps {
       slug: string;
     } | null;
   };
+  branchId?: string; // For favorites - if not provided, uses place.id
   averageRating?: number;
   reviewCount?: number;
   isOpenNow?: boolean;
   showRatingHeader?: boolean;
   showCategoryAndPrice?: boolean;
   showOpenStatus?: boolean;
+  branches?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    city?: string | null;
+    state?: string | null;
+    phone?: string | null;
+    website_url?: string | null;
+    address_line1?: string | null;
+    address_line2?: string | null;
+    is_main_branch: boolean;
+  }>;
 }
 
 function getPriceRangeDisplay(priceRange: number | null | undefined) {
@@ -62,12 +75,14 @@ function getPriceRangeDisplay(priceRange: number | null | undefined) {
 
 export default function BusinessQuickInfo({
   place,
+  branchId,
   averageRating,
   reviewCount,
   isOpenNow,
   showRatingHeader = true,
   showCategoryAndPrice = true,
   showOpenStatus = true,
+  branches,
 }: BusinessQuickInfoProps) {
   const priceRange = getPriceRangeDisplay(place.price_range);
   const { notify } = useToast();
@@ -130,17 +145,18 @@ export default function BusinessQuickInfo({
     setIsSaved(next);
     setSaving(true);
     try {
+      const favoriteId = branchId || place.id;
       if (next) {
         const { error } = await supabase
-          .from("favorite_places")
-          .upsert({ user_id: user.id, place_id: place.id });
+          .from("favorite_branches")
+          .upsert({ user_id: user.id, branch_id: favoriteId });
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("favorite_places")
+          .from("favorite_branches")
           .delete()
           .eq("user_id", user.id)
-          .eq("place_id", place.id);
+          .eq("branch_id", favoriteId);
         if (error) throw error;
       }
     } catch (err) {
@@ -157,11 +173,12 @@ export default function BusinessQuickInfo({
     let active = true;
     (async () => {
       if (!user?.id) return;
+      const favoriteId = branchId || place.id;
       const { data, error } = await supabase
-        .from("favorite_places")
-        .select("place_id")
+        .from("favorite_branches")
+        .select("branch_id")
         .eq("user_id", user.id)
-        .eq("place_id", place.id)
+        .eq("branch_id", favoriteId)
         .maybeSingle();
       if (!active) return;
       if (!error && data) setIsSaved(true);
@@ -169,7 +186,7 @@ export default function BusinessQuickInfo({
     return () => {
       active = false;
     };
-  }, [user?.id, place.id]);
+  }, [user?.id, place.id, branchId]);
 
   return (
     <div className="border-border rounded-3xl border p-6 shadow-xl">
@@ -273,6 +290,67 @@ export default function BusinessQuickInfo({
             </div>
           )}
         </div>
+
+        {/* Other Branches */}
+        {branches && branches.length > 0 && (
+          <>
+            <hr className="border-border" />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPinIcon size={16} className="text-muted-foreground" />
+                <span className="text-sm font-medium">
+                  Other Locations (
+                  {branches.filter((branch) => !branch.is_main_branch).length})
+                </span>
+              </div>
+              <div className="space-y-2">
+                {branches
+                  .filter((branch) => !branch.is_main_branch)
+                  .slice(0, 3) // Show max 3 other branches
+                  .map((branch) => {
+                    const branchAddress = [
+                      [branch.address_line1, branch.address_line2]
+                        .filter(Boolean)
+                        .join(" "),
+                      [branch.city, branch.state].filter(Boolean).join(", "),
+                    ]
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join(" · ");
+
+                    return (
+                      <Link
+                        key={branch.id}
+                        href={`/place/${place.slug}/${branch.slug}`}
+                        className="block rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
+                      >
+                        <div className="text-sm font-medium">{branch.name}</div>
+                        {branchAddress && (
+                          <div className="text-muted-foreground mt-1 text-xs">
+                            {branchAddress}
+                          </div>
+                        )}
+                        {branch.phone && (
+                          <div className="text-muted-foreground mt-1 text-xs">
+                            {branch.phone}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                {branches.filter((branch) => !branch.is_main_branch).length >
+                  3 && (
+                  <div className="text-muted-foreground text-center text-xs">
+                    +
+                    {branches.filter((branch) => !branch.is_main_branch)
+                      .length - 3}{" "}
+                    more locations
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         <hr className="border-border" />
 

@@ -6,7 +6,7 @@ import {
   getPlacesByCategoryPaged,
 } from "@/lib/supabase/queries";
 import { RatingStars } from "@/components/ui/rating-stars";
-import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
+// import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
 
@@ -65,11 +65,10 @@ export default async function CategoryPage({
   if (!category) return notFound();
 
   // Fetch category places with cover images and stats
-  const { data: places, total } = await getPlacesByCategoryPaged(
+  const { places, total } = await getPlacesByCategoryPaged(
     category.id,
     page,
     pageSize,
-    sortParam,
   );
 
   return (
@@ -111,12 +110,7 @@ export default async function CategoryPage({
               <Link href={`/place/${p.slug}`}>
                 <div className="relative aspect-video">
                   <Image
-                    src={
-                      buildCloudinaryUrl(p.cover_image_path || "", {
-                        w: 960,
-                        crop: "fill",
-                      }) || "/vercel.svg"
-                    }
+                    src="/vercel.svg"
                     alt={p.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

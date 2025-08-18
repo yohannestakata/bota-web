@@ -32,12 +32,6 @@ export default function SiteHeader() {
           }`}
         >
           <Link
-            href="/"
-            className="hover:text-foreground font-medium transition-colors"
-          >
-            Home
-          </Link>
-          <Link
             href="/reviews/add"
             className="hover:text-foreground font-medium transition-colors"
           >
@@ -48,6 +42,12 @@ export default function SiteHeader() {
             className="hover:text-foreground font-medium transition-colors"
           >
             Add Place
+          </Link>
+          <Link
+            href="/favorites"
+            className="hover:text-foreground font-medium transition-colors"
+          >
+            My Favorites
           </Link>
         </motion.nav>
         <AnimatePresence initial={false}>

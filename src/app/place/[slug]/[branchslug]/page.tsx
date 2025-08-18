@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPlacePageData } from "@/lib/supabase/queries";
 import PlaceContent from "@/features/place/pages/place-content";
-import { PlaceJsonLd } from "./structured-data";
+import { PlaceJsonLd } from "../structured-data";
 import {
   ReviewWithAuthor,
   MenuSection,
@@ -11,18 +11,18 @@ import {
 
 export const experimental_ppr = true;
 
-export default async function PlacePage({
+export default async function BranchPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; branchslug: string }>;
   searchParams: Promise<{ cat?: string }>;
 }) {
-  const { slug } = await params;
+  const { slug, branchslug } = await params;
   const { cat } = await searchParams;
   const activeCategoryId = cat ? Number(cat) : null;
 
-  const pageData = await getPlacePageData(slug, null, {
+  const pageData = await getPlacePageData(slug, branchslug, {
     photoLimit: 12,
     photoCategoryId: activeCategoryId ?? undefined,
     reviewLimit: 10,
@@ -30,6 +30,7 @@ export default async function PlacePage({
   });
 
   if (!pageData || !pageData.place.is_active) {
+    console.warn("[BranchPage] place not found or inactive", { slug });
     return notFound();
   }
 
@@ -77,30 +78,62 @@ export default async function PlacePage({
     // Leave undefined if hours fetch fails
   }
 
+  // Create branch data object for PlaceContent
+  // Since we're fetching branch-specific data, we need to create a branch object
+  // from the place data (which now contains the branch data)
+  const branchData = {
+    id: place.branch_id || place.id,
+    name: place.name,
+    slug: branchslug,
+    description: place.description,
+    city: place.city,
+    state: place.state,
+    address_line1: place.address_line1,
+    address_line2: place.address_line2,
+    postal_code: place.postal_code,
+    country: place.country,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    phone: place.phone,
+    website_url: place.website_url,
+    hours: place.hours?.map((h) => ({
+      day_of_week: h.day_of_week,
+      open_time: h.open_time || null,
+      close_time: h.close_time || null,
+      is_closed: h.is_closed,
+      is_24_hours: h.is_24_hours,
+    })),
+  };
+
   return (
     <>
       <PlaceJsonLd
-        name={place.name}
-        description={place.description}
-        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/place/${place.slug}`}
+        name={`${place.name} - ${branchData.name}`}
+        description={branchData.description || place.description}
+        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/place/${place.slug}/${branchData.slug}`}
         averageRating={avg}
         reviewCount={reviews}
         address={{
           streetAddress:
-            [place.address_line1, place.address_line2]
+            [branchData.address_line1, branchData.address_line2]
               .filter(Boolean)
               .join(" ") || undefined,
-          addressLocality: place.city || undefined,
-          addressRegion: place.state || undefined,
-          postalCode: place.postal_code || undefined,
-          addressCountry: place.country || undefined,
+          addressLocality: branchData.city || undefined,
+          addressRegion: branchData.state || undefined,
+          postalCode: branchData.postal_code || undefined,
+          addressCountry: branchData.country || undefined,
         }}
-        telephone={place.phone || undefined}
+        telephone={branchData.phone || place.phone || undefined}
         priceRange={place.price_range || undefined}
         geo={{
-          latitude: place.latitude != null ? Number(place.latitude) : undefined,
+          latitude:
+            branchData.latitude != null
+              ? Number(branchData.latitude)
+              : undefined,
           longitude:
-            place.longitude != null ? Number(place.longitude) : undefined,
+            branchData.longitude != null
+              ? Number(branchData.longitude)
+              : undefined,
         }}
         image={undefined}
       />
@@ -171,6 +204,7 @@ export default async function PlacePage({
             };
           }
         }
+        branch={branchData}
         averageRating={avg}
         reviewCount={reviews}
         isOpenNow={isOpenNow}
@@ -187,6 +221,9 @@ export default async function PlacePage({
         activeCategoryId={activeCategoryId}
         similarPlaces={pageData.similar_places as unknown as PlaceWithStats[]}
         reviews={pageData.reviews as unknown as ReviewWithAuthor[]}
+        showBackLink={true}
+        backLinkText={`Back to ${place.name}`}
+        backLinkHref={`/place/${place.slug}`}
       />
     </>
   );
@@ -197,15 +234,16 @@ export const revalidate = 300;
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; branchslug: string }>;
 }) {
-  const { slug } = await params;
-  const pageData = await getPlacePageData(slug, null);
+  const { slug, branchslug } = await params;
+  const pageData = await getPlacePageData(slug, branchslug);
   if (!pageData) return { title: "Place not found" };
+
   const place = pageData.place;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com";
-  const url = `${baseUrl}/place/${place.slug}`;
-  const title = `${place.name}`;
+  const url = `${baseUrl}/place/${place.slug}/${branchslug}`;
+  const title = `${place.name} - ${place.name}`;
   const description =
     place.description ||
     `${place.name} — discover reviews, photos, menu, hours, and location.`;

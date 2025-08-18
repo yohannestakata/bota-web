@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchIcon } from "lucide-react";
-import { getSearchHistory, saveSearchQuery } from "@/lib/supabase/queries";
+import {
+  getSearchHistory,
+  saveSearchQuery,
+  searchPlaces,
+} from "@/lib/supabase/queries";
+import Link from "next/link";
 
 type SearchBarSize = "small" | "medium" | "large";
 
@@ -16,15 +21,19 @@ export default function SearchBar({
   const isSmall = size === "small";
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Array<{ id: string; query: string }>>(
     [],
   );
+  const [results, setResults] = useState<
+    Array<{ id: string; name: string; slug: string; city?: string | null }>
+  >([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const enableHistory =
     process.env.NEXT_PUBLIC_ENABLE_SEARCH_HISTORY === "true";
 
+  // Load history on mount
   useEffect(() => {
-    // Prefetch user history if signed in; helpers handle anon user
     if (enableHistory) {
       void (async () => {
         const rows = await getSearchHistory();
@@ -33,13 +42,40 @@ export default function SearchBar({
     }
   }, [enableHistory]);
 
+  // Debounced search
+  useEffect(() => {
+    const handle = setTimeout(async () => {
+      const q = query.trim();
+      if (!q) {
+        setResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const places = await searchPlaces(q, 10);
+        setResults(
+          (places || []).map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            city: p.city,
+          })),
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [query]);
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!containerRef.current) return;
       if (!containerRef.current.contains(e.target as Node)) setOpen(false);
     }
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
   const dims = useMemo(() => {
@@ -64,15 +100,18 @@ export default function SearchBar({
     if (!q) return;
     if (enableHistory) await saveSearchQuery(q);
     setOpen(false);
-    // TODO: Navigate to results page when implemented
+    // TODO: Navigate to results page later
   }
 
+  const showHistory = !query.trim() && history.length > 0;
+  const showResults = query.trim() && results.length > 0;
+
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative w-full max-w-3xl" ref={containerRef}>
       <form
         onSubmit={onSubmit}
         className={
-          `border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex w-full max-w-3xl items-center rounded-full border bg-white duration-75 focus-within:ring-2 focus-within:ring-offset-2 ` +
+          `border-border focus-within:ring-offset-accent focus-within:ring-ring mx-auto flex w-full items-center rounded-full border bg-white duration-75 focus-within:ring-2 focus-within:ring-offset-2 ` +
           `${dims.height} ` +
           `${elevated ? "shadow-lg" : "shadow-none"}`
         }
@@ -85,7 +124,10 @@ export default function SearchBar({
           aria-label="Search restaurants, bars, cafes…"
           placeholder="Search restaurants, bars, cafes…"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
           onFocus={() => setOpen(true)}
           className={`h-full w-full rounded-full bg-transparent ${dims.padding} ${dims.text} focus:outline-none`}
         />
@@ -107,25 +149,58 @@ export default function SearchBar({
         )}
       </form>
 
-      {open && history.length > 0 && (
-        <div className="bg-popover border-border absolute z-10 mt-2 w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
-          <ul className="divide-border divide-y">
-            {history.map((h) => (
-              <li key={h.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery(h.query);
-                    setOpen(false);
-                  }}
-                  className="hover:bg-muted/60 flex w-full items-center gap-3 px-4 py-3 text-left"
-                >
-                  <SearchIcon className="text-muted-foreground" size={16} />
-                  <span className="truncate">{h.query}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+      {open && (showHistory || showResults || loading) && (
+        <div className="bg-popover border-border bg-background absolute z-10 mt-3 w-full overflow-hidden rounded-3xl border shadow-2xl">
+          {loading && (
+            <div className="text-muted-foreground px-4 py-3 text-sm">
+              Looking that up…
+            </div>
+          )}
+
+          {!loading && showResults && (
+            <ul className="divide-border bg-background divide-y">
+              {results.map((p) => (
+                <li key={p.id} className="hover:bg-muted px-4">
+                  <Link
+                    href={`/reviews/add/${p.slug}`}
+                    className="hover:bg-muted flex w-full justify-between py-4 text-sm"
+                    onClick={() => setOpen(false)}
+                  >
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-muted-foreground">
+                      {p.city || ""}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!loading && showHistory && (
+            <ul className="divide-border divide-y">
+              {history.map((h) => (
+                <li key={h.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery(h.query);
+                      setOpen(false);
+                    }}
+                    className="hover:bg-muted/60 flex w-full items-center gap-3 px-4 py-3 text-left"
+                  >
+                    <SearchIcon className="text-muted-foreground" size={16} />
+                    <span className="truncate">{h.query}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!loading && query.trim() && results.length === 0 && (
+            <div className="text-muted-foreground px-4 py-3 text-sm">
+              No results found.
+            </div>
+          )}
         </div>
       )}
     </div>

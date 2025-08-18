@@ -23,6 +23,18 @@ export interface RecentReviewItemData {
   dislikes: number;
   comments: number;
   image: string;
+  reviewPhotos?: Array<{
+    id: string;
+    file_path: string;
+    alt_text?: string;
+    created_at: string;
+  }>;
+  branchPhotos?: Array<{
+    id: string;
+    file_path: string;
+    alt_text?: string;
+    created_at: string;
+  }>;
 }
 
 export default function RecentReviewItem({
@@ -51,7 +63,7 @@ export default function RecentReviewItem({
         <div className="flex flex-col gap-0.5">
           <Link
             href={review.authorHandle ? `/profile/${review.authorHandle}` : "#"}
-            className="font-semibold underline-offset-4 hover:underline"
+            className="font-bold underline-offset-4 hover:underline"
           >
             {review.user}
           </Link>
@@ -60,47 +72,72 @@ export default function RecentReviewItem({
       </div>
 
       <div className="relative mt-3 aspect-video w-full rounded-3xl">
-        <Image
-          src={review.image}
-          alt={review.place}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="rounded-lg object-cover"
-          unoptimized={false}
-        />
+        {review.reviewPhotos && review.reviewPhotos.length > 0 ? (
+          // Show first review photo
+          <Image
+            src={review.reviewPhotos[0].file_path}
+            alt={review.reviewPhotos[0].alt_text || review.place}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="rounded-lg object-cover"
+            unoptimized={false}
+          />
+        ) : review.branchPhotos && review.branchPhotos.length > 0 ? (
+          // Show first branch photo as fallback
+          <Image
+            src={review.branchPhotos[0].file_path}
+            alt={review.branchPhotos[0].alt_text || review.place}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="rounded-lg object-cover"
+            unoptimized={false}
+          />
+        ) : (
+          // Fallback to the default image
+          <Image
+            src={review.image}
+            alt={review.place}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="rounded-lg object-cover"
+            unoptimized={false}
+          />
+        )}
       </div>
 
       <div className="mt-3 flex-1">
         <div className="flex flex-col gap-0.5">
           <Link
             href={review.placeSlug ? `/place/${review.placeSlug}` : "#"}
-            className="text-foreground font-semibold underline-offset-4 hover:underline"
+            className="text-foreground font-bold underline-offset-4 hover:underline"
           >
             {review.place}
           </Link>
           <div className="text-sm">{review.category}</div>
         </div>
 
-        <div className="mt-3 flex items-center gap-1">
+        <p className="text-foreground mt-3 line-clamp-2">{review.review}</p>
+
+        <div className="mt-1.5 flex items-center gap-1">
           <RatingStars rating={review.rating} size={16} />
         </div>
 
-        <p className="text-foreground mt-1 line-clamp-2">{review.review}</p>
-
-        <div className="mt-3">
-          <ReviewReactions
-            reviewId={review.reviewId || String(review.id)}
-            initialCounts={{
-              like: review.likes,
-              love: review.loves,
-              meh: review.mehs,
-              dislike: review.dislikes,
-            }}
-            initialMyReaction={review.myReaction ?? null}
-            compact
-            size={16}
-          />
-        </div>
+        {review.reviewId && review.reviewId !== "" && (
+          <div className="mt-4">
+            <ReviewReactions
+              reviewId={review.reviewId}
+              initialCounts={{
+                like: review.likes,
+                love: review.loves,
+                meh: review.mehs,
+                dislike: review.dislikes,
+              }}
+              initialMyReaction={review.myReaction ?? null}
+              // compact
+              size={16}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
