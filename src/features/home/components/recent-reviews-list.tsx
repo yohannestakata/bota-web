@@ -99,9 +99,6 @@ export default async function RecentReviewsList({
         ...photo,
         alt_text: photo.alt_text || undefined,
       })),
-      myReaction:
-        (review.my_reaction as "like" | "love" | "meh" | "dislike" | null) ??
-        null,
     };
   });
 

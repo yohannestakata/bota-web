@@ -1,50 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { ThumbsUp, Heart, Meh, ThumbsDown } from "lucide-react";
 import { setReviewReaction } from "@/lib/supabase/queries";
 import { getUserReactionForReview } from "@/lib/supabase/queries/reviews";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import AuthGateDialog from "@/components/ui/auth-gate-dialog.client";
 
 type ReactionType = "like" | "love" | "meh" | "dislike";
-import AuthGateDialog from "@/components/ui/auth-gate-dialog.client";
+
+// Custom hook for fetching user reaction with React Query
+function useUserReaction(reviewId: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["user-reaction", reviewId, user?.id],
+    queryFn: () => getUserReactionForReview(reviewId),
+    enabled: !!user, // Only run query if user is logged in
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+}
 
 export default function ReviewReactions({
   reviewId,
   initialCounts,
-  initialMyReaction = null,
   size = 16,
   compact = false,
 }: {
   reviewId: string;
   initialCounts: { like: number; love: number; meh: number; dislike: number };
-  initialMyReaction?: ReactionType | null;
   size?: number;
   compact?: boolean;
 }) {
   const { user } = useAuth();
-  // router not needed; AuthGateDialog handles redirect
-
-  const [myReaction, setMyReaction] = useState<ReactionType | null>(
-    initialMyReaction,
-  );
+  const queryClient = useQueryClient();
+  const { data: myReaction } = useUserReaction(reviewId);
   const [counts, setCounts] = useState({ ...initialCounts });
   const [showAuth, setShowAuth] = useState(false);
-
-  // Fetch user's reaction if not provided initially
-  useEffect(() => {
-    if (initialMyReaction === null && user) {
-      console.log("[ReviewReactions] fetching my reaction", { reviewId });
-      getUserReactionForReview(reviewId)
-        .then((reaction) => {
-          console.log("[ReviewReactions] my reaction loaded", reaction);
-          setMyReaction(reaction);
-        })
-        .catch((error) => {
-          console.error("[ReviewReactions] Error fetching reaction:", error);
-        });
-    }
-  }, [reviewId, initialMyReaction, user]);
 
   const Button = ({
     k,
@@ -58,7 +52,7 @@ export default function ReviewReactions({
     return (
       <button
         type="button"
-        className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-lg ${
+        className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl ${
           compact ? "px-2 py-1 text-sm" : "px-3 py-1.5"
         } border ${active ? "bg-muted" : ""}`}
         title={k}
@@ -66,7 +60,9 @@ export default function ReviewReactions({
           if (!user) return setShowAuth(true);
           const wasActive = myReaction === k;
           const next: ReactionType | null = wasActive ? null : k;
-          setMyReaction(next);
+
+          // Optimistic update
+          queryClient.setQueryData(["user-reaction", reviewId, user.id], next);
           setCounts((prev) => ({
             ...prev,
             [k]: prev[k] + (wasActive ? -1 : 1),
@@ -76,15 +72,23 @@ export default function ReviewReactions({
                 ? { [myReaction]: prev[myReaction] - 1 }
                 : {}),
           }));
+
           try {
             await setReviewReaction({
               reviewId,
               reactionType: next,
               userId: user.id,
             });
+            // Invalidate and refetch to ensure consistency
+            queryClient.invalidateQueries({
+              queryKey: ["user-reaction", reviewId],
+            });
           } catch {
-            // revert
-            setMyReaction(wasActive ? k : myReaction);
+            // revert optimistic update
+            queryClient.setQueryData(
+              ["user-reaction", reviewId, user.id],
+              wasActive ? k : myReaction,
+            );
             setCounts((prev) => ({
               ...prev,
               [k]: prev[k] + (wasActive ? 1 : -1),

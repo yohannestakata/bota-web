@@ -537,5 +537,3 @@ export async function getUserReactionForReview(
   if (error || !data) return null;
   return data.reaction_type;
 }
-
-// Get user reactions for multiple reviews (batch query)

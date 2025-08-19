@@ -20,7 +20,10 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="bg-background border-border/60 sticky top-0 z-50 border-b">
+    <header
+      className="bg-background border-border/60 sticky top-0 z-50 border-b"
+      style={{ zIndex: 9999 }}
+    >
       <div className="relative container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Brand />
         <motion.nav

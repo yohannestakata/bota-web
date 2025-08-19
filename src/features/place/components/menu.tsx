@@ -76,43 +76,45 @@ export default async function Menu({
         const items = itemsBySection.get(section.id) || [];
         if (!items.length) return null;
         return (
-          <div key={section.id} className="mt-4">
-            <div className="text-foreground mb-1 text-lg font-medium">
+          <div key={section.id} className="mt-8">
+            <div className="text-foreground mb-1 pl-1 text-lg font-semibold">
               {section.name}
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="border-border rounded-2xl border p-3"
+                  className="border-border rounded-3xl border p-4"
                 >
-                  <div className="flex items-start gap-3">
-                    {item.menu_item_photos?.[0]?.file_path ? (
-                      <div className="relative h-16 w-16 overflow-hidden rounded-xl">
-                        <Image
-                          src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
-                          alt={item.menu_item_photos[0].alt_text || item.name}
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : null}
-                    <div className="flex-1">
-                      <div className="text-foreground font-medium">
+                  {item.menu_item_photos?.[0]?.file_path ? (
+                    <div className="relative h-16 w-16 overflow-hidden rounded-xl">
+                      <Image
+                        src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
+                        alt={item.menu_item_photos[0].alt_text || item.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <div className="text-foreground font-semibold">
                         {item.name}
                       </div>
-                      {item.description ? (
-                        <div className="text-muted-foreground text-sm">
-                          {item.description}
-                        </div>
-                      ) : null}
+                      <div className="text-foreground font-semibold">
+                        {item.price != null
+                          ? `${item.price.toFixed(0)} ${item.currency || "ETB"}`
+                          : ""}
+                      </div>
                     </div>
-                    <div className="text-foreground text-sm font-medium">
-                      {item.price != null
-                        ? `${item.price.toFixed(0)} ${item.currency || "ETB"}`
-                        : ""}
-                    </div>
+
+                    {item.description ? (
+                      <div className="mt-1 line-clamp-1 leading-6">
+                        {item.description}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

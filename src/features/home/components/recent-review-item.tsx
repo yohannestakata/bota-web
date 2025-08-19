@@ -7,7 +7,6 @@ import ReviewReactions from "@/features/reviews/components/review-reactions.clie
 export interface RecentReviewItemData {
   id: number;
   reviewId?: string;
-  myReaction?: "like" | "love" | "meh" | "dislike" | null;
   placeSlug?: string;
   authorHandle?: string;
   avatarUrl?: string;
@@ -116,14 +115,14 @@ export default function RecentReviewItem({
           <div className="text-sm">{review.category}</div>
         </div>
 
-        <p className="text-foreground mt-3 line-clamp-2">{review.review}</p>
+        <p className="text-foreground mt-2 line-clamp-2">{review.review}</p>
 
         <div className="mt-1.5 flex items-center gap-1">
           <RatingStars rating={review.rating} size={16} />
         </div>
 
         {review.reviewId && review.reviewId !== "" && (
-          <div className="mt-4">
+          <div className="mt-3.5">
             <ReviewReactions
               reviewId={review.reviewId}
               initialCounts={{
@@ -132,8 +131,6 @@ export default function RecentReviewItem({
                 meh: review.mehs,
                 dislike: review.dislikes,
               }}
-              initialMyReaction={review.myReaction ?? null}
-              // compact
               size={16}
             />
           </div>

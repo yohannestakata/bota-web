@@ -399,7 +399,6 @@ export interface Database {
           owner_response_by: string | null;
           created_at: string;
           updated_at: string;
-          my_reaction: string | null;
           place_name: string | null;
           place_slug: string | null;
           category_id: number | null;

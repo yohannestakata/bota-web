@@ -52,7 +52,7 @@ export default async function Hours({
                         : idx === hours.length - 1
                           ? "pt-3"
                           : "py-3"
-                    } pr-4 align-top text-sm font-medium`}
+                    } pr-4 align-top font-semibold`}
                   >
                     {DAYS[h.day_of_week]}
                   </td>

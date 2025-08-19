@@ -105,29 +105,26 @@ function ReviewItem({ review }: ReviewItemProps) {
           />
         </Link>
         <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <Link
-              href={profileHref}
-              className="text-foreground font-medium hover:underline"
-            >
-              {name}
-            </Link>
-            <div className="flex items-center gap-2">
-              <RatingStars rating={review.rating} size={16} />
-              <span className="text-sm font-medium">{review.rating}</span>
-            </div>
-          </div>
-          <div className="text-muted-foreground mt-0.5 text-sm">
+          <Link
+            href={profileHref}
+            className="text-foreground font-medium hover:underline"
+          >
+            {name}
+          </Link>
+          <div className="mt-0.5 text-sm">
             {new Date(review.created_at).toLocaleDateString()}
           </div>
         </div>
       </div>
 
-      {/* Title removed from schema; show only body */}
-
       {review.body ? (
-        <p className="text-foreground mt-3 max-w-prose">{review.body}</p>
+        <p className="text-foreground mt-3 leading-6">{review.body}</p>
       ) : null}
+
+      <div className="mt-1 flex items-center gap-2">
+        <RatingStars rating={review.rating} size={16} />
+        <span className="text-sm font-medium">{review.rating}</span>
+      </div>
 
       {review.photos && review.photos.length ? (
         <div className="mt-3">
@@ -154,7 +151,7 @@ function ReviewItem({ review }: ReviewItemProps) {
       ) : null}
 
       {user ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {(
             [
               { key: "like", icon: ThumbsUp },
@@ -169,7 +166,7 @@ function ReviewItem({ review }: ReviewItemProps) {
               <button
                 key={key}
                 type="button"
-                className={`border-border inline-flex items-center gap-1 rounded-xl border px-3 py-1 ${active ? "bg-muted" : ""}`}
+                className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl border px-3 py-1.5 ${active ? "bg-muted" : ""}`}
                 onClick={async () => {
                   if (!user) {
                     const redirect =
@@ -232,7 +229,14 @@ function ReviewItem({ review }: ReviewItemProps) {
                   }
                 }}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon
+                  width={16}
+                  height={16}
+                  className={`${active && "text-primary"} ${
+                    active && key === "love" && "fill-primary"
+                  }`}
+                  strokeWidth={active ? 2.5 : 2}
+                />
                 <span>{count}</span>
               </button>
             );
@@ -250,9 +254,9 @@ function ReviewItem({ review }: ReviewItemProps) {
               }
               setIsReplying((v) => !v);
             }}
-            className="ml-auto inline-flex items-center gap-1 rounded-xl px-2 py-1 hover:underline"
+            className="hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl px-3 py-1.5"
           >
-            <Reply className="h-3.5 w-3.5" />
+            <Reply width={16} height={16} strokeWidth={2} />
             <span>Reply</span>
           </button>
         </div>
@@ -350,7 +354,7 @@ function ReviewItem({ review }: ReviewItemProps) {
             return (
               <div
                 key={rep.id}
-                className="border-border flex gap-3.5 border-l-2 pb-4 pl-3.5"
+                className="border-border flex gap-3.5 border-l py-3 pl-3.5"
               >
                 <Link
                   href={`/profile/${rep.author?.username || rep.author?.id || "user"}`}
@@ -385,7 +389,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                     </div>
                   </div>
 
-                  <div className="text-foreground mt-2 max-w-prose">
+                  <div className="text-foreground mt-2 leading-relaxed">
                     {rep.body}
                   </div>
                   {rep.photos && rep.photos.length ? (

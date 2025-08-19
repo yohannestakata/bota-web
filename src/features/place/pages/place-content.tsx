@@ -6,6 +6,7 @@ import Hours from "@/features/place/components/hours";
 import Amenities from "@/features/place/components/amenities";
 import Menu from "@/features/place/components/menu";
 import BusinessQuickInfo from "@/features/place/components/business-quick-info";
+import TopReview from "@/features/place/components/top-review";
 import { RatingStars } from "@/components/ui/rating-stars";
 import {
   LocationHoursSkeleton,
@@ -15,7 +16,6 @@ import {
   // ReviewsSkeleton,
 } from "@/features/place/components/skeletons";
 import Reviews from "@/features/place/components/reviews";
-import { format } from "date-fns";
 import {
   PlaceWithStats,
   ReviewWithAuthor,
@@ -228,24 +228,22 @@ export default function PlaceContent({
           <h1 className="text-foreground text-4xl font-semibold tracking-tight">
             {displayName}
           </h1>
-          <div className="mt-3 flex flex-col gap-1">
+          <div className="mt-2.5 flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <RatingStars rating={averageRating} size={24} />
-              <span className="text-foreground font-medium">
+              <span className="text-foreground">
                 {averageRating.toFixed(1)}
               </span>
               <span className="text-sm">
                 ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
               </span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm">
               {isOpenNow !== undefined ? (
                 <span
-                  className={
-                    isOpenNow
-                      ? "font-medium text-green-600"
-                      : "font-medium text-red-600"
-                  }
+                  className={`${
+                    isOpenNow ? "text-green-600" : "text-red-600"
+                  } font-semibold`}
                 >
                   {isOpenNow ? "Open now" : "Closed for now"}
                 </span>
@@ -256,7 +254,7 @@ export default function PlaceContent({
               {(place.category_name || place.price_range) && (
                 <span>
                   {place.category_name}
-                  {place.category_name && place.price_range ? " · " : ""}
+                  {place.category_name && place.price_range ? " • " : ""}
                   {place.price_range
                     ? "$".repeat(
                         Math.min(
@@ -288,54 +286,7 @@ export default function PlaceContent({
           </div>
 
           {/* Top review */}
-          {topReview ? (
-            <div className="border-border mt-4 rounded-3xl border p-6">
-              <div className="flex items-center gap-3.5">
-                <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-full font-medium">
-                  {(
-                    topReview.author?.full_name ||
-                    topReview.author?.username ||
-                    "?"
-                  )
-                    .toString()
-                    .trim()
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-foreground font-medium">
-                    {topReview.author?.full_name ||
-                      topReview.author?.username ||
-                      "User"}
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <RatingStars rating={topReview.rating} size={16} />
-                    </div>
-                    <span>•</span>
-                    <span>
-                      {format(
-                        new Date(topReview.visited_at || topReview.created_at),
-                        "LLLL yyyy",
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                {topReview.body ? (
-                  <p className="text-foreground mt-3 line-clamp-3 leading-relaxed">
-                    {topReview.body}
-                  </p>
-                ) : null}
-                <div className="mt-2">
-                  <a href="#reviews" className="font-medium underline">
-                    Read the full review
-                  </a>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          {topReview && <TopReview review={topReview} />}
 
           {/* Photos */}
           <Section title="Photos">
@@ -353,7 +304,7 @@ export default function PlaceContent({
 
           {/* Description + key details */}
           <div className="border-border border-b py-12">
-            <p>{displayDescription}</p>
+            <p className="text-foreground leading-6">{displayDescription}</p>
           </div>
 
           {/* Location & Hours */}
