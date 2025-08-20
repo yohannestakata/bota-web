@@ -23,7 +23,7 @@ export default async function SimilarPlaces({
   if (!placesData.length) return null;
   return (
     <div>
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {placesData.map((p) => (
           <Link
             key={p.id}
