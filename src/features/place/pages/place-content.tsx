@@ -267,7 +267,9 @@ export default function PlaceContent({
               {(displayCity || displayState) && <span>•</span>}
               {(displayCity || displayState) && (
                 <span>
-                  {[displayCity, displayState].filter(Boolean).join(", ")}
+                  {[displayCity, place.address_line1, place.address_line2]
+                    .filter(Boolean)
+                    .join(", ")}
                 </span>
               )}
             </div>
