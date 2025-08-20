@@ -315,6 +315,12 @@ export type PlacePageData = {
       mehs_count: number;
       dislikes_count: number;
     };
+    photos: Array<{
+      id: string;
+      file_path: string;
+      alt_text?: string | null;
+      created_at: string;
+    }>;
     replies: Array<{
       id: string;
       body: string;

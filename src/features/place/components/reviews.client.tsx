@@ -129,11 +129,11 @@ function ReviewItem({ review }: ReviewItemProps) {
       {review.photos && review.photos.length ? (
         <div className="mt-3">
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="-ml-2 flex">
+            <div className="grid grid-cols-3 gap-2">
               {review.photos.slice(0, 12).map((p) => (
                 <div
                   key={p.id}
-                  className="relative ml-2 h-28 w-40 shrink-0 overflow-hidden rounded-xl"
+                  className="aspect-portrait relative shrink-0 overflow-hidden rounded-xl"
                 >
                   <Image
                     src={p.file_path}
