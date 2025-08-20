@@ -597,24 +597,50 @@ export async function getPlaces(limit = 20): Promise<PlaceWithStats[]> {
 
   if (error) throw error;
 
-  // Get stats for all places
+  // Get main branch IDs for all places
   const placeIds = (data || []).map((p) => p.id);
+  const { data: branches, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+
+  if (branchesError) throw branchesError;
+
+  // Create a map of place_id to branch_id
+  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
+
+  // Get stats for all main branches
+  const branchIds = (branches || []).map((b) => b.id);
   const { data: stats, error: statsError } = await supabase
     .from("branch_stats")
     .select(
       "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
     )
-    .in("branch_id", placeIds);
+    .in("branch_id", branchIds);
 
   if (statsError) throw statsError;
 
+  // Create a map of branch_id to stats
   const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
 
-  return (data || []).map((place) => ({
-    ...place,
-    ...statsMap.get(place.id),
-    category: place.categories,
-  }));
+  return (data || []).map((place) => {
+    const branchId = branchMap.get(place.id);
+    const placeStats = branchId ? statsMap.get(branchId) : null;
+
+    return {
+      ...place,
+      place_stats: placeStats
+        ? {
+            review_count: placeStats.review_count,
+            average_rating: placeStats.average_rating,
+            last_reviewed_at: placeStats.last_reviewed_at,
+            photo_count: placeStats.photo_count,
+          }
+        : null,
+      category: place.categories,
+    };
+  });
 }
 
 // Get places by category
@@ -638,24 +664,50 @@ export async function getPlacesByCategory(
 
   if (error) throw error;
 
-  // Get stats for all places
+  // Get main branch IDs for all places
   const placeIds = (data || []).map((p) => p.id);
+  const { data: branches, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+
+  if (branchesError) throw branchesError;
+
+  // Create a map of place_id to branch_id
+  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
+
+  // Get stats for all main branches
+  const branchIds = (branches || []).map((b) => b.id);
   const { data: stats, error: statsError } = await supabase
     .from("branch_stats")
     .select(
       "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
     )
-    .in("branch_id", placeIds);
+    .in("branch_id", branchIds);
 
   if (statsError) throw statsError;
 
+  // Create a map of branch_id to stats
   const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
 
-  return (data || []).map((place) => ({
-    ...place,
-    ...statsMap.get(place.id),
-    category: place.categories,
-  }));
+  return (data || []).map((place) => {
+    const branchId = branchMap.get(place.id);
+    const placeStats = branchId ? statsMap.get(branchId) : null;
+
+    return {
+      ...place,
+      place_stats: placeStats
+        ? {
+            review_count: placeStats.review_count,
+            average_rating: placeStats.average_rating,
+            last_reviewed_at: placeStats.last_reviewed_at,
+            photo_count: placeStats.photo_count,
+          }
+        : null,
+      category: place.categories,
+    };
+  });
 }
 
 // Get places by category with pagination
@@ -692,24 +744,50 @@ export async function getPlacesByCategoryPaged(
 
   if (error) throw error;
 
-  // Get stats for all places
+  // Get main branch IDs for all places
   const placeIds = (data || []).map((p) => p.id);
+  const { data: branches, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+
+  if (branchesError) throw branchesError;
+
+  // Create a map of place_id to branch_id
+  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
+
+  // Get stats for all main branches
+  const branchIds = (branches || []).map((b) => b.id);
   const { data: stats, error: statsError } = await supabase
     .from("branch_stats")
     .select(
       "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
     )
-    .in("branch_id", placeIds);
+    .in("branch_id", branchIds);
 
   if (statsError) throw statsError;
 
+  // Create a map of branch_id to stats
   const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
 
-  const places = (data || []).map((place) => ({
-    ...place,
-    ...statsMap.get(place.id),
-    category: place.categories,
-  }));
+  const places = (data || []).map((place) => {
+    const branchId = branchMap.get(place.id);
+    const placeStats = branchId ? statsMap.get(branchId) : null;
+
+    return {
+      ...place,
+      place_stats: placeStats
+        ? {
+            review_count: placeStats.review_count,
+            average_rating: placeStats.average_rating,
+            last_reviewed_at: placeStats.last_reviewed_at,
+            photo_count: placeStats.photo_count,
+          }
+        : null,
+      category: place.categories,
+    };
+  });
 
   return { places, total: count || 0 };
 }
@@ -737,24 +815,50 @@ export async function getSimilarPlaces(
 
   if (error) throw error;
 
-  // Get stats for all places
+  // Get main branch IDs for all places
   const placeIds = (data || []).map((p) => p.id);
+  const { data: branches, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+
+  if (branchesError) throw branchesError;
+
+  // Create a map of place_id to branch_id
+  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
+
+  // Get stats for all main branches
+  const branchIds = (branches || []).map((b) => b.id);
   const { data: stats, error: statsError } = await supabase
     .from("branch_stats")
     .select(
       "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
     )
-    .in("branch_id", placeIds);
+    .in("branch_id", branchIds);
 
   if (statsError) throw statsError;
 
+  // Create a map of branch_id to stats
   const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
 
-  return (data || []).map((place) => ({
-    ...place,
-    ...statsMap.get(place.id),
-    category: place.categories,
-  }));
+  return (data || []).map((place) => {
+    const branchId = branchMap.get(place.id);
+    const placeStats = branchId ? statsMap.get(branchId) : null;
+
+    return {
+      ...place,
+      place_stats: placeStats
+        ? {
+            review_count: placeStats.review_count,
+            average_rating: placeStats.average_rating,
+            last_reviewed_at: placeStats.last_reviewed_at,
+            photo_count: placeStats.photo_count,
+          }
+        : null,
+      category: place.categories,
+    };
+  });
 }
 
 // Get nearby places
@@ -796,24 +900,50 @@ export async function searchPlaces(
 
   if (error) throw error;
 
-  // Get stats for all places
+  // Get main branch IDs for all places
   const placeIds = (data || []).map((p) => p.id);
+  const { data: branches, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+
+  if (branchesError) throw branchesError;
+
+  // Create a map of place_id to branch_id
+  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
+
+  // Get stats for all main branches
+  const branchIds = (branches || []).map((b) => b.id);
   const { data: stats, error: statsError } = await supabase
     .from("branch_stats")
     .select(
       "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
     )
-    .in("branch_id", placeIds);
+    .in("branch_id", branchIds);
 
   if (statsError) throw statsError;
 
+  // Create a map of branch_id to stats
   const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
 
-  return (data || []).map((place) => ({
-    ...place,
-    ...statsMap.get(place.id),
-    category: place.categories,
-  }));
+  return (data || []).map((place) => {
+    const branchId = branchMap.get(place.id);
+    const placeStats = branchId ? statsMap.get(branchId) : null;
+
+    return {
+      ...place,
+      place_stats: placeStats
+        ? {
+            review_count: placeStats.review_count,
+            average_rating: placeStats.average_rating,
+            last_reviewed_at: placeStats.last_reviewed_at,
+            photo_count: placeStats.photo_count,
+          }
+        : null,
+      category: place.categories,
+    };
+  });
 }
 
 // Get all active place slugs for sitemap

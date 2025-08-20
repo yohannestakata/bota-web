@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { ThumbsUp, Heart, Meh, ThumbsDown } from "lucide-react";
 import { setReviewReaction } from "@/lib/supabase/queries";
-import { getUserReactionForReview } from "@/lib/supabase/queries/reviews";
+import {
+  getUserReactionForReview,
+  getReviewStats,
+} from "@/lib/supabase/queries/reviews";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AuthGateDialog from "@/components/ui/auth-gate-dialog.client";
 
@@ -79,11 +82,19 @@ export default function ReviewReactions({
               reactionType: next,
               userId: user.id,
             });
+            // Refetch the latest counts from the server
+            const freshStats = await getReviewStats(reviewId);
+            setCounts({
+              like: freshStats.likes_count,
+              love: freshStats.loves_count,
+              meh: freshStats.mehs_count,
+              dislike: freshStats.dislikes_count,
+            });
             // Invalidate and refetch to ensure consistency
             queryClient.invalidateQueries({
               queryKey: ["user-reaction", reviewId],
             });
-          } catch {
+          } catch (error) {
             // revert optimistic update
             queryClient.setQueryData(
               ["user-reaction", reviewId, user.id],

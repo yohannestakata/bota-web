@@ -107,23 +107,69 @@ export default function BusinessQuickInfo({
       notify("Please sign in to continue.", "error");
       return;
     }
+
+    // Check if user profile exists, create if it doesn't
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        const { error: createError } = await supabase.from("profiles").insert({
+          id: user.id,
+          username: user.email?.split("@")[0] || "user",
+          full_name: user.email?.split("@")[0] || "User",
+        });
+
+        if (createError) throw createError;
+      }
+    } catch (profileErr) {
+      console.error("Profile creation error:", profileErr);
+      notify("Failed to create user profile. Please try again.", "error");
+      return;
+    }
+
     // Optimistic toggle
     const next = !isSaved;
     setIsSaved(next);
     setSaving(true);
     try {
-      const favoriteId = branchId || place.id;
+      let favoriteBranchId = branchId;
+      if (!favoriteBranchId && branches) {
+        const mainBranch = branches.find((b) => b.is_main_branch);
+        favoriteBranchId = mainBranch?.id;
+      }
+
+      if (!favoriteBranchId) {
+        const { data: mainBranchData } = await supabase
+          .from("branches")
+          .select("id")
+          .eq("place_id", place.id)
+          .eq("is_main_branch", true)
+          .maybeSingle();
+        favoriteBranchId = mainBranchData?.id;
+      }
+
+      if (!favoriteBranchId) {
+        throw new Error("No branch found to favorite");
+      }
+
       if (next) {
         const { error } = await supabase
           .from("favorite_branches")
-          .upsert({ user_id: user.id, branch_id: favoriteId });
+          .upsert({ user_id: user.id, branch_id: favoriteBranchId });
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("favorite_branches")
           .delete()
           .eq("user_id", user.id)
-          .eq("branch_id", favoriteId);
+          .eq("branch_id", favoriteBranchId);
         if (error) throw error;
       }
     } catch (err) {
@@ -140,20 +186,50 @@ export default function BusinessQuickInfo({
     let active = true;
     (async () => {
       if (!user?.id) return;
-      const favoriteId = branchId || place.id;
+
+      // Get the branch ID to check - either the specific branch or the main branch
+      let favoriteBranchId = branchId;
+      if (!favoriteBranchId && branches) {
+        const mainBranch = branches.find((b) => b.is_main_branch);
+        favoriteBranchId = mainBranch?.id;
+      }
+
+      // If we still don't have a branch ID, try to fetch the main branch from the database
+      if (!favoriteBranchId) {
+        const { data: mainBranchData } = await supabase
+          .from("branches")
+          .select("id")
+          .eq("place_id", place.id)
+          .eq("is_main_branch", true)
+          .maybeSingle();
+        favoriteBranchId = mainBranchData?.id;
+      }
+
+      if (!favoriteBranchId) return;
+
+      console.log("Checking saved state for branch:", favoriteBranchId);
+
       const { data, error } = await supabase
         .from("favorite_branches")
         .select("branch_id")
         .eq("user_id", user.id)
-        .eq("branch_id", favoriteId)
+        .eq("branch_id", favoriteBranchId)
         .maybeSingle();
+
       if (!active) return;
-      if (!error && data) setIsSaved(true);
+
+      console.log("Saved state result:", { data, error, isSaved: !!data });
+
+      if (!error && data) {
+        setIsSaved(true);
+      } else {
+        setIsSaved(false);
+      }
     })();
     return () => {
       active = false;
     };
-  }, [user?.id, place.id, branchId]);
+  }, [user?.id, place.id, branchId, branches]);
 
   return (
     <div className="border-border rounded-3xl border p-6 shadow-xl">
@@ -267,7 +343,7 @@ export default function BusinessQuickInfo({
               type="button"
               onClick={onSave}
               disabled={saving}
-              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-200 bg-amber-50 text-amber-600" : "border-border hover:bg-muted border"}`}
+              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
             >
               <HeartIcon
                 size={14}

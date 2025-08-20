@@ -27,7 +27,9 @@ export async function createReview(input: {
 
   if (profileError || !profile) {
     console.error("Profile not found for user:", user.id, profileError);
-    throw new Error("User profile not found. Please try logging out and back in.");
+    throw new Error(
+      "User profile not found. Please try logging out and back in.",
+    );
   }
 
   const { data, error } = await supabase
@@ -257,6 +259,20 @@ export async function getRepliesForReviewIds(reviewIds: string[]): Promise<
   }
 
   return replyMap;
+}
+
+// Get review stats for a specific review
+export async function getReviewStats(reviewId: string) {
+  const { data, error } = await supabase
+    .from("review_stats")
+    .select(
+      "total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+    )
+    .eq("review_id", reviewId)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 // Get review with details

@@ -20,29 +20,33 @@ export default async function SimilarPlaces({
     (categoryId && excludePlaceId
       ? await getSimilarPlaces(categoryId, excludePlaceId, 6).catch(() => [])
       : []);
+
   if (!placesData.length) return null;
   return (
     <div>
       <div className="grid gap-3 md:grid-cols-2">
-        {placesData.map((p) => (
-          <Link
-            key={p.id}
-            href={`/place/${p.slug}`}
-            className="border-border rounded-3xl border p-4"
-          >
-            <div className="text-foreground font-semibold">{p.name}</div>
-            <div className="mt-2 flex items-center gap-2 text-sm">
-              <RatingStars
-                rating={p.place_stats?.average_rating ?? 0}
-                size={16}
-              />
-              <span>
-                {(p.place_stats?.average_rating ?? 0).toFixed(1)} (
-                {p.place_stats?.review_count ?? 0} reviews)
-              </span>
-            </div>
-          </Link>
-        ))}
+        {placesData.map((p) => {
+          const rating =
+            p.place_stats?.average_rating ?? p.stats?.average_rating ?? 0;
+          const reviewCount =
+            p.place_stats?.review_count ?? p.stats?.review_count ?? 0;
+
+          return (
+            <Link
+              key={p.id}
+              href={`/place/${p.slug}`}
+              className="border-border rounded-3xl border p-4"
+            >
+              <div className="text-foreground font-semibold">{p.name}</div>
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <RatingStars rating={rating} size={16} />
+                <span>
+                  {rating.toFixed(1)} ({reviewCount} reviews)
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

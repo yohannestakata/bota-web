@@ -643,6 +643,12 @@ export interface MenuSectionWithItems extends MenuSection {
 export interface PlaceWithStats extends Place {
   branch_id?: string; // Add branch_id for review creation
   place_stats?: BranchStats;
+  stats?: {
+    review_count: number;
+    average_rating?: number | null;
+    last_reviewed_at?: string | null;
+    photo_count: number;
+  };
 }
 
 export interface ReviewWithAuthor extends Review {

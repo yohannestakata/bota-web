@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ThumbsUp, Heart, Meh, ThumbsDown, Reply } from "lucide-react";
+import { Reply } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/app/auth-context";
-import { setReviewReaction, type ReactionType } from "@/lib/supabase/queries";
+import { type ReactionType } from "@/lib/supabase/queries";
+import ReviewReactions from "@/features/reviews/components/review-reactions.client";
 
 export interface ReviewItemProps {
   review: {
@@ -24,7 +25,7 @@ export interface ReviewItemProps {
       username?: string | null;
       avatar_url?: string | null;
     };
-    review_stats?: {
+    stats?: {
       likes_count: number;
       loves_count: number;
       mehs_count: number;
@@ -58,26 +59,6 @@ function ReviewItem({ review }: ReviewItemProps) {
   const [replyText, setReplyText] = useState("");
   const [postBusy, setPostBusy] = useState(false);
   const [replies, setReplies] = useState(review.replies || []);
-  const propReaction = review.my_reaction ?? null;
-  const [myReaction, setMyReaction] = useState<ReactionType | null>(
-    propReaction,
-  );
-  const [optimisticCounts, setOptimisticCounts] = useState<
-    Record<Exclude<ReactionType, null>, number>
-  >({
-    like: review.review_stats?.likes_count ?? 0,
-    love: review.review_stats?.loves_count ?? 0,
-    meh: review.review_stats?.mehs_count ?? 0,
-    dislike: review.review_stats?.dislikes_count ?? 0,
-  });
-
-  // Keep local state in sync with parent-provided my_reaction (e.g., after client hydration)
-  useEffect(() => {
-    if (propReaction !== myReaction) {
-      setMyReaction(propReaction);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propReaction, review.id]);
 
   const name = review.author?.full_name || review.author?.username || "User";
   const avatar =
@@ -150,97 +131,19 @@ function ReviewItem({ review }: ReviewItemProps) {
         </div>
       ) : null}
 
-      {user ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {(
-            [
-              { key: "like", icon: ThumbsUp },
-              { key: "love", icon: Heart },
-              { key: "meh", icon: Meh },
-              { key: "dislike", icon: ThumbsDown },
-            ] as const
-          ).map(({ key, icon: Icon }) => {
-            const active = myReaction === (key as ReactionType);
-            const count = optimisticCounts[key as Exclude<ReactionType, null>];
-            return (
-              <button
-                key={key}
-                type="button"
-                className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl border px-3 py-1.5 ${active ? "bg-muted" : ""}`}
-                onClick={async () => {
-                  if (!user) {
-                    const redirect =
-                      typeof window !== "undefined"
-                        ? window.location.pathname
-                        : "/";
-                    router.push(
-                      `/login?redirect=${encodeURIComponent(redirect)}`,
-                    );
-                    return;
-                  }
-                  const wasActive = myReaction === (key as ReactionType);
-                  const next: ReactionType | null = wasActive
-                    ? null
-                    : (key as ReactionType);
-                  setMyReaction(next);
-                  setOptimisticCounts((prev) => {
-                    const delta: Record<string, number> = {
-                      like: 0,
-                      love: 0,
-                      meh: 0,
-                      dislike: 0,
-                    };
-                    if (myReaction) delta[myReaction] -= 1;
-                    if (next) delta[next] += 1;
-                    return {
-                      like: prev.like + delta.like,
-                      love: prev.love + delta.love,
-                      meh: prev.meh + delta.meh,
-                      dislike: prev.dislike + delta.dislike,
-                    };
-                  });
-                  try {
-                    await setReviewReaction({
-                      reviewId: review.id,
-                      reactionType: next,
-                      userId: user.id,
-                    });
-                  } catch {
-                    // revert
-                    setMyReaction(
-                      wasActive ? (key as ReactionType) : myReaction,
-                    );
-                    setOptimisticCounts((prev) => {
-                      const delta: Record<string, number> = {
-                        like: 0,
-                        love: 0,
-                        meh: 0,
-                        dislike: 0,
-                      };
-                      if (next) delta[next] -= 1;
-                      if (myReaction) delta[myReaction] += 1;
-                      return {
-                        like: prev.like + delta.like,
-                        love: prev.love + delta.love,
-                        meh: prev.meh + delta.meh,
-                        dislike: prev.dislike + delta.dislike,
-                      };
-                    });
-                  }
-                }}
-              >
-                <Icon
-                  width={16}
-                  height={16}
-                  className={`${active && "text-primary"} ${
-                    active && key === "love" && "fill-primary"
-                  }`}
-                  strokeWidth={active ? 2.5 : 2}
-                />
-                <span>{count}</span>
-              </button>
-            );
-          })}
+      <div className="mt-4 flex items-center gap-2">
+        <ReviewReactions
+          reviewId={review.id}
+          initialCounts={{
+            like: review.stats?.likes_count ?? 0,
+            love: review.stats?.loves_count ?? 0,
+            meh: review.stats?.mehs_count ?? 0,
+            dislike: review.stats?.dislikes_count ?? 0,
+          }}
+          size={16}
+        />
+
+        {user ? (
           <button
             type="button"
             onClick={() => {
@@ -259,8 +162,8 @@ function ReviewItem({ review }: ReviewItemProps) {
             <Reply width={16} height={16} strokeWidth={2} />
             <span>Reply</span>
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {isReplying ? (
         <div className="mt-4">
