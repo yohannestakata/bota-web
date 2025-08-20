@@ -13,10 +13,11 @@ export default function TermsOfServicePage() {
             1. Acceptance of Terms
           </h2>
           <p className="mb-4">
-            Welcome to Bota Review. These Terms of Service ("Terms") govern your
-            use of our website, mobile applications, and services (collectively,
-            the "Service"). By accessing or using our Service, you agree to be
-            bound by these Terms and all applicable laws and regulations.
+            Welcome to Bota Review. These Terms of Service (&ldquo;Terms&rdquo;)
+            govern your use of our website, mobile applications, and services
+            (collectively, the &ldquo;Service&rdquo;). By accessing or using our
+            Service, you agree to be bound by these Terms and all applicable
+            laws and regulations.
           </p>
           <p className="mb-4">
             If you do not agree with any of these terms, you are prohibited from
@@ -26,7 +27,7 @@ export default function TermsOfServicePage() {
           <p>
             We reserve the right to modify these Terms at any time. We will
             notify users of any material changes by posting the new Terms on
-            this page and updating the "Last updated" date.
+            this page and updating the &ldquo;Last updated&rdquo; date.
           </p>
         </section>
 

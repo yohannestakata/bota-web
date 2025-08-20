@@ -94,7 +94,7 @@ export default function ReviewReactions({
             queryClient.invalidateQueries({
               queryKey: ["user-reaction", reviewId],
             });
-          } catch (error) {
+          } catch {
             // revert optimistic update
             queryClient.setQueryData(
               ["user-reaction", reviewId, user.id],

@@ -637,7 +637,7 @@ export async function getPlaces(limit = 20): Promise<PlaceWithStats[]> {
             last_reviewed_at: placeStats.last_reviewed_at,
             photo_count: placeStats.photo_count,
           }
-        : null,
+        : undefined,
       category: place.categories,
     };
   });
@@ -704,7 +704,7 @@ export async function getPlacesByCategory(
             last_reviewed_at: placeStats.last_reviewed_at,
             photo_count: placeStats.photo_count,
           }
-        : null,
+        : undefined,
       category: place.categories,
     };
   });
@@ -784,7 +784,7 @@ export async function getPlacesByCategoryPaged(
             last_reviewed_at: placeStats.last_reviewed_at,
             photo_count: placeStats.photo_count,
           }
-        : null,
+        : undefined,
       category: place.categories,
     };
   });
@@ -855,7 +855,7 @@ export async function getSimilarPlaces(
             last_reviewed_at: placeStats.last_reviewed_at,
             photo_count: placeStats.photo_count,
           }
-        : null,
+        : undefined,
       category: place.categories,
     };
   });
@@ -940,7 +940,7 @@ export async function searchPlaces(
             last_reviewed_at: placeStats.last_reviewed_at,
             photo_count: placeStats.photo_count,
           }
-        : null,
+        : undefined,
       category: place.categories,
     };
   });

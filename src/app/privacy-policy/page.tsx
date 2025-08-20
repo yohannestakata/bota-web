@@ -11,11 +11,11 @@ export default function PrivacyPolicyPage() {
         <section className="mb-8">
           <h2 className="mb-4 text-2xl font-semibold">1. Introduction</h2>
           <p className="mb-4">
-            Welcome to Bota Review ("we," "our," or "us"). We are committed to
-            protecting your privacy and ensuring you have a positive experience
-            on our platform. This Privacy Policy explains how we collect, use,
-            disclose, and safeguard your information when you visit our website
-            and use our services.
+            Welcome to Bota Review (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or
+            &ldquo;us&rdquo;). We are committed to protecting your privacy and
+            ensuring you have a positive experience on our platform. This
+            Privacy Policy explains how we collect, use, disclose, and safeguard
+            your information when you visit our website and use our services.
           </p>
           <p>
             By using our services, you agree to the collection and use of
@@ -262,7 +262,9 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="mb-4 text-2xl font-semibold">9. Children's Privacy</h2>
+          <h2 className="mb-4 text-2xl font-semibold">
+            9. Children&apos;s Privacy
+          </h2>
           <p className="mb-4">
             Our services are not intended for children under 13 years of age. We
             do not knowingly collect personal information from children under
@@ -322,7 +324,7 @@ export default function PrivacyPolicyPage() {
               <strong>Email:</strong> dpo@botareview.com
             </p>
             <p className="mb-2">
-              <strong>Subject Line:</strong> "Privacy Inquiry - DPO"
+              <strong>Subject Line:</strong> &ldquo;Privacy Inquiry - DPO&rdquo;
             </p>
           </div>
         </section>
