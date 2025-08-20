@@ -1,18 +1,14 @@
 "use client";
 
 import {
-  MapPinIcon,
   PhoneIcon,
   GlobeIcon,
-  TagIcon,
-  ClockIcon,
   MessageCircleIcon,
   PencilIcon,
   ImagePlusIcon,
   Share2Icon,
   HeartIcon,
 } from "lucide-react";
-import { RatingStars } from "@/components/ui/rating-stars";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/app/auth-context";
 import { useEffect, useState } from "react";
@@ -60,26 +56,11 @@ interface BusinessQuickInfoProps {
   }>;
 }
 
-function getPriceRangeDisplay(priceRange: number | null | undefined) {
-  if (!priceRange) return null;
-
-  const ranges = {
-    1: { symbol: "$", label: "Inexpensive" },
-    2: { symbol: "$$", label: "Moderate" },
-    3: { symbol: "$$$", label: "Expensive" },
-    4: { symbol: "$$$$", label: "Very Expensive" },
-  };
-
-  return ranges[priceRange as keyof typeof ranges] || null;
-}
-
 export default function BusinessQuickInfo({
   place,
   branchId,
-  showCategoryAndPrice = true,
   branches,
 }: BusinessQuickInfoProps) {
-  const priceRange = getPriceRangeDisplay(place.price_range);
   const { notify } = useToast();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);

@@ -64,6 +64,7 @@ export interface Place {
 }
 
 export interface PlaceWithStats extends Place {
+  branch_id?: string; // Add branch_id for review creation
   place_stats?: {
     review_count: number;
     average_rating: number;
