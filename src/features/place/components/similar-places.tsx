@@ -26,10 +26,8 @@ export default async function SimilarPlaces({
     <div>
       <div className="grid gap-3 md:grid-cols-2">
         {placesData.map((p) => {
-          const rating =
-            p.place_stats?.average_rating ?? 0;
-          const reviewCount =
-            p.place_stats?.review_count ?? 0;
+          const rating = p.place_stats?.average_rating ?? 0;
+          const reviewCount = p.place_stats?.review_count ?? 0;
 
           return (
             <Link
