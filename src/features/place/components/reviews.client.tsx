@@ -107,7 +107,7 @@ function ReviewItem({ review }: ReviewItemProps) {
         <div className="flex-1">
           <Link
             href={profileHref}
-            className="text-foreground font-medium hover:underline"
+            className="text-foreground font-semibold hover:underline"
           >
             {name}
           </Link>
@@ -374,7 +374,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/profile/${rep.author?.username || rep.author?.id || "user"}`}
-                        className="text-foreground font-medium hover:underline"
+                        className="text-foreground font-semibold hover:underline"
                       >
                         {rname}
                       </Link>

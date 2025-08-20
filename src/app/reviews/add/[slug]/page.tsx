@@ -50,7 +50,7 @@ export default async function AddReviewPage({
           <Suspense fallback={null}>
             {/* Client component handles auth gate and submission */}
             <AddReviewForm
-              placeId={place.id}
+              placeId={place.branch_id || place.id}
               placeSlug={place.slug}
               menuItems={menuItems}
               categories={categories}

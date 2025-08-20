@@ -18,7 +18,7 @@ export default function TopReview({ review }: TopReviewProps) {
             .toUpperCase()}
         </div>
         <div>
-          <div className="text-foreground font-medium">
+          <div className="text-foreground font-semibold">
             {review.author?.full_name || review.author?.username || "User"}
           </div>
           <div className="mt-1 text-sm">
@@ -42,7 +42,7 @@ export default function TopReview({ review }: TopReviewProps) {
         <div className="mt-3">
           <a
             href="#reviews"
-            className="font-medium underline underline-offset-4"
+            className="font-semibold underline underline-offset-4"
           >
             Read the full review
           </a>

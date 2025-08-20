@@ -63,6 +63,7 @@ export async function getPlaceBySlugWithDetails(
 
   return {
     id: branch.place_id,
+    branch_id: branch.branch_id, // Add branch_id for review creation
     name: branch.place_name,
     slug: branch.place_slug,
     description: branch.place_description,

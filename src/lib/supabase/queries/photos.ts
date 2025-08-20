@@ -97,10 +97,19 @@ export async function uploadReviewPhoto(input: {
   altText?: string;
   photoCategoryId?: number;
 }) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data, error } = await supabase
     .from("review_photos")
     .insert({
       review_id: input.reviewId,
+      author_id: user.id,
       file_path: input.filePath,
       alt_text: input.altText,
       photo_category_id: input.photoCategoryId,

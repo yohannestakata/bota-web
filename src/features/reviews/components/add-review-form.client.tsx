@@ -19,7 +19,7 @@ export default function AddReviewForm({
   menuItems,
   categories,
 }: {
-  placeId: string;
+  placeId: string; // This is now actually the branch ID
   placeSlug: string;
   menuItems: MenuItemOption[];
   categories: CategoryOption[];

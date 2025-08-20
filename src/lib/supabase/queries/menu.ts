@@ -22,7 +22,12 @@ export async function getPlaceMenu(placeId: string) {
         price,
         currency,
         is_available,
-        created_at
+        created_at,
+        menu_item_photos(
+          id,
+          file_path,
+          alt_text
+        )
       )
     `,
     )
@@ -48,6 +53,11 @@ export async function getPlaceMenu(placeId: string) {
         currency: string;
         is_available: boolean;
         created_at: string;
+        menu_item_photos?: Array<{
+          id: string;
+          file_path: string;
+          alt_text: string | null;
+        }>;
       }) => ({
         id: item.id,
         name: item.name,
@@ -56,6 +66,7 @@ export async function getPlaceMenu(placeId: string) {
         currency: item.currency,
         is_available: item.is_available,
         created_at: item.created_at,
+        menu_item_photos: item.menu_item_photos || [],
       }),
     ),
   }));

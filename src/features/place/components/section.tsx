@@ -18,7 +18,9 @@ export default function Section({
       id={id}
       className={`border-border border-b py-12 ${className ?? ""}`.trim()}
     >
-      <div className="text-foreground text-2xl font-bold">{title}</div>
+      <h2 className="text-foreground font-heading text-2xl font-bold">
+        {title}
+      </h2>
       <div className="mt-6">{children}</div>
     </section>
   );

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getPlaceMenu } from "@/lib/supabase/queries";
 import { MenuItemWithPhotos, MenuSection } from "@/lib/types/database";
+import { ImageDown, ImageIcon, ImageOff } from "lucide-react";
 
 export default async function Menu({
   placeId,
@@ -77,41 +78,50 @@ export default async function Menu({
         if (!items.length) return null;
         return (
           <div key={section.id} className="mt-8">
-            <div className="text-foreground mb-1 pl-1 text-lg font-semibold">
+            <div className="text-foreground font-heading mb-1 pl-1 text-lg font-semibold">
               {section.name}
             </div>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="border-border rounded-3xl border p-4"
+                  className="border-border flex items-center gap-3.5 rounded-3xl border p-4"
                 >
-                  {item.menu_item_photos?.[0]?.file_path ? (
-                    <div className="relative h-16 w-16 overflow-hidden rounded-xl">
-                      <Image
-                        src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
-                        alt={item.menu_item_photos[0].alt_text || item.name}
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : null}
+                  <div className="bg-muted size-24 overflow-hidden rounded-xl">
+                    {item.menu_item_photos?.[0]?.file_path ? (
+                      <div className="relative size-full">
+                        <Image
+                          src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
+                          alt={item.menu_item_photos[0].alt_text || item.name}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative size-full">
+                        <div className="text-muted-foreground flex h-full items-center justify-center p-2 text-center text-sm leading-none">
+                          <ImageOff
+                            size={24}
+                            className="text-muted-foreground"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center justify-between">
-                      <div className="text-foreground font-semibold">
-                        {item.name}
-                      </div>
-                      <div className="text-foreground font-semibold">
-                        {item.price != null
-                          ? `${item.price.toFixed(0)} ${item.currency || "ETB"}`
-                          : ""}
-                      </div>
+                  <div className="flex h-fit flex-1 flex-col overflow-hidden">
+                    <div className="text-foreground font-semibold">
+                      {item.name}
+                    </div>
+                    <div className="text-foreground mt-1 text-sm">
+                      {item.price != null
+                        ? `${item.price.toFixed(0)} ${item.currency || "ETB"}`
+                        : ""}
                     </div>
 
                     {item.description ? (
-                      <div className="mt-1 line-clamp-1 leading-6">
+                      <div className="mt-1 line-clamp-2 leading-6">
                         {item.description}
                       </div>
                     ) : null}
@@ -125,7 +135,9 @@ export default async function Menu({
 
       {ungrouped?.length ? (
         <div className="mt-6">
-          <div className="text-foreground mb-1 text-lg font-medium">Other</div>
+          <div className="text-foreground mb-1 text-lg font-semibold">
+            Other
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             {ungrouped.map((item) => (
               <div

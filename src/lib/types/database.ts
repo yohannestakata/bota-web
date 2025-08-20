@@ -641,6 +641,7 @@ export interface MenuSectionWithItems extends MenuSection {
 }
 
 export interface PlaceWithStats extends Place {
+  branch_id?: string; // Add branch_id for review creation
   place_stats?: BranchStats;
 }
 

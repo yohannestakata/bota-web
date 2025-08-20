@@ -10,10 +10,31 @@ export async function createReview(input: {
   body?: string;
   visitedAt?: string;
 }) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Check if user profile exists
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error("Profile not found for user:", user.id, profileError);
+    throw new Error("User profile not found. Please try logging out and back in.");
+  }
+
   const { data, error } = await supabase
     .from("reviews")
     .insert({
       branch_id: input.branchId,
+      author_id: user.id,
       rating: input.rating,
       body: input.body,
       visited_at: input.visitedAt,

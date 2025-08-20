@@ -224,8 +224,7 @@ export default function PlaceContent({
       {/* Main content */}
       <div className="mt-5 grid grid-cols-10 gap-24">
         <div className="col-span-6">
-          {/* Title and meta moved into left column */}
-          <h1 className="text-foreground text-4xl font-semibold tracking-tight">
+          <h1 className="text-foreground font-heading text-4xl font-bold tracking-tight">
             {displayName}
           </h1>
           <div className="mt-2.5 flex flex-col gap-1">
