@@ -8,6 +8,7 @@ import {
   searchPlaces,
 } from "@/lib/supabase/queries";
 import Link from "next/link";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 type SearchBarSize = "small" | "medium" | "large";
 
@@ -31,6 +32,7 @@ export default function SearchBar({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const enableHistory =
     process.env.NEXT_PUBLIC_ENABLE_SEARCH_HISTORY === "true";
+  const { trackSearchPerformed } = useAnalytics();
 
   // Load history on mount
   useEffect(() => {
@@ -99,6 +101,10 @@ export default function SearchBar({
     const q = query.trim();
     if (!q) return;
     if (enableHistory) await saveSearchQuery(q);
+
+    // Track search performed
+    trackSearchPerformed(q, results.length);
+
     setOpen(false);
     // TODO: Navigate to results page later
   }

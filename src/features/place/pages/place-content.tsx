@@ -1,4 +1,6 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useEffect } from "react";
 import Gallery from "@/features/place/components/gallery";
 import SimilarPlaces from "@/features/place/components/similar-places";
 import Section from "@/features/place/components/section";
@@ -23,6 +25,7 @@ import {
   MenuSection,
 } from "@/lib/types/database";
 import { getPlacePageData } from "@/lib/supabase/queries";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 interface PlaceContentProps {
   place: {
@@ -151,6 +154,12 @@ export default function PlaceContent({
   backLinkText,
   backLinkHref,
 }: PlaceContentProps) {
+  const { trackPlaceView } = useAnalytics();
+
+  // Track place view on component mount
+  useEffect(() => {
+    trackPlaceView(place, branch);
+  }, [place.id, branch?.id, trackPlaceView]);
   // Use branch data if provided, otherwise use place data
   const displayName = branch?.name || place.name;
   const displayDescription = branch?.description || place.description;

@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import Providers from "./providers";
 import Footer from "@/components/layout/footer";
 import SiteHeader from "@/components/layout/site-header";
+import PageViewTracker from "@/components/analytics/page-view-tracker";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -85,6 +86,7 @@ export default function RootLayout({
         className={`${manrope.variable} ${inter.className} bg-background antialiased`}
       >
         <Providers>
+          <PageViewTracker />
           <SiteHeader />
           {children}
           <Footer />

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
+import { usePostHog } from "posthog-js/react";
 
 type AuthContextValue = {
   user: { id: string; email?: string | null; avatarUrl?: string | null } | null;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     avatarUrl?: string | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const posthog = usePostHog();
 
   const fetchProfileAvatar = async (userId: string) => {
     try {
@@ -112,6 +114,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  // Identify user in PostHog when user state changes
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.id, {
+        email: user.email,
+        avatar_url: user.avatarUrl,
+        $set: {
+          email: user.email,
+          avatar_url: user.avatarUrl,
+        },
+      });
+    } else {
+      // Reset to anonymous user
+      posthog.reset();
+    }
+  }, [user, posthog]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

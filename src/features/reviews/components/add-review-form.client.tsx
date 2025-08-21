@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StarRating } from "./star-rating";
 import AuthGate from "@/components/ui/auth-gate";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -29,6 +30,7 @@ export default function AddReviewForm({
   const { user, isLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { trackReviewSubmitted } = useAnalytics();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -120,6 +122,17 @@ export default function AddReviewForm({
           ? new Date(values.visitedAt).toISOString().slice(0, 10)
           : undefined,
       });
+
+      // Track review submission
+      trackReviewSubmitted(
+        { id: placeId, name: "", slug: placeSlug }, // We'll need to get place name
+        {
+          rating: values.rating,
+          has_photos: files.length > 0,
+          text_length: (values.body || "").length,
+        },
+      );
+
       for (const pf of files) {
         // TODO: Upload file to Cloudinary first to get filePath
         // For now, using a placeholder to fix TypeScript error
