@@ -9,7 +9,7 @@ import {
   getReviewStats,
 } from "@/lib/supabase/queries/reviews";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import AuthGateDialog from "@/components/ui/auth-gate-dialog.client";
+import AuthGate from "@/components/ui/auth-gate";
 
 type ReactionType = "like" | "love" | "meh" | "dislike";
 
@@ -41,7 +41,6 @@ export default function ReviewReactions({
   const queryClient = useQueryClient();
   const { data: myReaction } = useUserReaction(reviewId);
   const [counts, setCounts] = useState({ ...initialCounts });
-  const [showAuth, setShowAuth] = useState(false);
 
   const Button = ({
     k,
@@ -52,88 +51,94 @@ export default function ReviewReactions({
   }) => {
     const active = myReaction === k;
     const count = counts[k];
+
+    const handleClick = async () => {
+      if (!user) return; // AuthGate will handle this
+
+      const wasActive = myReaction === k;
+      const next: ReactionType | null = wasActive ? null : k;
+
+      // Optimistic update
+      queryClient.setQueryData(["user-reaction", reviewId, user.id], next);
+      setCounts((prev) => ({
+        ...prev,
+        [k]: prev[k] + (wasActive ? -1 : 1),
+        ...(wasActive
+          ? {}
+          : myReaction
+            ? { [myReaction]: prev[myReaction] - 1 }
+            : {}),
+      }));
+
+      try {
+        await setReviewReaction({
+          reviewId,
+          reactionType: next,
+          userId: user.id,
+        });
+        // Refetch the latest counts from the server
+        const freshStats = await getReviewStats(reviewId);
+        setCounts({
+          like: freshStats.likes_count,
+          love: freshStats.loves_count,
+          meh: freshStats.mehs_count,
+          dislike: freshStats.dislikes_count,
+        });
+        // Invalidate and refetch to ensure consistency
+        queryClient.invalidateQueries({
+          queryKey: ["user-reaction", reviewId],
+        });
+      } catch {
+        // revert optimistic update
+        queryClient.setQueryData(
+          ["user-reaction", reviewId, user.id],
+          wasActive ? k : myReaction,
+        );
+        setCounts((prev) => ({
+          ...prev,
+          [k]: prev[k] + (wasActive ? 1 : -1),
+          ...(wasActive
+            ? {}
+            : myReaction
+              ? { [myReaction]: prev[myReaction] + 1 }
+              : {}),
+        }));
+      }
+    };
+
     return (
-      <button
-        type="button"
-        className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl ${
-          compact ? "px-2 py-1 text-sm" : "px-3 py-1.5"
-        } border ${active ? "bg-muted" : ""}`}
-        title={k}
-        onClick={async () => {
-          if (!user) return setShowAuth(true);
-          const wasActive = myReaction === k;
-          const next: ReactionType | null = wasActive ? null : k;
-
-          // Optimistic update
-          queryClient.setQueryData(["user-reaction", reviewId, user.id], next);
-          setCounts((prev) => ({
-            ...prev,
-            [k]: prev[k] + (wasActive ? -1 : 1),
-            ...(wasActive
-              ? {}
-              : myReaction
-                ? { [myReaction]: prev[myReaction] - 1 }
-                : {}),
-          }));
-
-          try {
-            await setReviewReaction({
-              reviewId,
-              reactionType: next,
-              userId: user.id,
-            });
-            // Refetch the latest counts from the server
-            const freshStats = await getReviewStats(reviewId);
-            setCounts({
-              like: freshStats.likes_count,
-              love: freshStats.loves_count,
-              meh: freshStats.mehs_count,
-              dislike: freshStats.dislikes_count,
-            });
-            // Invalidate and refetch to ensure consistency
-            queryClient.invalidateQueries({
-              queryKey: ["user-reaction", reviewId],
-            });
-          } catch {
-            // revert optimistic update
-            queryClient.setQueryData(
-              ["user-reaction", reviewId, user.id],
-              wasActive ? k : myReaction,
-            );
-            setCounts((prev) => ({
-              ...prev,
-              [k]: prev[k] + (wasActive ? 1 : -1),
-              ...(wasActive
-                ? {}
-                : myReaction
-                  ? { [myReaction]: prev[myReaction] + 1 }
-                  : {}),
-            }));
-          }
-        }}
+      <AuthGate
+        title="Sign in to react"
+        description="You need an account to react to reviews."
       >
-        <Icon
-          width={size}
-          height={size}
-          className={`${active && "text-primary"} ${
-            active && k === "love" && "fill-primary"
-          }`}
-          strokeWidth={active ? 2.5 : 2}
-        />
-        {!compact ? <span>{count}</span> : null}
-      </button>
+        <button
+          type="button"
+          className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl ${
+            compact ? "px-2 py-1 text-sm" : "px-3 py-1.5"
+          } border ${active ? "bg-muted" : ""}`}
+          title={k}
+          onClick={handleClick}
+        >
+          <Icon
+            width={size}
+            height={size}
+            className={`${active && "text-primary"} ${
+              active && k === "love" && "fill-primary"
+            }`}
+            strokeWidth={active ? 2.5 : 2}
+          />
+          {!compact ? <span>{count}</span> : null}
+        </button>
+      </AuthGate>
     );
   };
 
   return (
-    <>
-      <div className="flex items-center gap-2">
-        <Button k="like" Icon={ThumbsUp} />
-        <Button k="love" Icon={Heart} />
-        <Button k="meh" Icon={Meh} />
-        <Button k="dislike" Icon={ThumbsDown} />
-      </div>
-      <AuthGateDialog open={showAuth} onOpenChange={setShowAuth} />
-    </>
+    <div className="flex items-center gap-2">
+      <Button k="like" Icon={ThumbsUp} />
+      <Button k="love" Icon={Heart} />
+      <Button k="meh" Icon={Meh} />
+      <Button k="dislike" Icon={ThumbsDown} />
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import {
   getAllCategories,
   getAllActivePlaceSlugs,
+  getAllActiveBranchSlugs,
 } from "@/lib/supabase/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -57,5 +58,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...categoryRoutes, ...placeRoutes];
+  // Full set of active branch slugs for sitemap
+  let branches: Awaited<ReturnType<typeof getAllActiveBranchSlugs>> = [];
+  try {
+    branches = await getAllActiveBranchSlugs();
+  } catch {}
+
+  const branchRoutes: MetadataRoute.Sitemap = branches.map((b) => {
+    const lm = b.updated_at || new Date().toISOString();
+    return {
+      url: `${baseUrl}/place/${b.place_slug}/${b.branch_slug}`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+      lastModified: new Date(lm),
+    };
+  });
+
+  return [...staticRoutes, ...categoryRoutes, ...placeRoutes, ...branchRoutes];
 }

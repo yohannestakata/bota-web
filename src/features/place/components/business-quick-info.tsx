@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFriendlyErrorMessage } from "@/lib/errors";
 import Link from "next/link";
+import AuthGate from "@/components/ui/auth-gate";
 
 interface BusinessQuickInfoProps {
   place: {
@@ -103,10 +104,7 @@ export default function BusinessQuickInfo({
   };
 
   const onSave = async () => {
-    if (!user) {
-      notify("Please sign in to continue.", "error");
-      return;
-    }
+    if (!user) return; // AuthGate will handle this
 
     // Check if user profile exists, create if it doesn't
     try {
@@ -339,18 +337,23 @@ export default function BusinessQuickInfo({
           </Link>
 
           <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={saving}
-              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
+            <AuthGate
+              title="Sign in to save places"
+              description="Create an account to save your favorite places."
             >
-              <HeartIcon
-                size={14}
-                className={isSaved ? "text-amber-600" : ""}
-              />
-              {isSaved ? "Saved" : "Save"}
-            </button>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saving}
+                className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
+              >
+                <HeartIcon
+                  size={14}
+                  className={isSaved ? "text-amber-600" : ""}
+                />
+                {isSaved ? "Saved" : "Save"}
+              </button>
+            </AuthGate>
 
             <Link
               href={place.slug ? `/place/${place.slug}/request-edit` : "/"}

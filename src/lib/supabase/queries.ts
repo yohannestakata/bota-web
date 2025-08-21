@@ -31,6 +31,7 @@ export {
   getNearbyPlaces,
   searchPlaces,
   getAllActivePlaceSlugs,
+  getAllActiveBranchSlugs,
   getMenuItemsForPlace,
   type PlaceWithFullDetails,
   type BranchWithDetails,

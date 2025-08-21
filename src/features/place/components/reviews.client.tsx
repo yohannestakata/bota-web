@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/app/auth-context";
 import { type ReactionType } from "@/lib/supabase/queries";
 import ReviewReactions from "@/features/reviews/components/review-reactions.client";
+import AuthGate from "@/components/ui/auth-gate";
 
 export interface ReviewItemProps {
   review: {
@@ -143,26 +144,19 @@ function ReviewItem({ review }: ReviewItemProps) {
           size={16}
         />
 
-        {user ? (
+        <AuthGate
+          title="Sign in to reply"
+          description="You need an account to reply to reviews."
+        >
           <button
             type="button"
-            onClick={() => {
-              if (!user) {
-                const redirect =
-                  typeof window !== "undefined"
-                    ? window.location.pathname
-                    : "/";
-                router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
-                return;
-              }
-              setIsReplying((v) => !v);
-            }}
+            onClick={() => setIsReplying((v) => !v)}
             className="hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl px-3 py-1.5"
           >
             <Reply width={16} height={16} strokeWidth={2} />
             <span>Reply</span>
           </button>
-        ) : null}
+        </AuthGate>
       </div>
 
       {isReplying ? (

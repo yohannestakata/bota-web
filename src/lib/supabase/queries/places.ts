@@ -961,6 +961,22 @@ export async function getAllActivePlaceSlugs(
   return data || [];
 }
 
+// Get all active branch slugs for sitemap
+export async function getAllActiveBranchSlugs(
+  limitPerPage = 1000,
+): Promise<{ place_slug: string; branch_slug: string; updated_at: string }[]> {
+  const { data, error } = await supabase
+    .from("branches_with_details")
+    .select("place_slug, branch_slug, updated_at")
+    .eq("is_active", true)
+    .eq("place_is_active", true)
+    .order("updated_at", { ascending: false })
+    .limit(limitPerPage);
+
+  if (error) throw error;
+  return data || [];
+}
+
 // Flat list of menu items for a place (id + name)
 export async function getMenuItemsForPlace(
   placeId: string,
