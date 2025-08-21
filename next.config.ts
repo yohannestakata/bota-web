@@ -38,15 +38,15 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/ingest/static/:path*",
+        source: "/relay-dlLN/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/ingest/:path*",
+        source: "/relay-dlLN/:path*",
         destination: "https://us.i.posthog.com/:path*",
       },
       {
-        source: "/ingest/flags",
+        source: "/relay-dlLN/flags",
         destination: "https://us.i.posthog.com/flags",
       },
     ];
