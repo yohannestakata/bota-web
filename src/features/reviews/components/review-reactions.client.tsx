@@ -113,7 +113,7 @@ export default function ReviewReactions({
       >
         <button
           type="button"
-          className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl ${
+          className={`border-border hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 ${
             compact ? "px-2 py-1 text-sm" : "px-3 py-1.5"
           } border ${active ? "bg-muted" : ""}`}
           title={k}

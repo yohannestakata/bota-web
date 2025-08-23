@@ -55,7 +55,7 @@ export default function ConfirmDialog({
         className="absolute inset-0 bg-black/40"
         onClick={() => onOpenChange(false)}
       />
-      <div className="bg-background relative z-10 w-[90vw] max-w-md rounded-2xl border p-6 shadow-xl">
+      <div className="bg-background relative z-10 w-[90vw] max-w-md border p-6 shadow-xl">
         <div className="mb-2 text-lg font-semibold">{title}</div>
         {description ? (
           <p className="text-muted-foreground mb-4 text-sm">{description}</p>
@@ -64,7 +64,7 @@ export default function ConfirmDialog({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-md border px-3 py-2 text-sm"
+            className="border px-3 py-2 text-sm"
             disabled={!!confirmLoading}
           >
             {cancelText}
@@ -73,7 +73,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={!!confirmLoading}
-            className={`rounded-md px-3 py-2 text-sm ${
+            className={`px-3 py-2 text-sm ${
               destructive
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 : "bg-primary text-primary-foreground hover:bg-primary/90"

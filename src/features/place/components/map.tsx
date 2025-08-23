@@ -11,7 +11,7 @@ interface MapProps {
 const LeafletMap = dynamic(() => import("./leaflet-map"), {
   ssr: false,
   loading: () => (
-    <div className="border-border h-full overflow-hidden rounded-3xl border" />
+    <div className="border-border h-full overflow-hidden border" />
   ),
 });
 

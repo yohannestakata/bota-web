@@ -115,7 +115,7 @@ function ReviewItem({ review }: ReviewItemProps) {
               {review.photos.slice(0, 12).map((p) => (
                 <div
                   key={p.id}
-                  className="aspect-portrait relative shrink-0 overflow-hidden rounded-xl"
+                  className="aspect-portrait relative shrink-0 overflow-hidden"
                 >
                   <Image
                     src={p.file_path}
@@ -151,7 +151,7 @@ function ReviewItem({ review }: ReviewItemProps) {
           <button
             type="button"
             onClick={() => setIsReplying((v) => !v)}
-            className="hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 rounded-xl px-3 py-1.5"
+            className="hover:bg-muted inline-flex min-w-14 cursor-pointer items-center justify-center gap-1 px-3 py-1.5"
           >
             <Reply width={16} height={16} strokeWidth={2} />
             <span>Reply</span>
@@ -166,7 +166,7 @@ function ReviewItem({ review }: ReviewItemProps) {
             onChange={(e) => setReplyText(e.target.value)}
             placeholder="Write a reply..."
             rows={3}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+            className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none"
           />
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -220,7 +220,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                   setPostBusy(false);
                 }
               }}
-              className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm disabled:opacity-60"
+              className="bg-primary text-primary-foreground px-3 py-1 text-sm disabled:opacity-60"
             >
               {postBusy ? "Posting..." : "Post"}
             </button>
@@ -231,7 +231,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                 setIsReplying(false);
                 setReplyText("");
               }}
-              className="rounded-md border px-3 py-1 text-sm"
+              className="border px-3 py-1 text-sm"
             >
               Cancel
             </button>
@@ -276,7 +276,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                         {rname}
                       </Link>
                       {rep.is_owner && (
-                        <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+                        <span className="bg-primary text-primary-foreground px-2 py-0.5 text-xs font-medium">
                           Owner
                         </span>
                       )}
@@ -294,7 +294,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                       {rep.photos.slice(0, 6).map((p) => (
                         <div
                           key={p.id}
-                          className="relative aspect-square overflow-hidden rounded-3xl"
+                          className="relative aspect-square overflow-hidden"
                         >
                           <Image
                             src={p.file_path}

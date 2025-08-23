@@ -346,11 +346,11 @@ export default function AddPlaceForm({
     >
       <div className="space-y-6">
         {/* Tab Navigation */}
-        <div className="border-border bg-muted/50 flex rounded-lg border p-1">
+        <div className="border-border bg-muted/50 flex border p-1">
           <button
             type="button"
             onClick={() => setActiveTab("place")}
-            className={`relative flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex-1 px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === "place"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -369,7 +369,7 @@ export default function AddPlaceForm({
           <button
             type="button"
             onClick={() => setActiveTab("branch")}
-            className={`relative flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex-1 px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === "branch"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -412,7 +412,7 @@ export default function AddPlaceForm({
                       setShowNameResults(true);
                     }}
                     onFocus={() => setShowNameResults(true)}
-                    className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
+                    className="border-input bg-background w-full border px-3 py-2 focus:outline-none"
                     placeholder="Enter place name..."
                   />
                   {errors.name && (
@@ -424,7 +424,7 @@ export default function AddPlaceForm({
                   {/* Name recommendations dropdown */}
                   {showNameResults &&
                     (nameResults.length > 0 || loadingNames) && (
-                      <div className="bg-popover border-border bg-background absolute z-10 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
+                      <div className="bg-popover border-border bg-background absolute z-10 mt-1 w-full overflow-hidden border shadow-lg">
                         {loadingNames && (
                           <div className="text-muted-foreground px-3 py-2 text-sm">
                             Searching...
@@ -473,7 +473,7 @@ export default function AddPlaceForm({
                   <textarea
                     rows={4}
                     {...register("description")}
-                    className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
+                    className="border-input bg-background w-full border px-3 py-2 focus:outline-none"
                   />
                 </div>
 

@@ -49,7 +49,7 @@ export default function AddReviewEntryPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by name or city..."
-        className="border-input bg-background mb-4 w-full rounded-md border px-3 py-2 focus:outline-none"
+        className="border-input bg-background mb-4 w-full border px-3 py-2 focus:outline-none"
       />
       {loading && <div className="text-sm">Looking that up…</div>}
       {!loading && canSearch && results.length === 0 && (

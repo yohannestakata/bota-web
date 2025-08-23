@@ -29,7 +29,7 @@ export default async function CategoriesList() {
               {category.icon ? (
                 <category.icon className="mx-auto h-8 w-8" strokeWidth={1.75} />
               ) : (
-                <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+                <div className="mx-auto flex h-8 w-8 items-center justify-center bg-gray-200">
                   <span className="text-sm font-semibold underline-offset-4 group-hover:underline">
                     {category.name.charAt(0)}
                   </span>

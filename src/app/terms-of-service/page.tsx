@@ -336,7 +336,7 @@ export default function TermsOfServicePage() {
             If you have any questions about these Terms of Service, please
             contact us:
           </p>
-          <div className="bg-muted rounded-lg p-4">
+          <div className="bg-muted p-4">
             <p className="mb-2">
               <strong>Email:</strong> legal@botareview.com
             </p>

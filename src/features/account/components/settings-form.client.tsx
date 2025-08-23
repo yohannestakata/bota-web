@@ -287,7 +287,7 @@ export default function SettingsForm() {
         <div className="space-x-2">
           <button
             type="button"
-            className="rounded-md border px-3 py-1 text-sm"
+            className="border px-3 py-1 text-sm"
             onClick={startAvatarUpload}
             disabled={avatarUploading}
           >
@@ -322,7 +322,7 @@ export default function SettingsForm() {
         <input
           type="text"
           {...register("username")}
-          className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+          className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none"
         />
         {errors.username?.message ? (
           <div className="text-destructive mt-1 text-xs">
@@ -335,7 +335,7 @@ export default function SettingsForm() {
         <button
           type="submit"
           disabled={saving || !isDirty}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-sm"
         >
           {saving ? "Saving..." : "Save changes"}
         </button>
@@ -352,7 +352,7 @@ export default function SettingsForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={Boolean(authProvider) && authProvider !== "email"}
-              className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none disabled:opacity-60"
+              className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none disabled:opacity-60"
             />
             <button
               type="button"
@@ -361,7 +361,7 @@ export default function SettingsForm() {
                 emailUpdating ||
                 (Boolean(authProvider) && authProvider !== "email")
               }
-              className="rounded-md border px-3 py-2 text-sm"
+              className="border px-3 py-2 text-sm"
             >
               {emailUpdating ? "Updating..." : "Update"}
             </button>
@@ -384,13 +384,13 @@ export default function SettingsForm() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+              className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none"
             />
             <button
               type="button"
               onClick={updatePassword}
               disabled={passwordUpdating || newPassword.length < 6}
-              className="rounded-md border px-3 py-2 text-sm"
+              className="border px-3 py-2 text-sm"
             >
               {passwordUpdating ? "Updating..." : "Update"}
             </button>
@@ -408,7 +408,7 @@ export default function SettingsForm() {
         <button
           type="button"
           onClick={() => setConfirmOpen(true)}
-          className="text-destructive rounded-md border px-3 py-2 text-sm"
+          className="text-destructive border px-3 py-2 text-sm"
         >
           Delete my account
         </button>

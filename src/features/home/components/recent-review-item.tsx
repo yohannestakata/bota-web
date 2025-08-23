@@ -42,8 +42,8 @@ export default function RecentReviewItem({
   review: RecentReviewItemData;
 }) {
   return (
-    <div className="border-border rounded-3xl border p-6">
-      <div className="mt-2 flex items-center gap-3.5">
+    <div className="border-border border p-6">
+      <div className="flex items-center gap-3.5">
         <div className="bg-muted relative size-12 overflow-hidden rounded-full">
           {review.avatarUrl ? (
             <Image
@@ -70,7 +70,7 @@ export default function RecentReviewItem({
         </div>
       </div>
 
-      <div className="relative mt-3 aspect-video w-full rounded-3xl">
+      <div className="relative mt-3 aspect-video w-full">
         {review.reviewPhotos && review.reviewPhotos.length > 0 ? (
           // Show first review photo
           <Image
@@ -78,7 +78,7 @@ export default function RecentReviewItem({
             alt={review.reviewPhotos[0].alt_text || review.place}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="rounded-lg object-cover"
+            className="object-cover"
             unoptimized={false}
           />
         ) : review.branchPhotos && review.branchPhotos.length > 0 ? (
@@ -88,7 +88,7 @@ export default function RecentReviewItem({
             alt={review.branchPhotos[0].alt_text || review.place}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="rounded-lg object-cover"
+            className="object-cover"
             unoptimized={false}
           />
         ) : (
@@ -98,7 +98,7 @@ export default function RecentReviewItem({
             alt={review.place}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="rounded-lg object-cover"
+            className="object-cover"
             unoptimized={false}
           />
         )}

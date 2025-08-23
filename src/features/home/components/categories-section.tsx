@@ -9,10 +9,7 @@ export default function CategoriesSection() {
         fallback={
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
             {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 animate-pulse rounded-3xl bg-gray-200"
-              />
+              <div key={i} className="h-24 animate-pulse bg-gray-200" />
             ))}
           </div>
         }

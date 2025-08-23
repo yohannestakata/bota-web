@@ -29,7 +29,7 @@ export default function UserActions() {
             <DropdownMenu.Content
               sideOffset={8}
               align="end"
-              className="bg-popover text-popover-foreground border-border/60 z-50 min-w-48 rounded-md border p-1 shadow-md"
+              className="bg-popover text-popover-foreground border-border/60 z-50 min-w-48 border p-1 shadow-md"
             >
               <div className="px-2 py-2 text-sm font-medium">
                 {user.email ?? user.id}
@@ -38,7 +38,7 @@ export default function UserActions() {
               <DropdownMenu.Item asChild>
                 <Link
                   href="/favorites"
-                  className="hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-2 text-sm"
+                  className="hover:bg-accent hover:text-accent-foreground px-2 py-2 text-sm"
                 >
                   Favorites
                 </Link>
@@ -47,7 +47,7 @@ export default function UserActions() {
               <DropdownMenu.Item asChild>
                 <Link
                   href="/account"
-                  className="hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-2 text-sm"
+                  className="hover:bg-accent hover:text-accent-foreground px-2 py-2 text-sm"
                 >
                   Account settings
                 </Link>
@@ -56,7 +56,7 @@ export default function UserActions() {
               <DropdownMenu.Item asChild>
                 <button
                   onClick={() => void signOut()}
-                  className="hover:bg-accent hover:text-accent-foreground w-full rounded-sm px-2 py-2 text-left text-sm"
+                  className="hover:bg-accent hover:text-accent-foreground w-full px-2 py-2 text-left text-sm"
                 >
                   Sign out
                 </button>

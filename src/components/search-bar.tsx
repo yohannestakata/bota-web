@@ -156,7 +156,7 @@ export default function SearchBar({
       </form>
 
       {open && (showHistory || showResults || loading) && (
-        <div className="bg-popover border-border bg-background absolute z-10 mt-3 w-full overflow-hidden rounded-3xl border shadow-2xl">
+        <div className="bg-popover border-border bg-background absolute z-10 mt-3 w-full overflow-hidden border shadow-2xl">
           {loading && (
             <div className="text-muted-foreground px-4 py-3 text-sm">
               Looking that up…

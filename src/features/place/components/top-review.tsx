@@ -8,7 +8,7 @@ interface TopReviewProps {
 
 export default function TopReview({ review }: TopReviewProps) {
   return (
-    <div className="border-border mt-8 rounded-3xl border p-6">
+    <div className="border-border mt-8 border p-6">
       <div className="flex items-center gap-3.5">
         <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-full font-medium">
           {(review.author?.full_name || review.author?.username || "?")

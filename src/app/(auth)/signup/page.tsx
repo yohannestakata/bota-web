@@ -57,7 +57,7 @@ function SignupInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border-input bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
+            className="border-input bg-background focus:ring-ring w-full border px-3 py-2 focus:ring-2 focus:outline-none"
           />
         </div>
         <div>
@@ -67,7 +67,7 @@ function SignupInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="border-input bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
+            className="border-input bg-background focus:ring-ring w-full border px-3 py-2 focus:outline-none"
           />
         </div>
         <div>
@@ -81,7 +81,7 @@ function SignupInner() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-primary text-primary-foreground w-full rounded-md px-4 py-2 font-medium disabled:opacity-60"
+          className="bg-primary text-primary-foreground w-full px-4 py-2 font-medium disabled:opacity-60"
         >
           {loading ? "Creating your account…" : "Sign up"}
         </button>

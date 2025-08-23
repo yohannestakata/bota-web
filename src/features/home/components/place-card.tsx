@@ -21,9 +21,9 @@ export default function PlaceCard({ place }: PlaceCardProps) {
   return (
     <Link
       href={`/place/${place.slug || place.id}`}
-      className="border-border overflow-hidden rounded-3xl border transition-all duration-200"
+      className="border-border overflow-hidden border transition-all duration-200"
     >
-      <div className="bg-muted relative flex aspect-video items-center justify-center rounded-t-2xl">
+      <div className="bg-muted relative flex aspect-video items-center justify-center">
         <Image
           className="object-cover"
           fill

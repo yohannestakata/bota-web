@@ -67,7 +67,7 @@ export default async function SimilarPlaces({
             <Link
               key={p.id}
               href={`/place/${p.slug}`}
-              className="border-border rounded-3xl border p-4"
+              className="border-border border p-4"
             >
               <div className="text-foreground font-semibold">{p.name}</div>
               <div className="mt-2 flex items-center gap-2 text-sm">

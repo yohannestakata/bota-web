@@ -49,7 +49,7 @@ export default function Gallery({
 
   return (
     <div>
-      <div className="px-2">
+      <div>
         <GalleryTabs
           placeId={placeId}
           activeCategoryId={activeCategoryId}

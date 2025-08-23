@@ -7,12 +7,13 @@ export default function BranchNotFound() {
         Branch not found
       </h1>
       <p className="text-muted-foreground mt-4 text-lg">
-        The branch you&apos;re looking for doesn&apos;t exist or has been removed.
+        The branch you&apos;re looking for doesn&apos;t exist or has been
+        removed.
       </p>
       <div className="mt-8 flex justify-center gap-4">
         <Link
           href="/"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-full px-4 py-2 text-sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center px-4 py-2 text-sm"
         >
           Go home
         </Link>

@@ -18,7 +18,7 @@ export default function GoogleButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-10 w-full items-center justify-center gap-3 rounded-md border border-[#dadce0] bg-white px-4 text-sm font-medium text-[#3c4043] transition hover:bg-[#f7f8f8] focus:ring-2 focus:ring-[#1a73e8] focus:ring-offset-2 focus:outline-none active:bg-[#efefef] disabled:opacity-60 ${className}`}
+      className={`inline-flex h-10 w-full items-center justify-center gap-3 border border-[#dadce0] bg-white px-4 text-sm font-medium text-[#3c4043] transition hover:bg-[#f7f8f8] focus:ring-2 focus:ring-[#1a73e8] focus:ring-offset-2 focus:outline-none active:bg-[#efefef] disabled:opacity-60 ${className}`}
       aria-label={text}
     >
       <svg
@@ -49,4 +49,3 @@ export default function GoogleButton({
     </button>
   );
 }
-

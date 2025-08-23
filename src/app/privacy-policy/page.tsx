@@ -298,7 +298,7 @@ export default function PrivacyPolicyPage() {
             If you have any questions about this Privacy Policy or our data
             practices, please contact us:
           </p>
-          <div className="bg-muted rounded-lg p-4">
+          <div className="bg-muted p-4">
             <p className="mb-2">
               <strong>Email:</strong> privacy@botareview.com
             </p>
@@ -319,7 +319,7 @@ export default function PrivacyPolicyPage() {
             For privacy-related inquiries, you may also contact our Data
             Protection Officer:
           </p>
-          <div className="bg-muted rounded-lg p-4">
+          <div className="bg-muted p-4">
             <p className="mb-2">
               <strong>Email:</strong> dpo@botareview.com
             </p>

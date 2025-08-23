@@ -120,14 +120,14 @@ export default function PlacePhotoUpload({
         <div
           onDrop={onDrop}
           onDragOver={onDragOver}
-          className="border-border mb-2 rounded-lg border-2 border-dotted p-6 text-center"
+          className="border-border mb-2 border-2 border-dotted p-6 text-center"
         >
           <p>Drag and drop images here</p>
           <p className="text-muted-foreground text-sm">PNG, JPG up to ~5MB</p>
           <div className="mt-3">
             <button
               type="button"
-              className="rounded-md border px-3 py-1 text-sm"
+              className="border px-3 py-1 text-sm"
               onClick={() => inputRef.current?.click()}
             >
               Choose files
@@ -146,9 +146,9 @@ export default function PlacePhotoUpload({
         {files.length > 0 && (
           <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {files.map((pf) => (
-              <li key={pf.id} className="rounded-lg border p-3">
+              <li key={pf.id} className="border p-3">
                 <div className="flex items-start gap-3">
-                  <div className="relative h-20 w-28 overflow-hidden rounded">
+                  <div className="relative h-20 w-28 overflow-hidden">
                     <Image
                       src={pf.previewUrl}
                       alt="preview"
@@ -172,7 +172,7 @@ export default function PlacePhotoUpload({
                             ),
                           )
                         }
-                        className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
+                        className="border-input bg-background w-full border px-2 py-1 text-sm focus:outline-none"
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -191,7 +191,7 @@ export default function PlacePhotoUpload({
                               ),
                             )
                           }
-                          className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
+                          className="border-input bg-background w-full border px-2 py-1 text-sm focus:outline-none"
                         >
                           <option value="">None</option>
                           {menuItems.map((mi) => (
@@ -221,7 +221,7 @@ export default function PlacePhotoUpload({
                               ),
                             )
                           }
-                          className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
+                          className="border-input bg-background w-full border px-2 py-1 text-sm focus:outline-none"
                         >
                           <option value="">None</option>
                           {categories.map((c) => (
@@ -235,7 +235,7 @@ export default function PlacePhotoUpload({
                   </div>
                   <button
                     type="button"
-                    className="text-destructive ml-2 rounded-md border px-2 py-1 text-xs"
+                    className="text-destructive ml-2 border px-2 py-1 text-xs"
                     onClick={() =>
                       setFiles((prev) => prev.filter((f) => f.id !== pf.id))
                     }
@@ -254,14 +254,14 @@ export default function PlacePhotoUpload({
           <button
             type="submit"
             disabled={isSubmitting || files.length === 0}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm disabled:opacity-60"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-sm disabled:opacity-60"
           >
             {isSubmitting ? "Uploading..." : "Upload"}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-md border px-4 py-2 text-sm"
+            className="border px-4 py-2 text-sm"
           >
             Cancel
           </button>

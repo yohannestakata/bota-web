@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           {toasts.map((t) => (
             <div
               key={t.id}
-              className={`bg-background pointer-events-auto rounded-md border px-3 py-2 text-sm shadow-sm ${
+              className={`bg-background pointer-events-auto border px-3 py-2 text-sm shadow-sm ${
                 t.variant === "error"
                   ? "text-destructive"
                   : t.variant === "success"

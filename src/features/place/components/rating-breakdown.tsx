@@ -52,7 +52,7 @@ export default function RatingBreakdown({
           return (
             <div key={rating} className="flex items-center gap-2 text-sm">
               <span className="w-4 text-center font-medium">{rating}</span>
-              <div className="bg-muted h-2 flex-1 overflow-hidden rounded-full">
+              <div className="bg-muted h-2 flex-1 overflow-hidden">
                 <div
                   className="h-full bg-amber-500 transition-all duration-300"
                   style={{ width: `${percentage}%` }}

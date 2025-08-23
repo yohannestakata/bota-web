@@ -80,7 +80,7 @@ export default async function Hours({
         )}
       </div>
       {latitude && longitude ? (
-        <div className="h-full min-h-72 overflow-hidden rounded-3xl">
+        <div className="h-full min-h-72 overflow-hidden">
           <Map lat={Number(latitude)} lon={Number(longitude)} name={name} />
         </div>
       ) : null}

@@ -46,7 +46,7 @@ export default function GalleryTabs({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-6">
         {tabs.map((t) => {
           const isActive = activeCategoryId === t.id;
           return (
@@ -74,7 +74,7 @@ export default function GalleryTabs({
                   staleTime: 60_000,
                 });
               }}
-              className={`relative pb-1 text-sm transition-colors ${
+              className={`relative pb-1 transition-colors ${
                 isActive ? "font-semibold" : "font-normal"
               }`}
             >
@@ -82,7 +82,7 @@ export default function GalleryTabs({
               {isActive ? (
                 <motion.div
                   layoutId="gallery-underline"
-                  className="bg-foreground absolute right-0 -bottom-px left-0 h-0.5 rounded"
+                  className="bg-foreground absolute right-0 -bottom-px left-0 h-0.5"
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               ) : null}

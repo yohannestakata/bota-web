@@ -175,7 +175,7 @@ export default function RequestEditForm({
           <select
             value={requestType}
             onChange={(e) => setRequestType(e.target.value as RequestType)}
-            className="border-input bg-background w-full max-w-xs rounded-md border px-2 py-2 text-sm focus:outline-none"
+            className="border-input bg-background w-full max-w-xs border px-2 py-2 text-sm focus:outline-none"
           >
             <option value="correction">Correction</option>
             <option value="closure">Closure</option>
@@ -194,7 +194,7 @@ export default function RequestEditForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Proposed new name"
-                className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                className="border-input bg-background w-full border px-2 py-2 text-sm focus:outline-none"
               />
             </div>
             <div>

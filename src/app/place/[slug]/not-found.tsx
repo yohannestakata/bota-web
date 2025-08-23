@@ -13,7 +13,7 @@ export default function NotFound() {
       <div className="mt-6">
         <Link
           href="/"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-full px-4 py-2 text-sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center px-4 py-2 text-sm"
         >
           Go back home
         </Link>

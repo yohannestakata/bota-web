@@ -82,7 +82,7 @@ export default async function Amenities({
               {Icon ? (
                 <Icon size={24} strokeWidth={2} />
               ) : (
-                <span className="bg-foreground/60 h-1.5 w-1.5 rounded-full" />
+                <span className="bg-foreground/60 h-1.5 w-1.5" />
               )}
               <span>{amenityInfo?.name || "Unknown amenity"}</span>
             </div>

@@ -85,9 +85,9 @@ export default async function Menu({
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="border-border flex items-center gap-3.5 rounded-3xl border p-4"
+                  className="border-border flex items-center gap-3.5 border p-4"
                 >
-                  <div className="bg-muted size-24 overflow-hidden rounded-xl">
+                  <div className="bg-muted size-24 overflow-hidden">
                     {item.menu_item_photos?.[0]?.file_path ? (
                       <div className="relative size-full">
                         <Image
@@ -140,13 +140,10 @@ export default async function Menu({
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {ungrouped.map((item) => (
-              <div
-                key={item.id}
-                className="border-border rounded-2xl border p-3"
-              >
+              <div key={item.id} className="border-border border p-3">
                 <div className="flex items-start gap-3">
                   {item.menu_item_photos?.[0]?.file_path ? (
-                    <div className="relative h-16 w-16 overflow-hidden rounded-xl">
+                    <div className="relative h-16 w-16 overflow-hidden">
                       <Image
                         src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
                         alt={item.menu_item_photos[0].alt_text || item.name}

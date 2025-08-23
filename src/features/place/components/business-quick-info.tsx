@@ -230,7 +230,7 @@ export default function BusinessQuickInfo({
   }, [user?.id, place.id, branchId, branches]);
 
   return (
-    <div className="border-border rounded-3xl border p-6 shadow-xl">
+    <div className="border-border border p-6 shadow-xl">
       <div className="divide-border space-y-6 divide-y">
         {/* Contact Information */}
         <div className="pb-6">
@@ -293,7 +293,7 @@ export default function BusinessQuickInfo({
                       <Link
                         key={branch.id}
                         href={`/place/${place.slug}/${branch.slug}`}
-                        className="border-border block rounded-xl border p-4"
+                        className="border-border block border p-4"
                       >
                         <div className="font-semibold">{branch.name}</div>
                         {branchAddress && (
@@ -322,7 +322,7 @@ export default function BusinessQuickInfo({
         <div className="space-y-2">
           <Link
             href={place.slug ? `/reviews/add/${place.slug}` : "/reviews/add"}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold transition-colors"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 px-6 py-3 font-semibold transition-colors"
           >
             <MessageCircleIcon size={16} className="text-primary-foreground" />
             Write a Review
@@ -330,7 +330,7 @@ export default function BusinessQuickInfo({
 
           <Link
             href={place.slug ? `/place/${place.slug}/photos/add` : "/"}
-            className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-3 transition-colors"
+            className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 border px-6 py-3 transition-colors"
           >
             <ImagePlusIcon size={16} />
             Upload Photos/Video
@@ -345,7 +345,7 @@ export default function BusinessQuickInfo({
                 type="button"
                 onClick={onSave}
                 disabled={saving}
-                className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
+                className={`flex w-full cursor-pointer items-center justify-center gap-2 border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
               >
                 <HeartIcon
                   size={14}
@@ -357,7 +357,7 @@ export default function BusinessQuickInfo({
 
             <Link
               href={place.slug ? `/place/${place.slug}/request-edit` : "/"}
-              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors"
+              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 border px-4 py-3 transition-colors"
             >
               <PencilIcon size={14} />
               Edit
@@ -366,7 +366,7 @@ export default function BusinessQuickInfo({
             <button
               type="button"
               onClick={onShare}
-              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 transition-colors"
+              className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 border px-4 py-3 transition-colors"
             >
               <Share2Icon size={14} />
               Share

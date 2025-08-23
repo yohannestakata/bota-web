@@ -13,7 +13,7 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
   const center: LatLngExpression = [lat, lon];
 
   return (
-    <div className="border-border h-full overflow-hidden rounded-3xl border">
+    <div className="border-border h-full overflow-hidden border">
       <MapContainer
         center={center}
         zoom={15}
@@ -36,4 +36,3 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
     </div>
   );
 }
-

@@ -13,7 +13,7 @@ export default function RecentReviews({
 }) {
   return (
     <section className="container mx-auto mt-16 max-w-6xl px-4">
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between">
         <h2 className="text-foreground text-xl font-bold">
           {filter === "nearby"
             ? "Nearby reviews"
@@ -31,11 +31,11 @@ export default function RecentReviews({
           <div className="mt-4 grid animate-pulse gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-start gap-3">
-                <div className="bg-muted h-20 w-28 rounded-xl" />
+                <div className="bg-muted h-20 w-28" />
                 <div className="flex-1 space-y-2">
-                  <div className="bg-muted h-4 w-40 rounded" />
-                  <div className="bg-muted h-3 w-24 rounded" />
-                  <div className="bg-muted h-3 w-5/6 rounded" />
+                  <div className="bg-muted h-4 w-40" />
+                  <div className="bg-muted h-3 w-24" />
+                  <div className="bg-muted h-3 w-5/6" />
                 </div>
               </div>
             ))}

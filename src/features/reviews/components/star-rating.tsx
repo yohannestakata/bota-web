@@ -29,7 +29,7 @@ export function StarRating({
               onMouseEnter={() => setHover(v)}
               onMouseLeave={() => setHover(null)}
               onClick={() => onChange(v)}
-              className="hover:bg-accent rounded p-1"
+              className="hover:bg-accent p-1"
             >
               <RatingStars rating={filled ? 1 : 0} max={1} size={32} />
             </button>

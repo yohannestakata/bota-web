@@ -55,18 +55,18 @@ export default async function ProfilePage({
       </div>
 
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border p-4">
+        <div className="border p-4">
           <div className="text-muted-foreground text-xs">Reviews</div>
           <div className="text-2xl font-semibold">{stats.totalReviews}</div>
         </div>
-        <div className="rounded-2xl border p-4">
+        <div className="border p-4">
           <div className="text-muted-foreground text-xs">Avg rating</div>
           <div className="flex items-center gap-2">
             <RatingStars rating={stats.averageRating} size={16} />
             <div className="text-2xl font-semibold">{stats.averageRating}</div>
           </div>
         </div>
-        <div className="rounded-2xl border p-4">
+        <div className="border p-4">
           <div className="text-muted-foreground text-xs">
             Reactions received
           </div>
@@ -80,7 +80,7 @@ export default async function ProfilePage({
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
           {reviews.map((r) => (
-            <li key={r.id} className="rounded-2xl border p-4">
+            <li key={r.id} className="border p-4">
               <div className="flex items-center justify-between">
                 <Link
                   href={`/place/${r.place?.slug}`}
@@ -94,7 +94,7 @@ export default async function ProfilePage({
                 </div>
               </div>
               {r.photos && r.photos.length ? (
-                <div className="relative mt-3 aspect-video overflow-hidden rounded-xl">
+                <div className="relative mt-3 aspect-video overflow-hidden">
                   <Image
                     src={r.photos[0].file_path}
                     alt={r.photos[0].alt_text || "review photo"}

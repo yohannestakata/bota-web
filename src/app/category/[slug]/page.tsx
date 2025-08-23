@@ -106,7 +106,7 @@ export default async function CategoryPage({
       ) : (
         <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {places.map((p) => (
-            <li key={p.id} className="overflow-hidden rounded-3xl border">
+            <li key={p.id} className="overflow-hidden border">
               <Link href={`/place/${p.slug}`}>
                 <div className="relative aspect-video">
                   <Image

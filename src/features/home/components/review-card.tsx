@@ -22,8 +22,8 @@ interface ReviewCardProps {
 
 export default function ReviewCard({ review }: ReviewCardProps) {
   return (
-    <div className="border-border overflow-hidden rounded-3xl border">
-      <div className="bg-muted relative flex aspect-video items-center justify-center rounded-t-2xl">
+    <div className="border-border overflow-hidden border">
+      <div className="bg-muted relative flex aspect-video items-center justify-center">
         <Image
           className="object-cover"
           fill
