@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { StarRating } from "./star-rating";
 import AuthGate from "@/components/ui/auth-gate";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { uploadImageToBucket } from "@/lib/supabase/storage";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -134,11 +135,21 @@ export default function AddReviewForm({
       );
 
       for (const pf of files) {
-        // TODO: Upload file to Cloudinary first to get filePath
-        // For now, using a placeholder to fix TypeScript error
+        const ext = (pf.file.name.split(".").pop() || "jpg").toLowerCase();
+        const safeName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.${ext}`;
+        const objectPath = `reviews/${review.id}/${safeName}`;
+        const { dbPath } = await uploadImageToBucket({
+          bucket: "images",
+          objectPathWithinBucket: objectPath,
+          file: pf.file,
+          contentType: pf.file.type || "image/jpeg",
+          upsert: true,
+        });
         await uploadReviewPhoto({
           reviewId: review.id,
-          filePath: `placeholder/${pf.file.name}`,
+          filePath: dbPath,
           altText: pf.altText || undefined,
           photoCategoryId: pf.photoCategoryId ?? undefined,
         });

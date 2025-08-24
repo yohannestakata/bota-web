@@ -392,6 +392,8 @@ export async function getPlacePageData(
     in_photo_category_id: options?.photoCategoryId ?? null,
     in_review_limit: options?.reviewLimit ?? 10,
     in_similar_limit: options?.similarLimit ?? 6,
+    // user injected at the page level using SSR client (leave null here)
+    in_user: null,
   });
 
   console.log("RPC response:", { data, error });

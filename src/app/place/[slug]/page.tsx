@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPlacePageData } from "@/lib/supabase/queries";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import PlaceContent from "@/features/place/pages/place-content";
 import { PlaceJsonLd } from "./structured-data";
 import {
@@ -22,11 +24,32 @@ export default async function PlacePage({
   const { cat } = await searchParams;
   const activeCategoryId = cat ? Number(cat) : null;
 
-  const pageData = await getPlacePageData(slug, null, {
-    photoLimit: 12,
-    photoCategoryId: activeCategoryId ?? undefined,
-    reviewLimit: 10,
-    similarLimit: 6,
+  // One-call RPC including my_reaction
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    },
+  );
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: pageData, error } = await supabase.rpc("get_place_page_data", {
+    in_place_slug: slug,
+    in_branch_slug: null,
+    in_photo_limit: 12,
+    in_photo_category_id: activeCategoryId ?? null,
+    in_review_limit: 10,
+    in_similar_limit: 6,
+    in_user: user?.id ?? null,
   });
 
   if (!pageData || !pageData.place.is_active) {
@@ -76,6 +99,52 @@ export default async function PlacePage({
   } catch {
     // Leave undefined if hours fetch fails
   }
+
+  // Enrich reviews with current user's reaction (SSR highlight)
+  let enrichedReviews = (pageData.reviews ||
+    []) as unknown as ReviewWithAuthor[];
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {
+            // no-op: middleware refreshes tokens
+          },
+        },
+      },
+    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user && enrichedReviews.length) {
+      const reviewIds = enrichedReviews.map((r) => r.id);
+      const { data: myReactions } = await supabase
+        .from("review_reactions")
+        .select("review_id, reaction_type")
+        .eq("user_id", user.id)
+        .in("review_id", reviewIds);
+      const map = new Map<string, "like" | "love" | "meh" | "dislike">();
+      for (const row of myReactions || []) {
+        map.set(
+          String(row.review_id),
+          row.reaction_type as "like" | "love" | "meh" | "dislike",
+        );
+      }
+      enrichedReviews = enrichedReviews.map((r) => ({
+        ...(r as ReviewWithAuthor),
+        my_reaction:
+          (map.get(r.id) as "like" | "love" | "meh" | "dislike" | undefined) ??
+          null,
+      })) as unknown as ReviewWithAuthor[];
+    }
+  } catch {}
 
   return (
     <>
@@ -186,7 +255,7 @@ export default async function PlacePage({
         photos={pageData.photos}
         activeCategoryId={activeCategoryId}
         similarPlaces={pageData.similar_places as unknown as PlaceWithStats[]}
-        reviews={pageData.reviews as unknown as ReviewWithAuthor[]}
+        reviews={enrichedReviews}
       />
     </>
   );

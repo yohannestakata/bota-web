@@ -33,6 +33,7 @@ interface PlaceContentProps {
     name: string;
     slug: string;
     description: string | null;
+    my_saved?: boolean;
     category_name?: string | null;
     category_slug?: string | null;
     price_range?: number | null;

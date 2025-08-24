@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import { getPlaceMenu } from "@/lib/supabase/queries";
 import { MenuItemWithPhotos, MenuSection } from "@/lib/types/database";
 import { ImageOff } from "lucide-react";
@@ -81,7 +82,7 @@ export default async function Menu({
             <div className="text-foreground mb-1 pl-1 text-lg font-semibold">
               {section.name}
             </div>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -91,7 +92,9 @@ export default async function Menu({
                     {item.menu_item_photos?.[0]?.file_path ? (
                       <div className="relative size-full">
                         <Image
-                          src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
+                          src={normalizeImageSrc(
+                            item.menu_item_photos[0].file_path,
+                          )}
                           alt={item.menu_item_photos[0].alt_text || item.name}
                           fill
                           sizes="96px"
@@ -145,7 +148,9 @@ export default async function Menu({
                   {item.menu_item_photos?.[0]?.file_path ? (
                     <div className="relative h-16 w-16 overflow-hidden">
                       <Image
-                        src={`https://res.cloudinary.com/demo/image/fetch/q_auto,f_auto,w_200/${encodeURIComponent(item.menu_item_photos[0].file_path)}`}
+                        src={normalizeImageSrc(
+                          item.menu_item_photos[0].file_path,
+                        )}
                         alt={item.menu_item_photos[0].alt_text || item.name}
                         fill
                         sizes="64px"

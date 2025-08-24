@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import { RatingStars } from "@/components/ui/rating-stars";
 import Link from "next/link";
 import { User } from "lucide-react";
@@ -20,6 +21,7 @@ export interface RecentReviewItemData {
   loves: number;
   mehs: number;
   dislikes: number;
+  myReaction?: "like" | "love" | "meh" | "dislike" | null;
   comments: number;
   image: string;
   reviewPhotos?: Array<{
@@ -74,7 +76,7 @@ export default function RecentReviewItem({
         {review.reviewPhotos && review.reviewPhotos.length > 0 ? (
           // Show first review photo
           <Image
-            src={review.reviewPhotos[0].file_path}
+            src={normalizeImageSrc(review.reviewPhotos[0].file_path)}
             alt={review.reviewPhotos[0].alt_text || review.place}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -84,7 +86,7 @@ export default function RecentReviewItem({
         ) : review.branchPhotos && review.branchPhotos.length > 0 ? (
           // Show first branch photo as fallback
           <Image
-            src={review.branchPhotos[0].file_path}
+            src={normalizeImageSrc(review.branchPhotos[0].file_path)}
             alt={review.branchPhotos[0].alt_text || review.place}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -132,6 +134,7 @@ export default function RecentReviewItem({
                 dislike: review.dislikes,
               }}
               size={16}
+              initialMyReaction={review.myReaction ?? null}
             />
           </div>
         )}

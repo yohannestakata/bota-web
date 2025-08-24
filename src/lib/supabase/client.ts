@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey =
@@ -16,7 +16,8 @@ if (!supabaseKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Use SSR browser client so auth state is mirrored into cookies for middleware/SSR
+export const supabase = createBrowserClient(supabaseUrl, supabaseKey);
 
 // Types for our database schema
 export interface Profile {

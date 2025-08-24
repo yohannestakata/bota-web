@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/app/auth-context";
 import { supabase } from "@/lib/supabase/client";
+import { uploadImageToBucket } from "@/lib/supabase/storage";
 import { useToast } from "@/components/ui/toast";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
@@ -192,66 +193,32 @@ export default function SettingsForm() {
     if (!file || !user?.id) return;
     try {
       setAvatarUploading(true);
-      const folder = `uploads/avatars/${user.id}`;
-      const sigRes = await fetch("/api/uploads/cloudinary-sign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folder }),
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const safeName =
+        `${Date.now()}-${Math.random().toString(36).slice(2)}` + `.${ext}`;
+      const objectPath = `avatars/${user.id}/${safeName}`;
+      const { publicUrl } = await uploadImageToBucket({
+        bucket: "images",
+        objectPathWithinBucket: objectPath,
+        file,
+        contentType: file.type || "image/jpeg",
+        upsert: true,
       });
-      const sig = (await sigRes.json()) as {
-        timestamp: number;
-        signature: string;
-        apiKey: string;
-        cloudName: string;
-        folder: string;
-      };
-      if (!sigRes.ok) {
-        notify("Upload not configured. Check server logs.", "error");
-        return;
-      }
-      if (!sig.cloudName) {
-        notify("Upload not configured. Try again later.", "error");
-        return;
-      }
-
-      const form = new FormData();
-      form.append("file", file);
-      form.append("timestamp", String(sig.timestamp));
-      form.append("api_key", sig.apiKey);
-      form.append("signature", sig.signature);
-      form.append("folder", sig.folder);
-      const cloud =
-        sig.cloudName || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloud}/auto/upload`,
-        {
-          method: "POST",
-          body: form,
-        },
-      );
-      const uploadJson = (await uploadRes.json()) as {
-        secure_url: string;
-        public_id: string;
-      };
-      if (!uploadRes.ok) {
-        notify("Upload failed. Please try again.", "error");
-        return;
-      }
 
       const { error } = await supabase
         .from("profiles")
-        .update({ avatar_url: uploadJson.secure_url })
+        .update({ avatar_url: publicUrl })
         .eq("id", user.id);
       if (!error) {
         setProfile((prev) =>
-          prev ? { ...prev, avatar_url: uploadJson.secure_url } : prev,
+          prev ? { ...prev, avatar_url: publicUrl } : prev,
         );
         // Optimistic update for nav/avatar consumers
-        setAvatarUrl(uploadJson.secure_url);
+        setAvatarUrl(publicUrl);
         // Also store in auth metadata to resist provider refresh overwrite
         try {
           await supabase.auth.updateUser({
-            data: { avatar_url: uploadJson.secure_url },
+            data: { avatar_url: publicUrl },
           });
         } catch {}
         notify("Photo updated", "success");

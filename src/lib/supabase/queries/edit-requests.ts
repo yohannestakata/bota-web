@@ -1,9 +1,9 @@
 import { supabase } from "../client";
 
-// Create place edit request
+// Create branch edit request
 export async function createPlaceEditRequest(input: {
-  placeId: string;
-  requestType: string;
+  branchId: string;
+  requestType: "correction" | "closure" | "duplicate" | "other" | string;
   proposedChanges: Record<string, unknown>;
   message?: string;
   evidenceUrl?: string;
@@ -11,20 +11,18 @@ export async function createPlaceEditRequest(input: {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("User not authenticated");
 
-  // For now, we'll use the place ID as the branch ID (main branch)
-  // In the future, this could be enhanced to handle multiple branches
   const { data, error } = await supabase
     .from("branch_edit_requests")
     .insert({
-      branch_id: input.placeId, // Using place ID as branch ID for main branch
-      requester_id: userId,
-      field_name: input.requestType,
-      current_value: "",
-      proposed_value: JSON.stringify(input.proposedChanges),
-      reason: input.message || "",
+      branch_id: input.branchId,
+      author_id: userId,
+      request_type: input.requestType,
+      proposed_changes: input.proposedChanges,
+      message: input.message || null,
+      evidence_url: input.evidenceUrl || null,
       status: "pending",
     })
-    .select()
+    .select("id, status, created_at")
     .single();
 
   if (error) throw error;
@@ -41,17 +39,17 @@ export async function getMyPlaceEditRequests(branchId: string) {
     .select(
       `
       id,
-      field_name,
-      current_value,
-      proposed_value,
-      reason,
+      request_type,
+      proposed_changes,
+      message,
+      evidence_url,
       status,
       created_at,
       updated_at
     `,
     )
     .eq("branch_id", branchId)
-    .eq("requester_id", userId)
+    .eq("author_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

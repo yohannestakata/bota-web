@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -118,7 +119,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                   className="aspect-portrait relative shrink-0 overflow-hidden"
                 >
                   <Image
-                    src={p.file_path}
+                    src={normalizeImageSrc(p.file_path)}
                     alt={p.alt_text || "review photo"}
                     fill
                     sizes="(max-width: 640px) 160px, 160px"
@@ -142,6 +143,7 @@ function ReviewItem({ review }: ReviewItemProps) {
             dislike: review.stats?.dislikes_count ?? 0,
           }}
           size={16}
+          initialMyReaction={review.my_reaction ?? null}
         />
 
         <AuthGate
@@ -297,7 +299,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                           className="relative aspect-square overflow-hidden"
                         >
                           <Image
-                            src={p.file_path}
+                            src={normalizeImageSrc(p.file_path)}
                             alt={p.alt_text || "reply photo"}
                             fill
                             sizes="(max-width: 640px) 96px, 96px"

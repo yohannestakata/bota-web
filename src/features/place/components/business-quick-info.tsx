@@ -22,6 +22,7 @@ interface BusinessQuickInfoProps {
     id: string;
     name: string;
     slug?: string;
+    my_saved?: boolean;
     phone?: string | null;
     website_url?: string | null;
     address_line1?: string | null;
@@ -65,7 +66,7 @@ export default function BusinessQuickInfo({
   const { notify } = useToast();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!place.my_saved);
 
   const onShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";

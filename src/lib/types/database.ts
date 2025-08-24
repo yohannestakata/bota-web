@@ -384,6 +384,39 @@ export interface Database {
           created_at?: string;
         };
       };
+      branch_edit_requests: {
+        Row: {
+          id: string;
+          branch_id: string;
+          author_id: string;
+          request_type: "correction" | "closure" | "duplicate" | "other";
+          proposed_changes: Record<string, unknown>;
+          message: string | null;
+          evidence_url: string | null;
+          status: "pending" | "approved" | "rejected";
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          branch_id: string;
+          author_id: string;
+          request_type: "correction" | "closure" | "duplicate" | "other";
+          proposed_changes?: Record<string, unknown>;
+          message?: string | null;
+          evidence_url?: string | null;
+          status?: "pending" | "approved" | "rejected";
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["branch_edit_requests"]["Row"]
+        >;
+      };
     };
     Views: {
       recent_reviews_enriched: {
@@ -649,6 +682,7 @@ export interface PlaceWithStats extends Place {
     last_reviewed_at?: string | null;
     photo_count: number;
   };
+  cover_image_path?: string | null;
 }
 
 export interface ReviewWithAuthor extends Review {

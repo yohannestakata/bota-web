@@ -1,4 +1,5 @@
-import { CategoriesSection, RecentReviews } from "@/features/home";
+import { CategoriesSection } from "@/features/home";
+import RecentReviews from "@/features/home/components/recent-reviews";
 import SearchBar from "@/components/search-bar";
 
 export default async function Home({

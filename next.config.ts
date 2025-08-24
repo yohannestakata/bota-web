@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "res.cloudinary.com",
+        hostname: "*.supabase.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.in",
         pathname: "/**",
       },
       {
@@ -37,6 +42,11 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // Proxy public Storage objects to avoid hardcoding Supabase project host
+      {
+        source: "/public-images/:path*",
+        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL || "https://project.supabase.co"}/storage/v1/object/public/:path*`,
+      },
       {
         source: "/relay-dlLN/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",

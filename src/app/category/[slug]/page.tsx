@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import {
   getAllCategories,
   getPlacesByCategoryPaged,
 } from "@/lib/supabase/queries";
 import { RatingStars } from "@/components/ui/rating-stars";
+import type { FeaturedPlaceListItem } from "@/lib/supabase/client";
 // import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +112,10 @@ export default async function CategoryPage({
               <Link href={`/place/${p.slug}`}>
                 <div className="relative aspect-video">
                   <Image
-                    src="/vercel.svg"
+                    src={normalizeImageSrc(
+                      (p as unknown as FeaturedPlaceListItem)
+                        .cover_image_path || "/file.svg",
+                    )}
                     alt={p.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

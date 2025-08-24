@@ -10,6 +10,7 @@ import {
   searchPlaces,
 } from "@/lib/supabase/queries";
 import AuthGate from "@/components/ui/auth-gate";
+import { supabase } from "@/lib/supabase/client";
 
 type RequestType = "correction" | "closure" | "duplicate" | "other";
 
@@ -40,6 +41,13 @@ export default function RequestEditForm({
   const [hours, setHours] = useState<Record<number, DayHours>>({});
   const [message, setMessage] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [priceRange, setPriceRange] = useState<number | "">("");
+  const [categoryId, setCategoryId] = useState<number | "">("");
+  const [categories, setCategories] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
   const [duplicateQuery, setDuplicateQuery] = useState("");
   const [duplicateResults, setDuplicateResults] = useState<
     { id: string; name: string; slug: string }[]
@@ -75,6 +83,19 @@ export default function RequestEditForm({
     })();
   }, [placeId]);
 
+  // Load categories for optional category change
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("categories")
+          .select("id, name")
+          .order("name");
+        setCategories((data as Array<{ id: number; name: string }>) || []);
+      } catch {}
+    })();
+  }, []);
+
   const proposedChanges = useMemo(() => {
     const changes: Record<string, unknown> = {};
     if (requestType === "duplicate" && selectedDuplicate) {
@@ -86,6 +107,10 @@ export default function RequestEditForm({
       if (address.trim()) changes["address"] = address.trim();
       if (website.trim()) changes["website_url"] = website.trim();
       if (phone.trim()) changes["phone"] = phone.trim();
+      if (priceRange !== "") changes["price_range"] = Number(priceRange);
+      if (categoryId !== "") changes["category_id"] = Number(categoryId);
+      if (latitude.trim()) changes["latitude"] = Number(latitude);
+      if (longitude.trim()) changes["longitude"] = Number(longitude);
       // Include only days that have any value set
       const filteredDays: Record<string, DayHours> = {};
       for (let d = 0; d <= 6; d++) {
@@ -103,7 +128,19 @@ export default function RequestEditForm({
       }
     }
     return changes;
-  }, [requestType, name, address, website, phone, hours, selectedDuplicate]);
+  }, [
+    requestType,
+    name,
+    address,
+    website,
+    phone,
+    priceRange,
+    categoryId,
+    latitude,
+    longitude,
+    hours,
+    selectedDuplicate,
+  ]);
 
   // Debounced search for duplicate target
   useEffect(() => {
@@ -149,7 +186,7 @@ export default function RequestEditForm({
       setSubmitting(true);
       setError(null);
       await createPlaceEditRequest({
-        placeId,
+        branchId: placeId,
         requestType,
         proposedChanges,
         message: message.trim() || undefined,
@@ -175,7 +212,7 @@ export default function RequestEditForm({
           <select
             value={requestType}
             onChange={(e) => setRequestType(e.target.value as RequestType)}
-            className="border-input bg-background w-full max-w-xs border px-2 py-2 text-sm focus:outline-none"
+            className="border-input bg-background w-full max-w-xs rounded-md border px-2 py-2 text-sm focus:outline-none"
           >
             <option value="correction">Correction</option>
             <option value="closure">Closure</option>
@@ -184,54 +221,125 @@ export default function RequestEditForm({
           </select>
         </div>
 
-        {/* Field suggestions block (only for correction/other) */}
         {(requestType === "correction" || requestType === "other") && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Proposed new name"
-                className="border-input bg-background w-full border px-2 py-2 text-sm focus:outline-none"
-              />
+          <div className="space-y-4">
+            <div className="text-foreground text-sm font-medium">
+              Details to correct
             </div>
-            <div>
-              <label className="mb-1 block text-xs">Website</label>
-              <input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://example.com"
-                className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-              />
+            <div className="rounded-lg border p-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs">Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Proposed new name"
+                    className="border-input bg-background w-full border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Website</label>
+                  <input
+                    type="url"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="https://example.com"
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Phone</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="(555) 123-4567"
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Price range</label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setPriceRange(v)}
+                        className={`border-input ${
+                          priceRange === v ? "bg-muted" : "bg-background"
+                        } rounded-md border px-2 py-1 text-sm`}
+                      >
+                        {"$".repeat(v)}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPriceRange("")}
+                      className="text-muted-foreground hover:text-foreground text-xs"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Category</label>
+                  <select
+                    value={categoryId === "" ? "" : String(categoryId)}
+                    onChange={(e) =>
+                      setCategoryId(
+                        e.target.value ? Number(e.target.value) : "",
+                      )
+                    }
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  >
+                    <option value="">No change</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs">Address</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Street, City, State ZIP"
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Latitude</label>
+                  <input
+                    inputMode="decimal"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="e.g. 9.0108"
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">Longitude</label>
+                  <input
+                    inputMode="decimal"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="e.g. 38.7613"
+                    className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs">Phone</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(555) 123-4567"
-                className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-              />
+
+            <div className="border-t" />
+
+            <div className="text-foreground text-sm font-medium">
+              Business hours (optional)
             </div>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-xs">Address</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Street, City, State ZIP"
-                className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-              />
-            </div>
-            {/* Business hours editor */}
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-xs">
-                Business hours (optional)
-              </label>
+            <div className="rounded-lg border p-3">
               <div className="grid grid-cols-1 gap-3">
                 {(
                   [
@@ -246,7 +354,10 @@ export default function RequestEditForm({
                 ).map((label, idx) => {
                   const v = hours[idx] || {};
                   const set = (next: Partial<DayHours>) =>
-                    setHours((prev) => ({ ...prev, [idx]: { ...v, ...next } }));
+                    setHours((prev) => ({
+                      ...prev,
+                      [idx]: { ...v, ...next },
+                    }));
                   return (
                     <div key={label} className="rounded-lg border p-3">
                       <div className="mb-2 text-sm font-medium">{label}</div>
@@ -258,7 +369,6 @@ export default function RequestEditForm({
                             onChange={(e) =>
                               set({
                                 is_closed: e.target.checked || undefined,
-                                // unset conflicting fields
                                 is_24_hours: e.target.checked
                                   ? undefined
                                   : v.is_24_hours,
@@ -280,7 +390,6 @@ export default function RequestEditForm({
                             onChange={(e) =>
                               set({
                                 is_24_hours: e.target.checked || undefined,
-                                // unset conflicting fields
                                 is_closed: e.target.checked
                                   ? undefined
                                   : v.is_closed,
@@ -302,7 +411,9 @@ export default function RequestEditForm({
                               type="time"
                               value={v.open_time || ""}
                               onChange={(e) =>
-                                set({ open_time: e.target.value || undefined })
+                                set({
+                                  open_time: e.target.value || undefined,
+                                })
                               }
                               className="border-input bg-background rounded-md border px-2 py-1 text-sm focus:outline-none"
                             />
@@ -311,7 +422,9 @@ export default function RequestEditForm({
                               type="time"
                               value={v.close_time || ""}
                               onChange={(e) =>
-                                set({ close_time: e.target.value || undefined })
+                                set({
+                                  close_time: e.target.value || undefined,
+                                })
                               }
                               className="border-input bg-background rounded-md border px-2 py-1 text-sm focus:outline-none"
                             />
@@ -330,84 +443,99 @@ export default function RequestEditForm({
         )}
 
         {requestType === "duplicate" && (
-          <div>
-            <label className="mb-1 block text-xs">Duplicate of</label>
-            <input
-              type="text"
-              value={duplicateQuery}
-              onChange={(e) => {
-                setDuplicateQuery(e.target.value);
-                setSelectedDuplicate(null);
-              }}
-              placeholder="Search places by name or city"
-              className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-              autoComplete="off"
-            />
-            {selectedDuplicate ? (
-              <div className="mt-2 text-xs">
-                Selected:{" "}
-                <span className="font-medium">{selectedDuplicate.name}</span>
-                <span className="text-muted-foreground">
-                  {" "}
-                  (/{selectedDuplicate.slug})
-                </span>
-              </div>
-            ) : null}
-            {!selectedDuplicate &&
-              (duplicateResults.length > 0 || isSearching) && (
-                <ul className="bg-popover border-border mt-2 max-h-56 w-full overflow-auto rounded-md border text-sm shadow">
-                  {isSearching ? (
-                    <li className="text-muted-foreground px-3 py-2">
-                      Searching…
-                    </li>
-                  ) : (
-                    duplicateResults.map((opt) => (
-                      <li
-                        key={opt.id}
-                        className="hover:bg-muted cursor-pointer px-3 py-2"
-                        onClick={() => {
-                          setSelectedDuplicate(opt);
-                          setDuplicateQuery(opt.name);
-                          setDuplicateResults([]);
-                        }}
-                      >
-                        <div className="font-medium">{opt.name}</div>
-                        <div className="text-muted-foreground text-xs">
-                          /{opt.slug}
-                        </div>
+          <div className="space-y-4">
+            <div className="text-foreground text-sm font-medium">
+              Mark as duplicate of…
+            </div>
+            <div className="rounded-lg border p-3">
+              <label className="mb-1 block text-xs">Duplicate of</label>
+              <input
+                type="text"
+                value={duplicateQuery}
+                onChange={(e) => {
+                  setDuplicateQuery(e.target.value);
+                  setSelectedDuplicate(null);
+                }}
+                placeholder="Search places by name or city"
+                className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                autoComplete="off"
+              />
+              {selectedDuplicate ? (
+                <div className="mt-2 text-xs">
+                  Selected:{" "}
+                  <span className="font-medium">{selectedDuplicate.name}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    (/{selectedDuplicate.slug})
+                  </span>
+                </div>
+              ) : null}
+              {!selectedDuplicate &&
+                (duplicateResults.length > 0 || isSearching) && (
+                  <ul className="bg-popover border-border mt-2 max-h-56 w-full overflow-auto rounded-md border text-sm shadow">
+                    {isSearching ? (
+                      <li className="text-muted-foreground px-3 py-2">
+                        Searching…
                       </li>
-                    ))
-                  )}
-                  {!isSearching && duplicateResults.length === 0 ? (
-                    <li className="text-muted-foreground px-3 py-2">
-                      No results
-                    </li>
-                  ) : null}
-                </ul>
-              )}
+                    ) : (
+                      duplicateResults.map((opt) => (
+                        <li
+                          key={opt.id}
+                          className="hover:bg-muted cursor-pointer px-3 py-2"
+                          onClick={() => {
+                            setSelectedDuplicate(opt);
+                            setDuplicateQuery(opt.name);
+                            setDuplicateResults([]);
+                          }}
+                        >
+                          <div className="font-medium">{opt.name}</div>
+                          <div className="text-muted-foreground text-xs">
+                            /{opt.slug}
+                          </div>
+                        </li>
+                      ))
+                    )}
+                    {!isSearching && duplicateResults.length === 0 ? (
+                      <li className="text-muted-foreground px-3 py-2">
+                        No results
+                      </li>
+                    ) : null}
+                  </ul>
+                )}
+            </div>
           </div>
         )}
 
-        <div>
-          <label className="mb-1 block text-xs">Message (optional)</label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={4}
-            placeholder="Explain what needs to change and why."
-            className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-          />
-        </div>
+        <div className="border-t" />
 
-        <div>
-          <label className="mb-1 block text-xs">Evidence link (optional)</label>
-          <input
-            type="url"
-            value={evidenceUrl}
-            onChange={(e) => setEvidenceUrl(e.target.value)}
-            placeholder="Link to official site, news, etc."
-            className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
-          />
+        <div className="space-y-4">
+          <div className="text-foreground text-sm font-medium">
+            Notes & evidence (optional)
+          </div>
+          <div className="rounded-lg border p-3">
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  placeholder="Explain what needs to change and why."
+                  className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs">Evidence link</label>
+                <input
+                  type="url"
+                  value={evidenceUrl}
+                  onChange={(e) => setEvidenceUrl(e.target.value)}
+                  placeholder="Link to official site, news, etc."
+                  className="border-input bg-background w-full rounded-md border px-2 py-2 text-sm focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {error ? <div className="text-destructive text-sm">{error}</div> : null}
@@ -423,7 +551,7 @@ export default function RequestEditForm({
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-md border px-4 py-2 text-sm"
+            className="border-border hover:bg-muted rounded-md border px-4 py-2 text-sm"
           >
             Cancel
           </button>

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -96,7 +97,7 @@ export default async function ProfilePage({
               {r.photos && r.photos.length ? (
                 <div className="relative mt-3 aspect-video overflow-hidden">
                   <Image
-                    src={r.photos[0].file_path}
+                    src={normalizeImageSrc(r.photos[0].file_path)}
                     alt={r.photos[0].alt_text || "review photo"}
                     fill
                     sizes="(max-width: 640px) 100vw, 50vw"

@@ -7,6 +7,7 @@ import { useAuth } from "@/app/auth-context";
 import { useToast } from "@/components/ui/toast";
 import { uploadPlacePhoto } from "@/lib/supabase/queries";
 import AuthGate from "@/components/ui/auth-gate";
+import { uploadImageToBucket } from "@/lib/supabase/storage";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -86,11 +87,21 @@ export default function PlacePhotoUpload({
       setIsSubmitting(true);
       setError(null);
       for (const pf of files) {
-        // TODO: Upload file to Cloudinary first to get filePath
-        // For now, using a placeholder to fix TypeScript error
+        const ext = (pf.file.name.split(".").pop() || "jpg").toLowerCase();
+        const safeName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.${ext}`;
+        const objectPath = `places/${placeId}/${safeName}`;
+        const { dbPath } = await uploadImageToBucket({
+          bucket: "images",
+          objectPathWithinBucket: objectPath,
+          file: pf.file,
+          contentType: pf.file.type || "image/jpeg",
+          upsert: true,
+        });
         await uploadPlacePhoto({
           branchId: placeId,
-          filePath: `placeholder/${pf.file.name}`,
+          filePath: dbPath,
           altText: pf.altText || undefined,
           photoCategoryId: pf.photoCategoryId ?? undefined,
         });

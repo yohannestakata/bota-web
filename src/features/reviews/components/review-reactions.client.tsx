@@ -14,7 +14,10 @@ import AuthGate from "@/components/ui/auth-gate";
 type ReactionType = "like" | "love" | "meh" | "dislike";
 
 // Custom hook for fetching user reaction with React Query
-function useUserReaction(reviewId: string) {
+function useUserReaction(
+  reviewId: string,
+  initialMyReaction?: ReactionType | null,
+) {
   const { user } = useAuth();
 
   return useQuery({
@@ -23,6 +26,7 @@ function useUserReaction(reviewId: string) {
     enabled: !!user, // Only run query if user is logged in
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    initialData: initialMyReaction,
   });
 }
 
@@ -31,15 +35,17 @@ export default function ReviewReactions({
   initialCounts,
   size = 16,
   compact = false,
+  initialMyReaction,
 }: {
   reviewId: string;
   initialCounts: { like: number; love: number; meh: number; dislike: number };
   size?: number;
   compact?: boolean;
+  initialMyReaction?: ReactionType | null;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: myReaction } = useUserReaction(reviewId);
+  const { data: myReaction } = useUserReaction(reviewId, initialMyReaction);
   const [counts, setCounts] = useState({ ...initialCounts });
 
   const Button = ({
