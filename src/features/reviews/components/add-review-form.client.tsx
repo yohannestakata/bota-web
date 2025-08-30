@@ -4,6 +4,7 @@ import { useAuth } from "@/app/auth-context";
 import { createReview, uploadReviewPhoto } from "@/lib/supabase/queries";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -212,23 +213,14 @@ export default function AddReviewForm({
 
         <div>
           <label className="mb-2 block text-sm">Photos (optional)</label>
-          <div
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            className="border-border mb-2 rounded-lg border-2 border-dotted p-6 text-center"
-          >
-            <p>Drag and drop photos</p>
-            <p className="text-muted-foreground text-sm">
-              PNG or JPG up to ~5MB
-            </p>
-            <div className="mt-3">
-              <button
-                type="button"
-                className="rounded-md border px-3 py-1 text-sm"
-                onClick={() => inputRef.current?.click()}
-              >
-                Choose files
-              </button>
+          <div className="flex flex-wrap gap-3">
+            <div
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onClick={() => inputRef.current?.click()}
+              className="group bg-muted/30 hover:bg-muted aspect-portrait relative grid w-28 cursor-pointer place-items-center overflow-hidden rounded-md border md:w-40"
+            >
+              <ImagePlus className="text-muted-foreground group-hover:text-foreground h-6 w-6" />
               <input
                 ref={inputRef}
                 type="file"
@@ -238,115 +230,96 @@ export default function AddReviewForm({
                 className="hidden"
               />
             </div>
-          </div>
 
-          {files.length > 0 && (
-            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {files.map((pf) => (
-                <li key={pf.id} className="rounded-lg border p-3">
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-20 w-28 overflow-hidden rounded">
-                      <Image
-                        src={pf.previewUrl}
-                        alt="preview"
-                        fill
-                        sizes="112px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <label className="mb-1 block text-xs">Alt text</label>
-                        <input
-                          type="text"
-                          value={pf.altText || ""}
-                          onChange={(e) =>
-                            setFiles((prev) =>
-                              prev.map((f) =>
-                                f.id === pf.id
-                                  ? { ...f, altText: e.target.value }
-                                  : f,
-                              ),
-                            )
-                          }
-                          className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                        <div>
-                          <label className="mb-1 block text-xs">
-                            Relate to menu item
-                          </label>
-                          <select
-                            value={pf.menuItemId || ""}
-                            onChange={(e) =>
-                              setFiles((prev) =>
-                                prev.map((f) =>
-                                  f.id === pf.id
-                                    ? {
-                                        ...f,
-                                        menuItemId: e.target.value || null,
-                                      }
-                                    : f,
-                                ),
-                              )
-                            }
-                            className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
-                          >
-                            <option value="">None</option>
-                            {menuItems.map((mi) => (
-                              <option key={mi.id} value={mi.id}>
-                                {mi.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs">
-                            Photo category
-                          </label>
-                          <select
-                            value={pf.photoCategoryId ?? ""}
-                            onChange={(e) =>
-                              setFiles((prev) =>
-                                prev.map((f) =>
-                                  f.id === pf.id
-                                    ? {
-                                        ...f,
-                                        photoCategoryId: e.target.value
-                                          ? Number(e.target.value)
-                                          : null,
-                                      }
-                                    : f,
-                                ),
-                              )
-                            }
-                            className="border-input bg-background w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
-                          >
-                            <option value="">None</option>
-                            {categories.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-destructive ml-2 rounded-md border px-2 py-1 text-xs"
-                      onClick={() =>
-                        setFiles((prev) => prev.filter((f) => f.id !== pf.id))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+            {files.map((pf) => (
+              <div
+                key={pf.id}
+                className="group bg-muted aspect-portrait relative w-28 overflow-hidden rounded-md md:w-40"
+              >
+                <Image
+                  src={pf.previewUrl}
+                  alt="preview"
+                  fill
+                  sizes="(max-width: 768px) 112px, 160px"
+                  className="object-cover"
+                />
+
+                <button
+                  type="button"
+                  className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white group-hover:flex"
+                  onClick={() =>
+                    setFiles((prev) => prev.filter((f) => f.id !== pf.id))
+                  }
+                  aria-label="Remove photo"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+
+                <div className="absolute inset-0 hidden flex-col gap-2 bg-black/50 p-2 text-white group-hover:flex">
+                  <input
+                    type="text"
+                    placeholder="Alt text"
+                    value={pf.altText || ""}
+                    onChange={(e) =>
+                      setFiles((prev) =>
+                        prev.map((f) =>
+                          f.id === pf.id
+                            ? { ...f, altText: e.target.value }
+                            : f,
+                        ),
+                      )
+                    }
+                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black placeholder:text-gray-500 focus:outline-none"
+                  />
+                  <select
+                    value={pf.menuItemId || ""}
+                    onChange={(e) =>
+                      setFiles((prev) =>
+                        prev.map((f) =>
+                          f.id === pf.id
+                            ? { ...f, menuItemId: e.target.value || null }
+                            : f,
+                        ),
+                      )
+                    }
+                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black focus:outline-none"
+                  >
+                    <option value="">Relate to menu…</option>
+                    {menuItems.map((mi) => (
+                      <option key={mi.id} value={mi.id}>
+                        {mi.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={pf.photoCategoryId ?? ""}
+                    onChange={(e) =>
+                      setFiles((prev) =>
+                        prev.map((f) =>
+                          f.id === pf.id
+                            ? {
+                                ...f,
+                                photoCategoryId: e.target.value
+                                  ? Number(e.target.value)
+                                  : null,
+                              }
+                            : f,
+                        ),
+                      )
+                    }
+                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black focus:outline-none"
+                  >
+                    <option value="">Photo category…</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

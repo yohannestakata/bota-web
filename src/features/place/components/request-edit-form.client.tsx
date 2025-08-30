@@ -49,7 +49,6 @@ export default function RequestEditForm({
   const [hours, setHours] = useState<Record<number, DayHours>>({});
   const [message, setMessage] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
-  const [priceRange, setPriceRange] = useState<number | "">("");
   const [categoryId, setCategoryId] = useState<number | "">("");
   const [categories, setCategories] = useState<
     Array<{ id: number; name: string }>
@@ -115,7 +114,6 @@ export default function RequestEditForm({
       if (address.trim()) changes["address"] = address.trim();
       if (website.trim()) changes["website_url"] = website.trim();
       if (phone.trim()) changes["phone"] = phone.trim();
-      if (priceRange !== "") changes["price_range"] = Number(priceRange);
       if (categoryId !== "") changes["category_id"] = Number(categoryId);
       if (latitude.trim()) changes["latitude"] = Number(latitude);
       if (longitude.trim()) changes["longitude"] = Number(longitude);
@@ -142,7 +140,6 @@ export default function RequestEditForm({
     address,
     website,
     phone,
-    priceRange,
     categoryId,
     latitude,
     longitude,
@@ -189,7 +186,6 @@ export default function RequestEditForm({
       address: "",
       website_url: "",
       phone: "",
-      price_range: "",
       category_id: "",
       latitude: "",
       longitude: "",
@@ -267,8 +263,6 @@ export default function RequestEditForm({
               setWebsite={setWebsite}
               phone={phone}
               setPhone={setPhone}
-              priceRange={priceRange}
-              setPriceRange={setPriceRange}
               categories={categories}
               categoryId={categoryId}
               setCategoryId={setCategoryId}

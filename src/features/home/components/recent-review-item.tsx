@@ -1,9 +1,13 @@
+"use client";
 import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { RatingStars } from "@/components/ui/rating-stars";
 import Link from "next/link";
 import { User } from "lucide-react";
 import ReviewReactions from "@/features/reviews/components/review-reactions.client";
+import { useCallback, useMemo, useState } from "react";
+import { Dialog } from "@/components/ui/dialog";
+import useEmblaCarousel from "embla-carousel-react";
 
 export interface RecentReviewItemData {
   id: number;
@@ -43,6 +47,22 @@ export default function RecentReviewItem({
 }: {
   review: RecentReviewItemData;
 }) {
+  const [open, setOpen] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
+  const photos = useMemo(
+    () =>
+      (review.reviewPhotos && review.reviewPhotos.length
+        ? review.reviewPhotos
+        : review.branchPhotos || []) || [],
+    [review.reviewPhotos, review.branchPhotos],
+  );
+  const openDialogAt = useCallback(
+    (idx: number) => {
+      setStartIndex(idx);
+      setOpen(true);
+    },
+    [setOpen, setStartIndex],
+  );
   return (
     <div className="border-border border p-6">
       <div className="flex items-center gap-3.5">
@@ -73,28 +93,23 @@ export default function RecentReviewItem({
       </div>
 
       <div className="relative mt-3 aspect-video w-full">
-        {review.reviewPhotos && review.reviewPhotos.length > 0 ? (
-          // Show first review photo
-          <Image
-            src={normalizeImageSrc(review.reviewPhotos[0].file_path)}
-            alt={review.reviewPhotos[0].alt_text || review.place}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-            unoptimized={false}
-          />
-        ) : review.branchPhotos && review.branchPhotos.length > 0 ? (
-          // Show first branch photo as fallback
-          <Image
-            src={normalizeImageSrc(review.branchPhotos[0].file_path)}
-            alt={review.branchPhotos[0].alt_text || review.place}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-            unoptimized={false}
-          />
+        {photos.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => openDialogAt(0)}
+            className="absolute inset-0"
+            aria-label="View photos"
+          >
+            <Image
+              src={normalizeImageSrc(photos[0].file_path)}
+              alt={photos[0].alt_text || review.place}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover"
+              unoptimized={false}
+            />
+          </button>
         ) : (
-          // Fallback to the default image
           <Image
             src={review.image}
             alt={review.place}
@@ -138,6 +153,80 @@ export default function RecentReviewItem({
             />
           </div>
         )}
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen} size="5xl">
+        <GalleryDialogContent
+          photos={photos}
+          place={review.place}
+          reviewText={review.review}
+          startIndex={startIndex}
+        />
+      </Dialog>
+    </div>
+  );
+}
+
+function GalleryDialogContent({
+  photos,
+  place,
+  startIndex = 0,
+}: {
+  photos: NonNullable<RecentReviewItemData["reviewPhotos"]>;
+  place: string;
+  reviewText: string;
+  startIndex?: number;
+}) {
+  const [emblaRef, embla] = useEmblaCarousel({
+    align: "start",
+    containScroll: "trimSnaps",
+    startIndex,
+    loop: true,
+  });
+  return (
+    <div className="grid h-full grid-cols-12 gap-3 p-3 md:p-4">
+      <div className="col-span-12 h-full md:col-span-9">
+        <div className="h-full overflow-hidden" ref={emblaRef}>
+          <div className="flex h-full">
+            {photos.map((p) => (
+              <div
+                key={p.id}
+                className="relative aspect-video min-w-0 shrink-0 grow-0 basis-full"
+              >
+                <div className="relative h-full w-full">
+                  <Image
+                    src={normalizeImageSrc(p.file_path)}
+                    alt={p.alt_text || place}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="bg-muted object-contain"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="col-span-12 overflow-y-scroll md:col-span-3">
+        <div className="grid grid-cols-5 gap-1 md:grid-cols-2">
+          {photos.map((p, idx) => (
+            <button
+              key={p.id}
+              type="button"
+              className="border-border relative aspect-square overflow-hidden border"
+              onClick={() => embla?.scrollTo(idx)}
+              aria-label={`Go to image ${idx + 1}`}
+            >
+              <Image
+                src={normalizeImageSrc(p.file_path)}
+                alt={p.alt_text || place}
+                fill
+                sizes="96px"
+                className="object-cover"
+              />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

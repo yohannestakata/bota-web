@@ -7,6 +7,18 @@ import Image from "next/image";
 
 export default function UserActions() {
   const { user, signOut, isLoading } = useAuth();
+  const initials = (() => {
+    const src = user?.email || user?.id || "U";
+    const namePart = (src || "U").split("@")[0];
+    const letters = namePart
+      .replace(/[^a-zA-Z]/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const first = letters[0]?.charAt(0).toUpperCase() || "U";
+    const second = letters[1]?.charAt(0).toUpperCase() || "";
+    return `${first}${second}`;
+  })();
   return (
     <ul className="flex items-center gap-6">
       {isLoading ? null : user ? (
@@ -17,13 +29,19 @@ export default function UserActions() {
                 aria-label="User menu"
                 className="hover:ring-foreground/20 focus:ring-foreground/30 inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full ring-1 ring-transparent transition focus:ring-2 focus:outline-none"
               >
-                <Image
-                  src={user.avatarUrl || "/vercel.svg"}
-                  alt={user.email || "User"}
-                  width={36}
-                  height={36}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
+                {user.avatarUrl ? (
+                  <Image
+                    src={user.avatarUrl}
+                    alt={user.email || "User"}
+                    width={36}
+                    height={36}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="bg-muted text-foreground/80 grid h-8 w-8 place-items-center rounded-full text-[10px] font-semibold">
+                    {initials}
+                  </div>
+                )}
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content

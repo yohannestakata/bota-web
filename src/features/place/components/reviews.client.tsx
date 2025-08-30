@@ -278,7 +278,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                         {rname}
                       </Link>
                       {rep.is_owner && (
-                        <span className="bg-primary text-primary-foreground px-2 py-0.5 text-xs font-medium">
+                        <span className="bg-muted rounded-full px-2 py-0.5 text-xs font-semibold">
                           Owner
                         </span>
                       )}

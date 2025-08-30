@@ -25,15 +25,15 @@ export default function BusinessHoursSection({
         <div className="divide-border space-y-12 divide-y">
           {(
             [
-              "Sunday",
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
+              { label: "Monday", idx: 1 },
+              { label: "Tuesday", idx: 2 },
+              { label: "Wednesday", idx: 3 },
+              { label: "Thursday", idx: 4 },
+              { label: "Friday", idx: 5 },
+              { label: "Saturday", idx: 6 },
+              { label: "Sunday", idx: 0 },
             ] as const
-          ).map((label, idx) => {
+          ).map(({ label, idx }) => {
             const v = hours[idx] || {};
             const set = (next: Partial<DayHours>) =>
               setHours((prev) => ({

@@ -128,10 +128,8 @@ export default function ReviewReactions({
           <Icon
             width={size}
             height={size}
-            className={`${active && "text-primary"} ${
-              active && k === "love" && "fill-primary"
-            }`}
-            strokeWidth={active ? 2.5 : 2}
+            className={`${active && "text-primary"}`}
+            strokeWidth={active ? 3 : 2}
           />
           {!compact ? <span>{count}</span> : null}
         </button>

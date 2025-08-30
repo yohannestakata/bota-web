@@ -155,6 +155,7 @@ export default function PlaceContent({
   backLinkText,
   backLinkHref,
 }: PlaceContentProps) {
+  console.log("place", place);
   const { trackPlaceView } = useAnalytics();
 
   // Track place view on component mount

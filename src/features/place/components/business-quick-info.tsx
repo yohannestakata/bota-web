@@ -346,11 +346,12 @@ export default function BusinessQuickInfo({
                 type="button"
                 onClick={onSave}
                 disabled={saving}
-                className={`flex w-full cursor-pointer items-center justify-center gap-2 border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "border-amber-600 bg-amber-50 text-amber-600" : "border-border hover:bg-muted"}`}
+                className={`border-border hover:bg-muted flex w-full cursor-pointer items-center justify-center gap-2 border px-4 py-3 transition-colors disabled:opacity-60 ${isSaved ? "bg-muted" : ""}`}
               >
                 <HeartIcon
-                  size={14}
-                  className={isSaved ? "text-amber-600" : ""}
+                  size={16}
+                  strokeWidth={isSaved ? 3 : 2}
+                  className={isSaved ? "text-primary" : ""}
                 />
                 {isSaved ? "Saved" : "Save"}
               </button>
@@ -360,7 +361,7 @@ export default function BusinessQuickInfo({
               href={place.slug ? `/place/${place.slug}/request-edit` : "/"}
               className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 border px-4 py-3 transition-colors"
             >
-              <PencilIcon size={14} />
+              <PencilIcon size={16} />
               Edit
             </Link>
 
@@ -369,7 +370,7 @@ export default function BusinessQuickInfo({
               onClick={onShare}
               className="border-border hover:bg-muted flex w-full items-center justify-center gap-2 border px-4 py-3 transition-colors"
             >
-              <Share2Icon size={14} />
+              <Share2Icon size={16} />
               Share
             </button>
           </div>

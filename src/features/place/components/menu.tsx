@@ -79,7 +79,7 @@ export default async function Menu({
         if (!items.length) return null;
         return (
           <div key={section.id} className="mt-8">
-            <div className="text-foreground mb-1 pl-1 text-lg font-semibold">
+            <div className="text-foreground mb-1 text-lg font-semibold">
               {section.name}
             </div>
             <div className="mt-3 grid gap-2 md:grid-cols-2">

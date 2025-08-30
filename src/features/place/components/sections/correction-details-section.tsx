@@ -1,6 +1,14 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
+import dynamic from "next/dynamic";
+
+const MapPicker = dynamic(() => import("../map-picker"), {
+  ssr: false,
+  loading: () => (
+    <div className="border-border h-64 w-full overflow-hidden border md:h-80" />
+  ),
+});
 
 export default function CorrectionDetailsSection(props: {
   name: string;
@@ -9,8 +17,6 @@ export default function CorrectionDetailsSection(props: {
   setWebsite: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
-  priceRange: number | "";
-  setPriceRange: (v: number | "") => void;
   categories: Array<{ id: number; name: string }>;
   categoryId: number | "";
   setCategoryId: (v: number | "") => void;
@@ -29,8 +35,6 @@ export default function CorrectionDetailsSection(props: {
     setWebsite,
     phone,
     setPhone,
-    priceRange,
-    setPriceRange,
     categories,
     categoryId,
     setCategoryId,
@@ -83,23 +87,6 @@ export default function CorrectionDetailsSection(props: {
             />
           </div>
           <div>
-            <label className="mb-2 block font-semibold">Price range</label>
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4].map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setPriceRange(v)}
-                  className={`border-input flex-1 ${
-                    priceRange === v ? "bg-muted" : "bg-background"
-                  } border py-3 text-sm`}
-                >
-                  {"$".repeat(v)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
             <label className="mb-2 block font-semibold">Category</label>
             <select
               value={categoryId === "" ? "" : String(categoryId)}
@@ -125,6 +112,17 @@ export default function CorrectionDetailsSection(props: {
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street, City, State ZIP"
               className="border-input bg-background w-full border p-3 focus:outline-none"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-2 block font-semibold">Location</label>
+            <MapPicker
+              lat={latitude ? Number(latitude) : null}
+              lon={longitude ? Number(longitude) : null}
+              onChange={(newLat, newLon) => {
+                setLatitude(String(newLat));
+                setLongitude(String(newLon));
+              }}
             />
           </div>
           <div>
