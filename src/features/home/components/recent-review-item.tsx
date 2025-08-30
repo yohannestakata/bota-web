@@ -7,7 +7,7 @@ import { User } from "lucide-react";
 import ReviewReactions from "@/features/reviews/components/review-reactions.client";
 import { useCallback, useMemo, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
-import useEmblaCarousel from "embla-carousel-react";
+import GalleryDialogContent from "./gallery-dialog-content";
 
 export interface RecentReviewItemData {
   id: number;
@@ -159,75 +159,9 @@ export default function RecentReviewItem({
         <GalleryDialogContent
           photos={photos}
           place={review.place}
-          reviewText={review.review}
           startIndex={startIndex}
         />
       </Dialog>
-    </div>
-  );
-}
-
-function GalleryDialogContent({
-  photos,
-  place,
-  startIndex = 0,
-}: {
-  photos: NonNullable<RecentReviewItemData["reviewPhotos"]>;
-  place: string;
-  reviewText: string;
-  startIndex?: number;
-}) {
-  const [emblaRef, embla] = useEmblaCarousel({
-    align: "start",
-    containScroll: "trimSnaps",
-    startIndex,
-    loop: true,
-  });
-  return (
-    <div className="grid h-full grid-cols-12 gap-3 p-3 md:p-4">
-      <div className="col-span-12 h-full md:col-span-9">
-        <div className="h-full overflow-hidden" ref={emblaRef}>
-          <div className="flex h-full">
-            {photos.map((p) => (
-              <div
-                key={p.id}
-                className="relative aspect-video min-w-0 shrink-0 grow-0 basis-full"
-              >
-                <div className="relative h-full w-full">
-                  <Image
-                    src={normalizeImageSrc(p.file_path)}
-                    alt={p.alt_text || place}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="bg-muted object-contain"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="col-span-12 overflow-y-scroll md:col-span-3">
-        <div className="grid grid-cols-5 gap-1 md:grid-cols-2">
-          {photos.map((p, idx) => (
-            <button
-              key={p.id}
-              type="button"
-              className="border-border relative aspect-square overflow-hidden border"
-              onClick={() => embla?.scrollTo(idx)}
-              aria-label={`Go to image ${idx + 1}`}
-            >
-              <Image
-                src={normalizeImageSrc(p.file_path)}
-                alt={p.alt_text || place}
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/app/auth-context";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFriendlyErrorMessage } from "@/lib/errors";
 import Link from "next/link";
+import Image from "next/image";
+import LocationsDialog from "./locations-dialog";
 import AuthGate from "@/components/ui/auth-gate";
 
 interface BusinessQuickInfoProps {
@@ -62,11 +64,14 @@ export default function BusinessQuickInfo({
   place,
   branchId,
   branches,
+  averageRating,
+  reviewCount,
 }: BusinessQuickInfoProps) {
   const { notify } = useToast();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(!!place.my_saved);
+  const [locationsOpen, setLocationsOpen] = useState(false);
 
   const onShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -306,13 +311,15 @@ export default function BusinessQuickInfo({
                     );
                   })}
                 {branches.filter((branch) => !branch.is_main_branch).length >
-                  3 && (
-                  <div className="text-sm">
-                    +
-                    {branches.filter((branch) => !branch.is_main_branch)
-                      .length - 2}{" "}
-                    more locations
-                  </div>
+                  2 && (
+                  <button
+                    type="button"
+                    onClick={() => setLocationsOpen(true)}
+                    className="text-primary text-sm hover:underline"
+                  >
+                    View all locations (+
+                    {branches.filter((b) => !b.is_main_branch).length - 2})
+                  </button>
                 )}
               </div>
             </div>
@@ -376,6 +383,16 @@ export default function BusinessQuickInfo({
           </div>
         </div>
       </div>
+
+      <LocationsDialog
+        open={locationsOpen}
+        onOpenChange={setLocationsOpen}
+        placeName={place.name}
+        averageRating={averageRating}
+        reviewCount={reviewCount}
+        branches={branches || []}
+        placeSlug={place.slug}
+      />
     </div>
   );
 }
