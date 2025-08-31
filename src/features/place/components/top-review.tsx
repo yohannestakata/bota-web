@@ -21,7 +21,7 @@ export default function TopReview({ review }: TopReviewProps) {
           <div className="text-foreground font-semibold">
             {review.author?.full_name || review.author?.username || "User"}
           </div>
-          <div className="mt-1 text-sm">
+          <div className="mt-0.5 text-sm">
             {format(
               new Date(review.visited_at || review.created_at),
               "LLLL yyyy",

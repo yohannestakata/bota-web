@@ -4,7 +4,7 @@ import { useAuth } from "@/app/auth-context";
 import { createReview, uploadReviewPhoto } from "@/lib/supabase/queries";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,6 +13,9 @@ import { StarRating } from "./star-rating";
 import AuthGate from "@/components/ui/auth-gate";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { uploadImageToBucket } from "@/lib/supabase/storage";
+import PhotoEditorDialog, {
+  type PendingFile as PendingFileType,
+} from "./photo-editor-dialog.client";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -71,6 +74,8 @@ export default function AddReviewForm({
   };
   const [files, setFiles] = useState<PendingFile[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [activePhotoId, setActivePhoto] = useState<string | null>(null);
+  const activePhoto = files.find((f) => f.id === activePhotoId) || null;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -168,57 +173,63 @@ export default function AddReviewForm({
       title="Sign in to add a review"
       description="You need an account to share your experience."
     >
-      <form onSubmit={onSubmit} className="space-y-8">
-        <div className="space-y-6">
-          <div>
-            <div className="text-sm font-medium">Rate your experience</div>
-            <div className="mt-2">
-              <StarRating
-                value={rating}
-                onChange={(v) => setValue("rating", v)}
-              />
-            </div>
-            {errors.rating && (
-              <p className="text-destructive mt-1 text-xs">
-                {errors.rating.message as string}
-              </p>
-            )}
+      <form onSubmit={onSubmit}>
+        {/* Rating */}
+        <div className="mt-12">
+          <div className="text-foreground text-xl font-semibold">
+            Rate your experience
           </div>
-
-          <div className="grid gap-2">
-            <label className="text-sm">Last visit</label>
-            <input
-              type="date"
-              {...register("visitedAt")}
-              className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
+          <div className="mt-3">
+            <StarRating
+              value={rating}
+              onChange={(v) => setValue("rating", v)}
             />
-            {errors.visitedAt && (
-              <p className="text-destructive mt-1 text-xs">
-                {errors.visitedAt.message as string}
-              </p>
-            )}
           </div>
+          {errors.rating && (
+            <p className="text-destructive mt-1 text-xs">
+              {errors.rating.message as string}
+            </p>
+          )}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm">Tell us more (optional)</label>
+        {/* Date of visit */}
+        <div className="mt-12 grid gap-2">
+          <label className="block font-semibold">Date of visit</label>
+          <input
+            type="date"
+            {...register("visitedAt")}
+            className="border-input bg-background w-full border p-3 focus:outline-none"
+          />
+          {errors.visitedAt && (
+            <p className="text-destructive mt-1 text-xs">
+              {errors.visitedAt.message as string}
+            </p>
+          )}
+        </div>
+
+        {/* Review */}
+        <div className="mt-12">
+          <label className="mb-2 block font-semibold">
+            Your review (optional)
+          </label>
           <textarea
             rows={5}
             placeholder="Share your experience..."
             {...register("body")}
-            className="border-input bg-background w-full rounded-md border px-3 py-2 focus:outline-none"
+            className="border-input bg-background w-full border p-3 focus:outline-none"
           />
           {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm">Photos (optional)</label>
-          <div className="flex flex-wrap gap-3">
+        {/* Photos */}
+        <div className="mt-12">
+          <label className="mb-2 block font-semibold">Photos (optional)</label>
+          <div className="grid grid-cols-3 gap-2 md:gap-2">
             <div
               onDrop={onDrop}
               onDragOver={onDragOver}
               onClick={() => inputRef.current?.click()}
-              className="group bg-muted/30 hover:bg-muted aspect-portrait relative grid w-28 cursor-pointer place-items-center overflow-hidden rounded-md border md:w-40"
+              className="group bg-muted/30 hover:bg-muted aspect-portrait border-border relative grid cursor-pointer place-items-center overflow-hidden border-2 border-dotted"
             >
               <ImagePlus className="text-muted-foreground group-hover:text-foreground h-6 w-6" />
               <input
@@ -234,110 +245,67 @@ export default function AddReviewForm({
             {files.map((pf) => (
               <div
                 key={pf.id}
-                className="group bg-muted aspect-portrait relative w-28 overflow-hidden rounded-md md:w-40"
+                className="group bg-muted aspect-portrait relative overflow-hidden"
               >
                 <Image
                   src={pf.previewUrl}
                   alt="preview"
                   fill
-                  sizes="(max-width: 768px) 112px, 160px"
+                  sizes="(max-width: 768px) 33vw, (max-width: 1024px) 33vw, 33vw"
                   className="object-cover"
                 />
-
-                <button
-                  type="button"
-                  className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white group-hover:flex"
-                  onClick={() =>
-                    setFiles((prev) => prev.filter((f) => f.id !== pf.id))
-                  }
-                  aria-label="Remove photo"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-
-                <div className="absolute inset-0 hidden flex-col gap-2 bg-black/50 p-2 text-white group-hover:flex">
-                  <input
-                    type="text"
-                    placeholder="Alt text"
-                    value={pf.altText || ""}
-                    onChange={(e) =>
-                      setFiles((prev) =>
-                        prev.map((f) =>
-                          f.id === pf.id
-                            ? { ...f, altText: e.target.value }
-                            : f,
-                        ),
-                      )
-                    }
-                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black placeholder:text-gray-500 focus:outline-none"
-                  />
-                  <select
-                    value={pf.menuItemId || ""}
-                    onChange={(e) =>
-                      setFiles((prev) =>
-                        prev.map((f) =>
-                          f.id === pf.id
-                            ? { ...f, menuItemId: e.target.value || null }
-                            : f,
-                        ),
-                      )
-                    }
-                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black focus:outline-none"
+                <div className="absolute inset-0 hidden items-center justify-center gap-2 bg-black/50 group-hover:flex">
+                  <button
+                    type="button"
+                    onClick={() => setActivePhoto(pf.id)}
+                    className="border-border bg-white/90 px-2 py-1 text-xs hover:bg-white"
                   >
-                    <option value="">Relate to menu…</option>
-                    {menuItems.map((mi) => (
-                      <option key={mi.id} value={mi.id}>
-                        {mi.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={pf.photoCategoryId ?? ""}
-                    onChange={(e) =>
-                      setFiles((prev) =>
-                        prev.map((f) =>
-                          f.id === pf.id
-                            ? {
-                                ...f,
-                                photoCategoryId: e.target.value
-                                  ? Number(e.target.value)
-                                  : null,
-                              }
-                            : f,
-                        ),
-                      )
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFiles((prev) => prev.filter((f) => f.id !== pf.id))
                     }
-                    className="w-full rounded-sm bg-white/90 px-2 py-1 text-xs text-black focus:outline-none"
+                    className="border-destructive text-destructive bg-white/90 px-2 py-1 text-xs hover:bg-white"
                   >
-                    <option value="">Photo category…</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    Remove
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary text-primary-foreground rounded-md px-5 py-2 font-medium disabled:opacity-60"
-          >
-            {submitting ? "Posting your review…" : "Post review"}
-          </button>
+        <div className="mt-12 flex items-center justify-end gap-3">
           <button
             type="button"
-            className="rounded-md border px-5 py-2"
+            className="border-border hover:bg-muted border px-4 py-3"
             onClick={() => router.back()}
           >
             Cancel
           </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3 font-medium disabled:opacity-60"
+          >
+            {submitting ? "Posting your review…" : "Post review"}
+          </button>
         </div>
+        <PhotoEditorDialog
+          open={Boolean(activePhoto)}
+          onOpenChange={(v) => !v && setActivePhoto(null)}
+          file={activePhoto as PendingFileType | null}
+          menuItems={menuItems}
+          categories={categories}
+          onChange={(next) =>
+            setFiles((prev) =>
+              prev.map((f) => (f.id === next.id ? { ...f, ...next } : f)),
+            )
+          }
+          onRemove={(id) => setFiles((prev) => prev.filter((f) => f.id !== id))}
+        />
       </form>
     </AuthGate>
   );

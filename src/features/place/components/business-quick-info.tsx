@@ -315,7 +315,7 @@ export default function BusinessQuickInfo({
                   <button
                     type="button"
                     onClick={() => setLocationsOpen(true)}
-                    className="text-primary text-sm hover:underline"
+                    className="mt-0.5 text-sm font-semibold underline-offset-4 hover:underline"
                   >
                     View all locations (+
                     {branches.filter((b) => !b.is_main_branch).length - 2})

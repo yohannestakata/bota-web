@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type DialogSize =
@@ -47,9 +47,11 @@ export function Dialog({
   size?: DialogSize;
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof document !== "undefined") {
       containerRef.current = document.body as unknown as HTMLElement;
     }
@@ -64,7 +66,7 @@ export function Dialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
-  if (!open || !containerRef.current) return null;
+  if (!open || !mounted || !containerRef.current) return null;
 
   const maxW = sizeToMaxW[size] || sizeToMaxW.md;
 
@@ -82,7 +84,7 @@ export function Dialog({
         onClick={() => onOpenChange(false)}
       />
       <div
-        className={`bg-background relative z-10 w-[96vw] ${maxW} border-border h-[80vh] border p-0 shadow-xl`}
+        className={`bg-background relative z-10 w-[96vw] ${maxW} border-border max-h-[80vh] overflow-auto border p-0 shadow-xl`}
       >
         {children}
       </div>
