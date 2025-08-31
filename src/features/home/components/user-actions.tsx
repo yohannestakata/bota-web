@@ -35,7 +35,7 @@ export default function UserActions() {
                     alt={user.email || "User"}
                     width={36}
                     height={36}
-                    className="h-8 w-8 rounded-full object-cover"
+                    className="size-10 rounded-full object-cover"
                   />
                 ) : (
                   <div className="bg-muted text-foreground/80 border-border grid size-10 place-items-center rounded-full border text-sm font-semibold">
