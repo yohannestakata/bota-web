@@ -27,7 +27,7 @@ export default function UserActions() {
             <DropdownMenu.Trigger asChild>
               <button
                 aria-label="User menu"
-                className="hover:ring-foreground/20 focus:ring-foreground/30 inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full ring-1 ring-transparent transition focus:ring-2 focus:outline-none"
+                className="hover:ring-foreground/20 focus:ring-foreground/30 border-border inline-flex size-10 items-center justify-center overflow-hidden rounded-full border ring-1 ring-transparent transition focus:ring-2 focus:outline-none"
               >
                 {user.avatarUrl ? (
                   <Image
@@ -38,7 +38,7 @@ export default function UserActions() {
                     className="h-8 w-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="bg-muted text-foreground/80 grid h-8 w-8 place-items-center rounded-full text-[10px] font-semibold">
+                  <div className="bg-muted text-foreground/80 border-border grid size-10 place-items-center rounded-full border text-sm font-semibold">
                     {initials}
                   </div>
                 )}

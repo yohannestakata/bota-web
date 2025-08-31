@@ -1,15 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brand, UserActions } from "@/features/home";
 import Link from "next/link";
 import SearchBar from "../search-bar";
+import { usePathname } from "next/navigation";
 
-export default function SiteHeader() {
-  const [showSearch, setShowSearch] = useState(false);
+type HeaderMode = "scroll" | "static";
+
+export default function SiteHeader({
+  mode,
+}: {
+  mode?: HeaderMode; // if undefined, auto: scroll only on home
+}) {
+  const pathname = usePathname();
+  const resolvedMode: HeaderMode = useMemo(() => {
+    if (mode) return mode;
+    return pathname === "/" ? "scroll" : "static";
+  }, [mode, pathname]);
+
+  const [showSearch, setShowSearch] = useState(resolvedMode === "static");
 
   useEffect(() => {
+    if (resolvedMode === "static") {
+      setShowSearch(true);
+      return;
+    }
     const onScroll = () => {
       const y = window.scrollY || window.pageYOffset;
       setShowSearch(y > 120);
@@ -17,14 +34,14 @@ export default function SiteHeader() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [resolvedMode]);
 
   return (
     <header
       className="bg-background border-border/60 sticky top-0 z-50 border-b"
       style={{ zIndex: 9999 }}
     >
-      <div className="relative container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="relative container mx-auto flex h-18 max-w-6xl items-center justify-between px-4">
         <Brand />
         <motion.nav
           layout
