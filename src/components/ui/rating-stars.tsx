@@ -30,7 +30,7 @@ export function RatingStars({
             <StarIcon
               key={index}
               size={size}
-              className={`text-primary ${!isFilled ? "fill-primary/5 opacity-40" : "fill-primary opacity-100"}`}
+              className={`text-secondary ${!isFilled ? "fill-secondary/5 opacity-40" : "fill-secondary opacity-100"}`}
             />
           );
         })}

@@ -252,7 +252,7 @@ export default function PlaceContent({
               {isOpenNow !== undefined ? (
                 <span
                   className={`${
-                    isOpenNow ? "text-green-600" : "text-red-600"
+                    isOpenNow ? "text-green-700" : "text-destructive"
                   } font-semibold`}
                 >
                   {isOpenNow ? "Open now" : "Closed for now"}
