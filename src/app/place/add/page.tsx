@@ -6,12 +6,12 @@ export default async function AddPlacePage() {
   const simplified = categories.map((c) => ({ id: c.id, name: c.name }));
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-10">
-      <h1 className="mb-2 text-2xl font-semibold">Add a place</h1>
-      <p className="text-muted-foreground mb-6 text-sm">
-        Share a spot you love. We’ll help others find it.
-      </p>
-      <AddPlaceForm categories={simplified} />
+    <div className="container mx-auto max-w-2xl px-4 py-12">
+      <h1 className="text-heading text-4xl font-bold">Add a place</h1>
+      <p className="mt-2">Share a spot you love. We’ll help others find it.</p>
+      <div className="mt-8">
+        <AddPlaceForm categories={simplified} />
+      </div>
     </div>
   );
 }
