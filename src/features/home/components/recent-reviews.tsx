@@ -6,6 +6,7 @@ import { type RecentReviewEnriched } from "@/lib/types/database";
 // Queries are invoked server-side via RPC in ServerRecentReviewsList
 import { unstable_noStore as noStore } from "next/cache";
 import FilterMenu from "./filter-menu";
+import RecentReviewsLoadMore from "./recent-reviews-load-more.client";
 
 export default function RecentReviews({
   filter,
@@ -47,10 +48,15 @@ export default function RecentReviews({
           </div>
         }
       >
-        {/* Server wrapper fetches user reactions via cookies + SSR client */}
-        {/* Server Component */}
+        {/* Server wrapper fetches first page; client handles "See more" */}
         <ServerRecentReviewsList filter={filter} lat={lat} lon={lon} />
       </Suspense>
+      <RecentReviewsLoadMore
+        show={!filter || !!filter}
+        filter={(filter || "recent") as "recent" | "trending" | "nearby"}
+        lat={lat}
+        lon={lon}
+      />
     </section>
   );
 }
@@ -95,7 +101,7 @@ async function ServerRecentReviewsList({
           in_lat: lat,
           in_lon: lon,
           in_radius_meters: 10000,
-          in_limit: 9,
+          in_limit: 12,
           in_user: user?.id ?? null,
         },
       );
@@ -104,53 +110,27 @@ async function ServerRecentReviewsList({
     } else if (filter === "trending") {
       const { data, error } = await supabase.rpc(
         "recent_reviews_popular_with_my_reaction",
-        { in_days: 7, in_limit: 9, in_user: user?.id ?? null },
+        { in_days: 7, in_limit: 12, in_user: user?.id ?? null },
       );
       if (error) throw error;
       dataRows = (data || []) as RecentReviewWithMy[];
     } else if (filter === "recent" || !filter) {
       const { data, error } = await supabase.rpc(
         "recent_reviews_with_my_reaction",
-        { in_limit: 9, in_user: user?.id ?? null },
+        { in_limit: 12, in_user: user?.id ?? null },
       );
       if (error) throw error;
       dataRows = (data || []) as RecentReviewWithMy[];
     } else {
       const { data, error } = await supabase.rpc(
         "recent_reviews_food_with_my_reaction",
-        { in_limit: 9, in_user: user?.id ?? null },
+        { in_limit: 12, in_user: user?.id ?? null },
       );
       if (error) throw error;
       dataRows = (data || []) as RecentReviewWithMy[];
     }
-  } catch (e) {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[highlight-rpc-error]", {
-        filter: filter || "recent",
-        error: (e as { message?: string })?.message || String(e),
-      });
-    }
+  } catch {
     dataRows = [] as RecentReviewWithMy[];
-  }
-
-  // Diagnostics: only log why highlights might be missing
-  if (process.env.NODE_ENV !== "production") {
-    if (!user?.id) {
-      console.log("[highlight]", { userId: null, reason: "no_user_on_ssr" });
-    } else {
-      const withMy = dataRows.filter((r) => r.my_reaction != null).length;
-      const withoutMy = dataRows.length - withMy;
-      const sampleMissing = dataRows
-        .filter((r) => r.my_reaction == null)
-        .map((r) => r.review_id)
-        .slice(0, 5);
-      console.log("[highlight]", {
-        userId: user.id,
-        withMyReaction: withMy,
-        withoutMyReaction: withoutMy,
-        sampleMissing,
-      });
-    }
   }
 
   return (

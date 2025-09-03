@@ -28,7 +28,7 @@ export default async function RecentReviewsList({
       dataRows = items;
     } else {
       if (filter === "nearby" && lat != null && lon != null) {
-        const LIMIT = 9;
+        const LIMIT = 12;
         const radiusSteps = [5000, 7000, 10000, 15000];
         const seen = new Set<string>();
         const collected: RecentReviewEnriched[] = [];
@@ -50,18 +50,18 @@ export default async function RecentReviewsList({
         );
         dataRows = collected.slice(0, LIMIT);
       } else if (filter === "trending") {
-        dataRows = await getRecentReviewsPopular(7, 9); // trending this week
+        dataRows = await getRecentReviewsPopular(7, 12); // trending this week
       } else if (filter === "recent" || !filter) {
         // default: most recent overall
-        dataRows = await getRecentReviews(9);
+        dataRows = await getRecentReviews(12);
       } else {
         // fallback: most recent food places
-        dataRows = await getRecentReviewsFood(9);
+        dataRows = await getRecentReviewsFood(12);
       }
     }
   } catch (e) {
     error = e;
-    dataRows = await getRecentReviews(9);
+    dataRows = await getRecentReviews(12);
   }
 
   // Server-side: fetch current user's reactions for these reviews
@@ -119,16 +119,7 @@ export default async function RecentReviewsList({
           }
         ).my_reaction ||
         null;
-      if (rid) {
-        console.log("[home-ssr] transform", {
-          reviewId: rid,
-          likes: review.likes_count,
-          loves: review.loves_count,
-          mehs: review.mehs_count,
-          dislikes: review.dislikes_count,
-          myReaction,
-        });
-      }
+
       return {
         id: idStr
           ? parseInt(idStr.replace(/-/g, "").substring(0, 8), 16)

@@ -99,8 +99,6 @@ export async function getRecentReviews(limit = 9) {
     .limit(limit);
 
   if (error) throw error;
-
-  console.log({ data });
   return data || [];
 }
 
