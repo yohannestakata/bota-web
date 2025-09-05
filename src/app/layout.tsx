@@ -6,6 +6,7 @@ import Providers from "./providers";
 import Footer from "@/components/layout/footer";
 import SiteHeader from "@/components/layout/site-header";
 import PageViewTracker from "@/components/analytics/page-view-tracker";
+import { OrganizationJsonLd, WebSiteJsonLd } from "./structured-data";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -79,6 +80,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+  const orgName = "Bota";
+  const logoUrl = `${baseUrl}/vercel.svg`;
+  const searchUrl = `${baseUrl}/`;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -86,6 +92,8 @@ export default function RootLayout({
         className={`${manrope.variable} ${inter.className} bg-background antialiased`}
       >
         <Providers>
+          <OrganizationJsonLd name={orgName} url={baseUrl} logoUrl={logoUrl} />
+          <WebSiteJsonLd name={orgName} url={baseUrl} searchUrl={searchUrl} />
           <PageViewTracker />
           <SiteHeader />
           {children}

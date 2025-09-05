@@ -10,6 +10,7 @@ import {
   MenuItemWithPhotos,
   PlaceWithStats,
 } from "@/lib/types/database";
+import { normalizeImageSrc } from "@/lib/utils/images";
 
 export const experimental_ppr = true;
 
@@ -288,6 +289,17 @@ export default async function BranchPage({
     }
   } catch {}
 
+  // Collect primary image URLs for JSON-LD (absolute URLs)
+  const imageCandidates = Array.isArray(pageData.photos)
+    ? pageData.photos
+        .map((p: { file_path: string }) => normalizeImageSrc(p.file_path))
+        .filter((u: string) => !!u)
+        .slice(0, 5)
+    : [];
+  const image = imageCandidates.map((u: string) =>
+    u.startsWith("http://") || u.startsWith("https://") ? u : `${baseUrl}${u}`,
+  );
+
   return (
     <>
       <PlaceJsonLd
@@ -318,7 +330,7 @@ export default async function BranchPage({
               ? Number(branchData.longitude)
               : undefined,
         }}
-        image={undefined}
+        image={image.length ? image : undefined}
         businessType={businessType}
         openingHours={openingHours}
         servesCuisine={servesCuisine}
@@ -339,8 +351,6 @@ export default async function BranchPage({
             state?: string | null;
             address_line1?: string | null;
             address_line2?: string | null;
-            city?: string | null;
-            state?: string | null;
             postal_code?: string | null;
             country?: string | null;
             latitude?: number | null;
