@@ -9,6 +9,10 @@ export function PlaceJsonLd({
   priceRange,
   geo,
   image,
+  businessType,
+  openingHours,
+  servesCuisine,
+  menuUrl,
 }: {
   name: string;
   description?: string | null;
@@ -26,11 +30,19 @@ export function PlaceJsonLd({
   priceRange?: string | number | null;
   geo?: { latitude?: number | null; longitude?: number | null };
   image?: string | string[] | null;
+  businessType?: string | null;
+  openingHours?: Array<{
+    dayOfWeek: string | string[];
+    opens?: string | null;
+    closes?: string | null;
+  }> | null;
+  servesCuisine?: string | string[] | null;
+  menuUrl?: string | null;
 }) {
   const data = {
     "@context": "https://schema.org",
-    // Default to LocalBusiness to cover non-restaurant categories; search engines can infer more specific types
-    "@type": "LocalBusiness",
+    // Default to LocalBusiness; allow overriding with a more specific type (e.g., "Restaurant")
+    "@type": businessType || "LocalBusiness",
     name,
     description: description || undefined,
     url,
@@ -63,6 +75,17 @@ export function PlaceJsonLd({
             ...address,
           }
         : undefined,
+    openingHoursSpecification:
+      openingHours && openingHours.length
+        ? openingHours.map((oh) => ({
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: oh.dayOfWeek,
+            opens: oh.opens || undefined,
+            closes: oh.closes || undefined,
+          }))
+        : undefined,
+    servesCuisine: servesCuisine || undefined,
+    menu: menuUrl || undefined,
   } as const;
 
   return (

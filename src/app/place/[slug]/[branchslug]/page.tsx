@@ -182,12 +182,118 @@ export default async function BranchPage({
     }
   } catch {}
 
+  // Prepare JSON-LD extras
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const openingHours = Array.isArray(place.hours)
+    ? (place.hours
+        .map(
+          (h: {
+            day_of_week: number;
+            open_time: string | null;
+            close_time: string | null;
+            is_closed: boolean;
+            is_24_hours: boolean;
+          }) => {
+            if (h.is_closed) return null;
+            if (h.is_24_hours) {
+              return {
+                dayOfWeek: dayNames[h.day_of_week] || undefined,
+                opens: "00:00",
+                closes: "23:59",
+              };
+            }
+            if (h.open_time && h.close_time) {
+              return {
+                dayOfWeek: dayNames[h.day_of_week] || undefined,
+                opens: h.open_time,
+                closes: h.close_time,
+              };
+            }
+            return null;
+          },
+        )
+        .filter(Boolean) as Array<{
+        dayOfWeek: string;
+        opens?: string | null;
+        closes?: string | null;
+      }>)
+    : undefined;
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com";
+  const canonicalUrl = `${baseUrl}/place/${place.slug}/${branchData.slug}`;
+
+  const categorySlug = (place.category_slug || "").toLowerCase?.() || "";
+  const categoryName = (place.category_name || "").toLowerCase?.() || "";
+  let businessType: string | null = null;
+  if (
+    categorySlug.includes("restaurant") ||
+    categoryName.includes("restaurant") ||
+    categorySlug.includes("food")
+  ) {
+    businessType = "Restaurant";
+  } else if (
+    categorySlug.includes("cafe") ||
+    categoryName.includes("cafe") ||
+    categoryName.includes("coffee")
+  ) {
+    businessType = "CafeOrCoffeeShop";
+  } else if (
+    categorySlug.includes("bar") ||
+    categoryName.includes("bar") ||
+    categoryName.includes("pub")
+  ) {
+    businessType = "BarOrPub";
+  }
+
+  const knownCuisines = [
+    "ethiopian",
+    "eritrean",
+    "italian",
+    "chinese",
+    "indian",
+    "japanese",
+    "korean",
+    "thai",
+    "mexican",
+    "french",
+    "turkish",
+    "lebanese",
+    "spanish",
+    "greek",
+    "american",
+    "brazilian",
+    "moroccan",
+    "vietnamese",
+    "filipino",
+    "german",
+    "persian",
+  ];
+  let servesCuisine: string | string[] | undefined = undefined;
+  try {
+    const tags: unknown = place.tags;
+    if (Array.isArray(tags)) {
+      const cuisines = tags
+        .map((t) => String(t).toLowerCase())
+        .filter((t) => knownCuisines.includes(t))
+        .map((t) => t.charAt(0).toUpperCase() + t.slice(1));
+      if (cuisines.length) servesCuisine = Array.from(new Set(cuisines));
+    }
+  } catch {}
+
   return (
     <>
       <PlaceJsonLd
         name={`${place.name} - ${branchData.name}`}
         description={branchData.description || place.description}
-        url={`${process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com"}/place/${place.slug}/${branchData.slug}`}
+        url={canonicalUrl}
         averageRating={avg}
         reviewCount={reviews}
         address={{
@@ -213,6 +319,10 @@ export default async function BranchPage({
               : undefined,
         }}
         image={undefined}
+        businessType={businessType}
+        openingHours={openingHours}
+        servesCuisine={servesCuisine}
+        menuUrl={canonicalUrl}
       />
 
       <PlaceContent
@@ -229,6 +339,8 @@ export default async function BranchPage({
             state?: string | null;
             address_line1?: string | null;
             address_line2?: string | null;
+            city?: string | null;
+            state?: string | null;
             postal_code?: string | null;
             country?: string | null;
             latitude?: number | null;
