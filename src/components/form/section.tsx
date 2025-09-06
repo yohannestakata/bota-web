@@ -33,7 +33,7 @@ export function CollapsibleSection({
       >
         <Accordion.Item value={value}>
           <Accordion.Header>
-            <Accordion.Trigger className="flex w-full items-center text-left text-lg font-semibold">
+            <Accordion.Trigger className="flex w-full items-center text-left text-xl font-bold">
               {title}
               <motion.span
                 className="ml-2 inline-flex"
@@ -51,9 +51,9 @@ export function CollapsibleSection({
               animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
               style={{ overflow: "hidden" }}
-              className="pt-5"
+              className="pt-6"
             >
-              <div className="space-y-4">{children}</div>
+              <div className="space-y-6">{children}</div>
             </motion.div>
           </Accordion.Content>
         </Accordion.Item>

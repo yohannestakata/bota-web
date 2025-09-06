@@ -15,12 +15,10 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
   ({ label, error, containerClassName, className, ...props }, ref) => {
     return (
       <div className={containerClassName}>
-        {label ? (
-          <label className="mb-1 block text-sm font-medium">{label}</label>
-        ) : null}
+        {label ? <label className="block font-semibold">{label}</label> : null}
         <input
           ref={ref}
-          className={`border-input bg-background w-full border px-3 py-2 focus:outline-none ${className || ""}`}
+          className={`border-input bg-background mt-2 w-full border p-3 focus:outline-none ${className || ""}`}
           {...props}
         />
         {error ? (
@@ -46,16 +44,16 @@ export const TextAreaField = React.forwardRef<
     return (
       <div className={containerClassName}>
         {label ? (
-          <label className="mb-1 block text-sm font-medium">{label}</label>
+          <label className="mb-2 block font-semibold">{label}</label>
         ) : null}
         <textarea
           ref={ref}
           rows={rows}
-          className={`border-input bg-background w-full border px-3 py-2 focus:outline-none ${className || ""}`}
+          className={`border-input bg-background w-full border p-3 focus:outline-none ${className || ""}`}
           {...props}
         />
         {error ? (
-          <p className="text-destructive mt-1 text-xs">{error}</p>
+          <p className="text-destructive mt-1 text-sm">{error}</p>
         ) : null}
       </div>
     );
@@ -76,18 +74,16 @@ export const SelectField = React.forwardRef<
   ) => {
     return (
       <div className={containerClassName}>
-        {label ? (
-          <label className="mb-1 block text-sm font-medium">{label}</label>
-        ) : null}
+        {label ? <label className="block font-semibold">{label}</label> : null}
         <select
           ref={ref}
-          className={`border-input bg-background w-full border px-3 py-2 focus:outline-none ${className || ""}`}
+          className={`border-input bg-background mt-2 w-full border p-3 focus:outline-none ${className || ""}`}
           {...props}
         >
           {children}
         </select>
         {error ? (
-          <p className="text-destructive mt-1 text-xs">{error}</p>
+          <p className="text-destructive mt-1 text-sm">{error}</p>
         ) : null}
       </div>
     );

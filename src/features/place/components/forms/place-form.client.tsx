@@ -199,9 +199,10 @@ export default function PlaceForm({
 
   return (
     <form onSubmit={onSubmit}>
-      <div className="divide-border divide-y">
-        <CollapsibleSection title="Basics" value="basics" defaultOpen>
-          <div ref={nameContainerRef} className="relative">
+      <div className="divide-border mt-12 divide-y">
+        <div className="pb-12">
+          <div className="text-xl font-bold">Basics</div>
+          <div ref={nameContainerRef} className="relative mt-6">
             <label className="block font-semibold">Name</label>
             <input
               type="text"
@@ -272,11 +273,11 @@ export default function PlaceForm({
             placeholder="Tell folks what makes this place special..."
             {...register("description")}
             error={errors.description?.message as string}
-            containerClassName="mt-4"
+            containerClassName="mt-6"
           />
-        </CollapsibleSection>
+        </div>
 
-        <CollapsibleSection title="Contact" value="contact">
+        <CollapsibleSection title="Contact" value="contact" defaultOpen>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InputField
               label="Phone"
@@ -373,11 +374,11 @@ export default function PlaceForm({
         </CollapsibleSection>
       </div>
 
-      <div className="pt-6">
+      <div className="flex items-center justify-end gap-3 pt-6 pb-12">
         <button
           type="submit"
           disabled={submitting}
-          className="bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-60"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3 disabled:opacity-60"
         >
           {submitting ? "Adding…" : "Add place"}
         </button>
