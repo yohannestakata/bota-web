@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RatingStars } from "@/components/ui/rating-stars";
-import { getSimilarPlaces } from "@/lib/supabase/queries";
+// Avoid async data fetching in client component; data is provided via props
 
 // Type for similar places that can come from either getSimilarPlaces or RPC function
 type SimilarPlace = {
@@ -40,17 +40,12 @@ interface SimilarPlacesProps {
   places?: SimilarPlace[];
 }
 
-export default async function SimilarPlaces({
+export default function SimilarPlaces({
   categoryId,
   excludePlaceId,
   places,
 }: SimilarPlacesProps) {
-  // If places are provided, use them; otherwise fetch from categoryId and excludePlaceId
-  const placesData: SimilarPlace[] =
-    places ||
-    (categoryId && excludePlaceId
-      ? await getSimilarPlaces(categoryId, excludePlaceId, 6).catch(() => [])
-      : []);
+  const placesData: SimilarPlace[] = places || [];
 
   if (!placesData.length) return null;
   return (

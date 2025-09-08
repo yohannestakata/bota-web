@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { MenuItemWithPhotos, MenuSection } from "@/lib/types/database";
-import { ImageOff } from "lucide-react";
+import { PlusIcon, ImageOff } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import MenuGallery from "./menu-gallery.client";
@@ -87,6 +87,7 @@ export default function Menu({
             <div className="text-foreground mb-1 text-lg font-semibold">
               {section.name}
             </div>
+
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {items.map((item) => {
                 const globalIndex = allItems.findIndex((i) => i.id === item.id);

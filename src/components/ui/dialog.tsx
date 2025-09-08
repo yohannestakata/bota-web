@@ -80,7 +80,7 @@ export function Dialog({
       }}
     >
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={() => onOpenChange(false)}
       />
       <div

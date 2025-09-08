@@ -22,7 +22,7 @@ export const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
           {...props}
         />
         {error ? (
-          <p className="text-destructive mt-1 text-xs">{error}</p>
+          <p className="text-destructive mt-1 text-sm">{error}</p>
         ) : null}
       </div>
     );
@@ -107,7 +107,7 @@ export const CheckboxField = React.forwardRef<
         {...props}
       />
       {label ? <label className="text-sm">{label}</label> : null}
-      {error ? <p className="text-destructive mt-1 text-xs">{error}</p> : null}
+      {error ? <p className="text-destructive mt-1 text-sm">{error}</p> : null}
     </div>
   );
 });

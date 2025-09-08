@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Gallery from "@/features/place/components/gallery";
 import SimilarPlaces from "@/features/place/components/similar-places";
 import Section from "@/features/place/components/section";
@@ -26,6 +26,10 @@ import {
 } from "@/lib/types/database";
 import { getPlacePageData } from "@/lib/supabase/queries";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { PlusIcon } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/app/auth-context";
+import AddMenuItemDialog from "@/features/place/components/add-menu-item-dialog.client";
 
 interface PlaceContentProps {
   place: {
@@ -157,29 +161,66 @@ export default function PlaceContent({
 }: PlaceContentProps) {
   console.log("place", place);
   const { trackPlaceView } = useAnalytics();
+  const { user } = useAuth();
+
+  // Add menu item dialog state
+  const [addOpen, setAddOpen] = useState(false);
+  const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(null);
 
   // Track place view on component mount
   useEffect(() => {
     trackPlaceView(place, branch);
-  }, [place.id, branch?.id, trackPlaceView]);
+  }, [trackPlaceView, place, branch]);
   // Use branch data if provided, otherwise use place data
   const displayName = branch?.name || place.name;
   const displayDescription = branch?.description || place.description;
   const displayCity = branch?.city || place.city;
   const displayState = branch?.state || place.state;
-  // const displayAddress1 = branch?.address_line1 || place.address_line1;
-  // const displayAddress2 = branch?.address_line2 || place.address_line2;
-  // const displayPostalCode = branch?.postal_code || place.postal_code;
-  // const displayCountry = branch?.country || place.country;
   const displayLatitude = branch?.latitude || place.latitude;
   const displayLongitude = branch?.longitude || place.longitude;
-  // const displayPhone = branch?.phone || place.phone;
-  // const displayWebsiteUrl = branch?.website_url || place.website_url;
   const displayHours = branch?.hours || place.hours;
 
   // Get the main branch ID for favorites
   const mainBranch = place.branches?.find((b) => b.is_main_branch);
   const mainBranchId = mainBranch?.id;
+
+  // Resolve a usable branch id (prefer provided branch, then main, else fetch)
+  useEffect(() => {
+    let mounted = true;
+    async function resolve() {
+      if (branch?.id) {
+        if (mounted) setResolvedBranchId(branch.id);
+        return;
+      }
+      if (mainBranchId) {
+        if (mounted) setResolvedBranchId(mainBranchId);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from("branches")
+          .select("id")
+          .eq("place_id", place.id)
+          .eq("is_main_branch", true)
+          .maybeSingle();
+        if (!mounted) return;
+        if (error) {
+          console.error("Failed to resolve branch id", error);
+          setResolvedBranchId(null);
+          return;
+        }
+        setResolvedBranchId((data as { id?: string } | null)?.id ?? null);
+      } catch (e) {
+        if (!mounted) return;
+        console.error("Error resolving branch id", e);
+        setResolvedBranchId(null);
+      }
+    }
+    resolve();
+    return () => {
+      mounted = false;
+    };
+  }, [place.id, branch?.id, mainBranchId]);
 
   // Use top review from the place data
   const topReview = place.top_review;
@@ -251,9 +292,7 @@ export default function PlaceContent({
             <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm">
               {isOpenNow !== undefined ? (
                 <span
-                  className={`${
-                    isOpenNow ? "text-green-700" : "text-destructive"
-                  } font-semibold`}
+                  className={`${isOpenNow ? "text-green-700" : "text-destructive"} font-semibold`}
                 >
                   {isOpenNow ? "Open now" : "Closed for now"}
                 </span>
@@ -342,7 +381,18 @@ export default function PlaceContent({
           </Section>
 
           {/* Menu */}
-          <Section title="Menu">
+          <Section
+            title="Menu"
+            titleAction={
+              <button
+                className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm font-semibold"
+                onClick={() => setAddOpen(true)}
+                disabled={!resolvedBranchId}
+              >
+                <PlusIcon size={16} /> Add item
+              </button>
+            }
+          >
             <Menu menu={place.menu} />
           </Section>
 
@@ -376,6 +426,14 @@ export default function PlaceContent({
           </div>
         </div>
       </div>
+
+      {/* Add menu item dialog */}
+      <AddMenuItemDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        branchId={resolvedBranchId}
+        onSaved={() => window.location.reload()}
+      />
     </div>
   );
 }

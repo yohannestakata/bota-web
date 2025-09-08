@@ -29,7 +29,7 @@ const DAYS = [
   "Saturday",
 ];
 
-export default async function Hours({
+export default function Hours({
   // placeId,
   latitude,
   longitude,
@@ -45,7 +45,7 @@ export default async function Hours({
   // If hours are provided, use them; otherwise fetch from placeId
   // const hoursData = hours || (placeId ? await getPlaceHours(placeId).catch(() => []) : []);
 
-  console.log(hours);
+  // hours are provided via props; avoid async fetch in client components
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">

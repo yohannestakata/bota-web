@@ -1,5 +1,5 @@
 import * as Icons from "lucide-react";
-import { getPlaceAmenities } from "@/lib/supabase/queries";
+// Avoid async data fetching in client component; data is provided via props
 
 interface AmenityType {
   id: number;
@@ -27,17 +27,14 @@ interface AmenityFromRPC {
   };
 }
 
-export default async function Amenities({
+export default function Amenities({
   placeId,
   amenities,
 }: {
   placeId?: string;
   amenities?: Amenity[] | AmenityFromRPC[];
 }) {
-  // If amenities are provided, use them; otherwise fetch from placeId
-  const amenitiesData =
-    amenities ||
-    (placeId ? await getPlaceAmenities(placeId).catch(() => []) : []);
+  const amenitiesData = amenities || [];
 
   if (!amenitiesData.length)
     return <div className="text-muted-foreground">No amenities listed.</div>;
