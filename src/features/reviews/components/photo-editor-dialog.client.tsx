@@ -2,15 +2,7 @@
 
 import Image from "next/image";
 import { Dialog } from "@/components/ui/dialog";
-
-export type PendingFile = {
-  file: File;
-  id: string;
-  previewUrl: string;
-  menuItemId?: string | null;
-  photoCategoryId?: number | null;
-  altText?: string;
-};
+import { type PendingPhotoFile } from "@/components/media/types";
 
 export default function PhotoEditorDialog({
   open,
@@ -23,10 +15,10 @@ export default function PhotoEditorDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  file: PendingFile | null;
+  file: PendingPhotoFile | null;
   menuItems: { id: string; name: string }[];
   categories: { id: number; name: string }[];
-  onChange: (next: PendingFile) => void;
+  onChange: (next: PendingPhotoFile) => void;
   onRemove: (id: string) => void;
 }) {
   if (!file) return null;

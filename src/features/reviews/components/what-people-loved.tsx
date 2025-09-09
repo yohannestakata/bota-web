@@ -45,7 +45,7 @@ export default function WhatPeopleLoved({
       {popular.length === 0 ? (
         <div className="text-muted-foreground text-sm">No reviews yet</div>
       ) : (
-        <ul className="mt-6 space-y-7">
+        <ul className="mt-6 space-y-8">
           {popular.map((r) => {
             const avatar = r.author?.avatar_url;
             const name = r.author?.full_name || r.author?.username || "User";

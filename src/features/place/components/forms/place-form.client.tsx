@@ -64,6 +64,7 @@ const placeSchema = z.object({
       message: "Price range is 1 (budget) to 4 (premium)",
     }),
   branch_name: z.string().optional().or(z.literal("")),
+  is_main_branch: z.boolean().optional(),
 });
 
 type PlaceFormValues = z.infer<typeof placeSchema>;
@@ -165,6 +166,7 @@ export default function PlaceForm({
         latitude: values.latitude ? Number(values.latitude) : null,
         longitude: values.longitude ? Number(values.longitude) : null,
         price_range: values.price_range ? Number(values.price_range) : null,
+        is_main_branch: Boolean(values.is_main_branch),
       };
       let insertError: unknown = null;
       if (selectedPlace) {
@@ -308,6 +310,13 @@ export default function PlaceForm({
               {...register("branch_name")}
               containerClassName="mt-6"
             />
+
+            <div className="mt-2">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" {...register("is_main_branch")} />
+                <span className="text-sm">This is the main branch</span>
+              </label>
+            </div>
 
             {selectedPlace ? null : (
               <TextAreaField
