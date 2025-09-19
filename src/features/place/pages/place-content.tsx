@@ -170,6 +170,8 @@ export default function PlaceContent({
   // Add menu item dialog state
   const [addOpen, setAddOpen] = useState(false);
   const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState<boolean>(!!place.my_saved);
+  const [saving, setSaving] = useState<boolean>(false);
 
   // Track place view on component mount
   useEffect(() => {
@@ -379,17 +381,56 @@ export default function PlaceContent({
                   title="Sign in to save"
                   description="Create an account to save places."
                 >
-                  <Link
-                    href={
-                      place.slug
-                        ? `/place/${place.slug}/request-edit`
-                        : "/place/request-edit"
-                    }
-                    className="border-border flex items-center justify-center gap-2 border p-3 text-sm"
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={async () => {
+                      try {
+                        setSaving(true);
+                        let favoriteBranchId = resolvedBranchId;
+                        if (!favoriteBranchId) {
+                          const { data: mainBranchData } = await supabase
+                            .from("branches")
+                            .select("id")
+                            .eq("place_id", place.id)
+                            .eq("is_main_branch", true)
+                            .maybeSingle();
+                          favoriteBranchId =
+                            (mainBranchData as { id?: string } | null)?.id ??
+                            null;
+                        }
+                        if (!favoriteBranchId) return;
+                        if (!isSaved) {
+                          await supabase.from("favorite_branches").upsert({
+                            user_id: (user as { id?: string } | null)?.id,
+                            branch_id: favoriteBranchId,
+                          });
+                          setIsSaved(true);
+                        } else {
+                          await supabase
+                            .from("favorite_branches")
+                            .delete()
+                            .eq(
+                              "user_id",
+                              (user as { id?: string } | null)?.id || "",
+                            )
+                            .eq("branch_id", favoriteBranchId);
+                          setIsSaved(false);
+                        }
+                      } catch {
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    className={`border-border flex w-full items-center justify-center gap-2 border p-3 text-sm transition-colors ${isSaved ? "bg-muted" : "hover:bg-muted"}`}
                   >
-                    <HeartIcon size={16} />
-                    <span>Save place</span>
-                  </Link>
+                    <HeartIcon
+                      size={16}
+                      strokeWidth={isSaved ? 3 : 2}
+                      className={isSaved ? "text-primary" : ""}
+                    />
+                    <span>{isSaved ? "Saved" : "Save place"}</span>
+                  </button>
                 </AuthGate>
                 <AuthGate
                   title="Sign in to request edit"
@@ -488,6 +529,33 @@ export default function PlaceContent({
                 <Reviews reviews={reviews} />
               </Section>
             </div>
+
+            {/* Other Locations (mobile only) */}
+            {place.branches && place.branches.length ? (
+              <div className="md:hidden">
+                <Section id="other-locations" title="Other Locations">
+                  <div className="space-y-2">
+                    {place.branches
+                      ?.filter((b) => !b.is_main_branch)
+                      .slice(0, 4)
+                      .map((b) => (
+                        <Link
+                          key={b.id}
+                          href={`/place/${place.slug}/${b.slug}`}
+                          className="border-border block border p-4"
+                        >
+                          <div className="font-semibold">{b.name}</div>
+                          <div className="mt-1 line-clamp-1 text-sm">
+                            {[b.address_line1, b.city]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </div>
+                        </Link>
+                      ))}
+                  </div>
+                </Section>
+              </div>
+            ) : null}
 
             {/* Similar Places moved to bottom */}
             <Section id="similar-places" title="Similar Places">

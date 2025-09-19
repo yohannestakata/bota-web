@@ -94,24 +94,26 @@ export default function GalleryImages({
 
       {/* Desktop: grid */}
       <div className="relative hidden md:block">
-        <div className="grid grid-cols-3 gap-2">
-          {photos.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => openAt(i)}
-              className="aspect-portrait relative overflow-hidden"
-              aria-label="View photo"
-            >
-              <Image
-                src={normalizeImageSrc(p.file_path)}
-                alt={p.alt_text || "place photo"}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1200px) 33vw, 25vw"
-              />
-            </button>
-          ))}
+        <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+          <div className="flex gap-2">
+            {photos.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => openAt(i)}
+                className="relative h-64 w-48 shrink-0 overflow-hidden"
+                aria-label="View photo"
+              >
+                <Image
+                  src={normalizeImageSrc(p.file_path)}
+                  alt={p.alt_text || "place photo"}
+                  fill
+                  className="object-cover"
+                  sizes="200px"
+                />
+              </button>
+            ))}
+          </div>
         </div>
 
         {isFetching && (
