@@ -58,7 +58,7 @@ export default function Gallery({
         />
       </div>
 
-      <div className="mt-5">
+      <div className="-mx-4 mt-5">
         <GalleryImages
           placeId={placeId}
           activeCategoryId={activeCategoryId}

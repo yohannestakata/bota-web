@@ -18,10 +18,10 @@ export default function Section({
   return (
     <section
       id={id}
-      className={`border-border border-b py-12 ${className ?? ""}`.trim()}
+      className={`border-border border-b px-4 py-8 md:py-12 ${className ?? ""}`.trim()}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-foreground font-heading text-2xl font-bold">
+        <h2 className="text-foreground font-heading text-xl font-bold md:text-2xl">
           {title}
         </h2>
         {titleAction}

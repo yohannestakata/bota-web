@@ -41,7 +41,7 @@ export default function SiteHeader({
       className="bg-background border-border/60 sticky top-0 z-50 border-b"
       style={{ zIndex: 9999 }}
     >
-      <div className="relative container mx-auto flex h-18 max-w-6xl items-center justify-between px-4">
+      <div className="relative container mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-18">
         <Brand />
         <motion.nav
           layout

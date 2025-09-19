@@ -59,10 +59,10 @@ export default function Hours({
                 if (h.day_of_week === 0) return null;
                 return (
                   <tr key={h.day_of_week}>
-                    <td className={`pr-4 pb-6 align-top font-semibold`}>
+                    <td className={`pr-4 pb-5 align-top font-semibold md:pb-6`}>
                       {DAYS[h.day_of_week]}
                     </td>
-                    <td className={`pb-6`}>
+                    <td className={`pb-5 md:pb-6`}>
                       {h.is_24_hours
                         ? "Open 24 hours"
                         : h.is_closed

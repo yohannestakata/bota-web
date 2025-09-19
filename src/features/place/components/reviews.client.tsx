@@ -70,6 +70,7 @@ function ReviewItem({ review }: ReviewItemProps) {
 
   const [emblaRef] = useEmblaCarousel({
     align: "start",
+    dragFree: true,
     containScroll: "trimSnaps",
   });
   return (
@@ -110,19 +111,45 @@ function ReviewItem({ review }: ReviewItemProps) {
       </div>
 
       {review.photos && review.photos.length ? (
-        <div className="mt-3">
-          <div className="overflow-hidden" ref={emblaRef}>
+        <div className="mt-3 -ml-4 md:-ml-0">
+          {/* Mobile: horizontal carousel, ~2.5 tiles visible */}
+          <div className="md:hidden">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex">
+                {review.photos.slice(0, 12).map((p) => (
+                  <div
+                    key={p.id}
+                    className="min-w-0 flex-[0_0_40%] pr-2 first:ml-4 last:mr-4"
+                  >
+                    <div className="aspect-portrait bg-muted relative w-full overflow-hidden">
+                      <Image
+                        src={normalizeImageSrc(p.file_path)}
+                        alt={p.alt_text || "review photo"}
+                        fill
+                        sizes="40vw"
+                        className="object-cover"
+                        unoptimized={false}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: grid */}
+          <div className="relative hidden md:block">
             <div className="grid grid-cols-3 gap-2">
               {review.photos.slice(0, 12).map((p) => (
                 <div
                   key={p.id}
-                  className="aspect-portrait relative shrink-0 overflow-hidden"
+                  className="aspect-portrait relative overflow-hidden"
                 >
                   <Image
                     src={normalizeImageSrc(p.file_path)}
                     alt={p.alt_text || "review photo"}
                     fill
-                    sizes="(max-width: 640px) 160px, 160px"
+                    sizes="(max-width: 1200px) 33vw, 25vw"
                     className="object-cover"
                     unoptimized={false}
                   />

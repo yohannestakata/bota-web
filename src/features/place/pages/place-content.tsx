@@ -9,15 +9,10 @@ import Hours from "@/features/place/components/hours";
 import Amenities from "@/features/place/components/amenities";
 import Menu from "@/features/place/components/menu";
 import BusinessQuickInfo from "@/features/place/components/business-quick-info";
+import { PhoneIcon, GlobeIcon } from "lucide-react";
 import TopReview from "@/features/place/components/top-review";
 import { RatingStars } from "@/components/ui/rating-stars";
-import {
-  LocationHoursSkeleton,
-  // AmenitiesSkeleton,
-  // MenuSkeleton,
-  // SimilarPlacesSkeleton,
-  // ReviewsSkeleton,
-} from "@/features/place/components/skeletons";
+import { LocationHoursSkeleton } from "@/features/place/components/skeletons";
 import Reviews from "@/features/place/components/reviews";
 import {
   PlaceWithStats,
@@ -27,10 +22,18 @@ import {
 } from "@/lib/types/database";
 import { getPlacePageData } from "@/lib/supabase/queries";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { PlusIcon } from "lucide-react";
+import {
+  PlusIcon,
+  MessageCircleIcon,
+  ImagePlusIcon,
+  PencilIcon,
+  HeartIcon,
+} from "lucide-react";
+import AuthGate from "@/components/ui/auth-gate";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/app/auth-context";
 import AddMenuItemDialog from "@/features/place/components/add-menu-item-dialog.client";
+import Link from "next/link";
 
 interface PlaceContentProps {
   place: {
@@ -256,38 +259,29 @@ export default function PlaceContent({
 
   return (
     <div>
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl py-6">
         {/* OpenGraph / Twitter handled by generateMetadata; JSON-LD below */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
         />
 
-        {/* Back link if needed */}
-        {showBackLink && backLinkText && backLinkHref && (
-          <div className="mb-4">
-            <a
-              href={backLinkHref}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
-            >
-              ← {backLinkText}
-            </a>
-          </div>
-        )}
-
         {/* Main content */}
-        <div className="grid grid-cols-10 gap-24">
+        <div className="grid grid-cols-1 md:grid-cols-10 md:gap-24">
           <div className="col-span-6">
             {/* Section navigation */}
-            <div className="sticky top-18 -mt-6" style={{ zIndex: 9999 }}>
+            <div
+              className="sticky top-14 -mt-6 md:top-18"
+              style={{ zIndex: 9999 }}
+            >
               <SectionNav />
             </div>
 
-            <h1 className="text-foreground font-heading mt-8 text-4xl font-bold tracking-tight">
+            <h1 className="text-foreground font-heading mt-8 px-4 text-3xl font-bold tracking-tight md:text-4xl">
               {displayName}
             </h1>
 
-            <div className="mt-2.5 flex flex-col gap-1">
+            <div className="mt-2.5 flex flex-col gap-1 px-4">
               <div className="flex items-center gap-2">
                 <RatingStars rating={averageRating} size={24} />
                 <span className="text-foreground">
@@ -331,21 +325,103 @@ export default function PlaceContent({
                   </span>
                 )}
               </div>
-            </div>
-            {/* Rating & Quick Info (mobile-first) */}
-            <div className="lg:hidden">
-              <BusinessQuickInfo
-                place={place}
-                branchId={mainBranchId}
-                averageRating={averageRating}
-                reviewCount={reviewCount}
-                isOpenNow={isOpenNow}
-                branches={place.branches}
-              />
+              {/* Contact row under title (4th row) */}
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
+                {place.phone ? (
+                  <a
+                    href={`tel:${place.phone}`}
+                    className="flex items-center gap-2 underline underline-offset-4"
+                  >
+                    <PhoneIcon size={16} /> {place.phone}
+                  </a>
+                ) : null}
+                {place.website_url ? (
+                  <a
+                    href={place.website_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 underline underline-offset-4"
+                  >
+                    <GlobeIcon size={16} /> Visit website
+                  </a>
+                ) : null}
+              </div>
+
+              {/* Quick action buttons */}
+              <div className="mt-5 grid grid-cols-2 gap-2 md:hidden">
+                <AuthGate
+                  title="Sign in to write a review"
+                  description="Create an account to write reviews."
+                >
+                  <Link
+                    href={
+                      place.slug ? `/reviews/add/${place.slug}` : "/reviews/add"
+                    }
+                    className="bg-primary text-primary-foreground flex items-center justify-center gap-2 p-3 text-sm"
+                  >
+                    <MessageCircleIcon size={16} />
+                    <span>Write review</span>
+                  </Link>
+                </AuthGate>
+                <AuthGate
+                  title="Sign in to upload photos"
+                  description="Create an account to upload photos."
+                >
+                  <Link
+                    href={place.slug ? `/place/${place.slug}/photos/add` : "/"}
+                    className="border-border flex items-center justify-center gap-2 border p-3 text-sm"
+                  >
+                    <ImagePlusIcon size={16} />
+                    <span>Upload photos</span>
+                  </Link>
+                </AuthGate>
+                <AuthGate
+                  title="Sign in to save"
+                  description="Create an account to save places."
+                >
+                  <Link
+                    href={
+                      place.slug
+                        ? `/place/${place.slug}/request-edit`
+                        : "/place/request-edit"
+                    }
+                    className="border-border flex items-center justify-center gap-2 border p-3 text-sm"
+                  >
+                    <HeartIcon size={16} />
+                    <span>Save place</span>
+                  </Link>
+                </AuthGate>
+                <AuthGate
+                  title="Sign in to request edit"
+                  description="Create an account to request edits."
+                >
+                  <Link
+                    href={
+                      place.slug
+                        ? `/place/${place.slug}/request-edit`
+                        : "/place/request-edit"
+                    }
+                    className="border-border flex items-center justify-center gap-2 border p-3 text-sm"
+                  >
+                    <PencilIcon size={16} />
+                    <span>Request edit</span>
+                  </Link>
+                </AuthGate>
+              </div>
             </div>
 
             {/* Top review */}
-            {topReview && <TopReview review={topReview} />}
+            <div className="hidden px-4 md:block">
+              {topReview && <TopReview review={topReview} />}
+            </div>
+
+            {/* Reviews (mobile only) - above Photos */}
+            <div className="px-0 md:hidden">
+              <div id="reviews" />
+              <Section title="Reviews">
+                <Reviews reviews={reviews} />
+              </Section>
+            </div>
 
             {/* Photos */}
             <Section id="photos" title="Photos">
@@ -362,7 +438,7 @@ export default function PlaceContent({
             </Section>
 
             {/* Description + key details */}
-            <div className="border-border border-b py-12">
+            <div className="border-border border-b px-4 py-12">
               <p className="text-foreground leading-6">{displayDescription}</p>
             </div>
 
@@ -405,15 +481,17 @@ export default function PlaceContent({
               <Menu menu={place.menu} />
             </Section>
 
-            {/* Similar Places */}
+            {/* Reviews (desktop only) */}
+            <div className="hidden md:block">
+              <div id="reviews" />
+              <Section title="Reviews">
+                <Reviews reviews={reviews} />
+              </Section>
+            </div>
+
+            {/* Similar Places moved to bottom */}
             <Section id="similar-places" title="Similar Places">
               <SimilarPlaces places={similarPlaces} />
-            </Section>
-
-            {/* Reviews */}
-            <div id="reviews" />
-            <Section title="Reviews">
-              <Reviews reviews={reviews} />
             </Section>
           </div>
 

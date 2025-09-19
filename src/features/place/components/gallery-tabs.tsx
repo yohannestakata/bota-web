@@ -46,49 +46,51 @@ export default function GalleryTabs({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap gap-6">
-        {tabs.map((t) => {
-          const isActive = activeCategoryId === t.id;
-          return (
-            <button
-              key={t.id ?? -1}
-              type="button"
-              onClick={() => setActiveCategoryId(t.id ?? null)}
-              onMouseEnter={() => {
-                const key = ["placePhotos", placeId, t.id ?? null] as const;
-                void queryClient.prefetchQuery({
-                  queryKey: key,
-                  queryFn: async () => {
-                    const params = new URLSearchParams();
-                    params.set("placeId", placeId);
-                    if (t.id != null) params.set("categoryId", String(t.id));
-                    const res = await fetch(
-                      `/api/place/photos?${params.toString()}`,
-                      {
-                        cache: "no-store",
-                      },
-                    );
-                    const json = (await res.json()) as { photos: Photo[] };
-                    return json.photos || [];
-                  },
-                  staleTime: 60_000,
-                });
-              }}
-              className={`relative pb-1 transition-colors ${
-                isActive ? "font-semibold" : "font-normal"
-              }`}
-            >
-              {t.name}
-              {isActive ? (
-                <motion.div
-                  layoutId="gallery-underline"
-                  className="bg-foreground absolute right-0 -bottom-px left-0 h-0.5"
-                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                />
-              ) : null}
-            </button>
-          );
-        })}
+      <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
+        <div className="flex w-max gap-6">
+          {tabs.map((t) => {
+            const isActive = activeCategoryId === t.id;
+            return (
+              <button
+                key={t.id ?? -1}
+                type="button"
+                onClick={() => setActiveCategoryId(t.id ?? null)}
+                onMouseEnter={() => {
+                  const key = ["placePhotos", placeId, t.id ?? null] as const;
+                  void queryClient.prefetchQuery({
+                    queryKey: key,
+                    queryFn: async () => {
+                      const params = new URLSearchParams();
+                      params.set("placeId", placeId);
+                      if (t.id != null) params.set("categoryId", String(t.id));
+                      const res = await fetch(
+                        `/api/place/photos?${params.toString()}`,
+                        {
+                          cache: "no-store",
+                        },
+                      );
+                      const json = (await res.json()) as { photos: Photo[] };
+                      return json.photos || [];
+                    },
+                    staleTime: 60_000,
+                  });
+                }}
+                className={`relative pb-1 transition-colors ${
+                  isActive ? "font-semibold" : "font-normal"
+                }`}
+              >
+                {t.name}
+                {isActive ? (
+                  <motion.div
+                    layoutId="gallery-underline"
+                    className="bg-foreground absolute right-0 -bottom-px left-0 h-0.5"
+                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

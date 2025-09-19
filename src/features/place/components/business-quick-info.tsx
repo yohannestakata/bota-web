@@ -236,40 +236,8 @@ export default function BusinessQuickInfo({
   }, [user?.id, place.id, branchId, branches]);
 
   return (
-    <div className="border-border border p-6 shadow-xl">
+    <div className="border-border border p-6 shadow-none md:shadow-xl">
       <div className="divide-border space-y-6 divide-y">
-        {/* Contact Information */}
-        <div className="pb-6">
-          <div className="text-foreground text-lg font-semibold">Contact</div>
-          <div className="mt-3 flex gap-6">
-            {place.phone && (
-              <div className="flex items-center gap-2">
-                <PhoneIcon size={16} />
-                <a
-                  href={`tel:${place.phone}`}
-                  className="text-foreground text-sm underline underline-offset-4"
-                >
-                  {place.phone}
-                </a>
-              </div>
-            )}
-
-            {place.website_url && (
-              <div className="flex items-center gap-2">
-                <GlobeIcon size={16} />
-                <a
-                  href={place.website_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-foreground text-sm underline underline-offset-4"
-                >
-                  Visit website
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Other Branches */}
         {branches && branches.length > 0 && (
           <>

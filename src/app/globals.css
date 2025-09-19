@@ -2,23 +2,25 @@
 
 :root {
   --background: oklch(1 0 0);
-  --foreground: oklch(14.7% 0.004 49.25);
+  --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(14.7% 0.004 49.25);
+  --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(14.7% 0.004 49.25);
-  --primary: oklch(57.7% 0.245 27.325);
-  --primary-foreground: oklch(97.1% 0.013 17.38);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: var(--color-green-600);
+  --primary-foreground: var(--color-green-50);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: var(--color-green-400);
   --secondary: oklch(76.9% 0.188 70.08);
   --secondary-foreground: oklch(98.7% 0.022 95.277);
-  --muted: oklch(97% 0.001 106.424);
-  --muted-foreground: oklch(21.6% 0.006 56.043);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(98.7% 0.022 95.277);
-  --destructive: oklch(50.5% 0.213 27.518);
-  --border: oklch(92.3% 0.003 48.717);
-  --input: oklch(92.3% 0.003 48.717);
-  --ring: oklch(57.7% 0.245 27.325);
 }
 
 @theme {
@@ -102,8 +104,15 @@ body {
 
 html {
   scroll-behavior: smooth;
-  /* align scroll position so anchored sections aren't under the sticky nav (h-18 ~ 72px) */
-  scroll-padding-top: 136px;
+  /* Mobile: account for site nav (top-14 ~ 56px) + section nav (h-12 ~ 48px) */
+  scroll-padding-top: 104px;
+}
+
+@media (min-width: 768px) {
+  html {
+    /* Desktop/tablet: account for taller navs */
+    scroll-padding-top: 136px;
+  }
 }
 
 .aspect-portrait {
@@ -117,3 +126,7 @@ html {
 ::selection {
   @apply bg-blue-700 text-blue-50;
 }
+
+/* * {
+  border: 1px solid red;
+} */

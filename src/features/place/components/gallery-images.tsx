@@ -5,6 +5,7 @@ import { normalizeImageSrc } from "@/lib/utils/images";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
+import useEmblaCarousel from "embla-carousel-react";
 
 type Photo = {
   id: string;
@@ -52,11 +53,49 @@ export default function GalleryImages({
     setOpen(true);
   };
 
+  // Build mobile carousel as individual tiles (we'll show ~2.5 tiles via width)
+
+  const [emblaRef] = useEmblaCarousel({
+    align: "start",
+    dragFree: true,
+    containScroll: "trimSnaps",
+  });
+
   return (
     <>
-      <div className="relative">
+      {/* Mobile: horizontal carousel, ~2.5 tiles visible */}
+      <div className="md:hidden">
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex">
+            {photos.map((photo, idx) => (
+              <div
+                key={photo.id}
+                className="min-w-0 flex-[0_0_40%] pr-2 first:ml-4 last:mr-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => openAt(idx)}
+                  className="aspect-portrait bg-muted relative w-full overflow-hidden"
+                  aria-label="View photo"
+                >
+                  <Image
+                    src={normalizeImageSrc(photo.file_path)}
+                    alt={photo.alt_text || "place photo"}
+                    fill
+                    className="object-cover"
+                    sizes="40vw"
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: grid */}
+      <div className="relative hidden md:block">
         <div className="grid grid-cols-3 gap-2">
-          {photos.slice(0, 3).map((p, i) => (
+          {photos.map((p, i) => (
             <button
               key={p.id}
               type="button"
@@ -69,7 +108,7 @@ export default function GalleryImages({
                 alt={p.alt_text || "place photo"}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                sizes="(max-width: 1200px) 33vw, 25vw"
               />
             </button>
           ))}

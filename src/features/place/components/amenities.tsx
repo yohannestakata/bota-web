@@ -41,7 +41,7 @@ export default function Amenities({
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:gap-x-12 md:gap-y-6">
         {amenitiesData.map((a, idx) => {
           // Handle both old and new structures
           let amenityInfo: AmenityType | null = null;
