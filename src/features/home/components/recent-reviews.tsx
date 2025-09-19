@@ -19,7 +19,7 @@ export default function RecentReviews({
 }) {
   return (
     <section className="container mx-auto mt-16 max-w-6xl px-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center justify-start gap-3 md:flex-row md:justify-between md:gap-0">
         <h2 className="text-foreground text-xl font-bold">
           {filter === "nearby"
             ? "Nearby reviews"

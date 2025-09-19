@@ -21,13 +21,16 @@ export default async function CategoriesList() {
   });
 
   return (
-    <div className="mt-5 grid grid-cols-2 gap-10 md:grid-cols-5">
+    <div className="mt-5 grid grid-cols-2 gap-8 md:grid-cols-5 md:gap-10">
       {transformedCategories.map((category) => (
         <Link key={category.name} href={category.href} className="group">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <div>
               {category.icon ? (
-                <category.icon className="mx-auto h-8 w-8" strokeWidth={1.75} />
+                <category.icon
+                  className="mx-auto size-6 md:size-8"
+                  strokeWidth={1.75}
+                />
               ) : (
                 <div className="mx-auto flex h-8 w-8 items-center justify-center bg-gray-200">
                   <span className="text-sm font-semibold underline-offset-4 group-hover:underline">

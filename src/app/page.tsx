@@ -24,8 +24,8 @@ export default async function Home({
         }}
       />
       {/* Page-specific hero */}
-      <section className="mx-auto mt-16 max-w-6xl px-4">
-        <h1 className="font-heading text-center text-3xl font-bold md:text-6xl">
+      <section className="mx-auto mt-12 max-w-6xl px-4 md:mt-16">
+        <h1 className="font-heading text-center text-5xl font-bold text-balance md:text-6xl">
           Discover the best places
         </h1>
         <div className="mx-auto mt-5 w-full max-w-3xl">

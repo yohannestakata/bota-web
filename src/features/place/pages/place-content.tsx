@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Gallery from "@/features/place/components/gallery";
 import SimilarPlaces from "@/features/place/components/similar-places";
 import Section from "@/features/place/components/section";
+import SectionNav from "@/features/place/components/section-nav";
 import Hours from "@/features/place/components/hours";
 import Amenities from "@/features/place/components/amenities";
 import Menu from "@/features/place/components/menu";
@@ -254,186 +255,195 @@ export default function PlaceContent({
   } as const;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* OpenGraph / Twitter handled by generateMetadata; JSON-LD below */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
-      />
+    <div>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        {/* OpenGraph / Twitter handled by generateMetadata; JSON-LD below */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        />
 
-      {/* Back link if needed */}
-      {showBackLink && backLinkText && backLinkHref && (
-        <div className="mb-4">
-          <a
-            href={backLinkHref}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
-          >
-            ← {backLinkText}
-          </a>
-        </div>
-      )}
+        {/* Back link if needed */}
+        {showBackLink && backLinkText && backLinkHref && (
+          <div className="mb-4">
+            <a
+              href={backLinkHref}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
+            >
+              ← {backLinkText}
+            </a>
+          </div>
+        )}
 
-      {/* Main content */}
-      <div className="mt-5 grid grid-cols-10 gap-24">
-        <div className="col-span-6">
-          <h1 className="text-foreground font-heading text-4xl font-bold tracking-tight">
-            {displayName}
-          </h1>
-          <div className="mt-2.5 flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <RatingStars rating={averageRating} size={24} />
-              <span className="text-foreground">
-                {averageRating.toFixed(1)}
-              </span>
-              <span className="text-sm">
-                ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
-              </span>
+        {/* Main content */}
+        <div className="grid grid-cols-10 gap-24">
+          <div className="col-span-6">
+            {/* Section navigation */}
+            <div className="sticky top-18 -mt-6" style={{ zIndex: 9999 }}>
+              <SectionNav />
             </div>
-            <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm">
-              {isOpenNow !== undefined ? (
-                <span
-                  className={`${isOpenNow ? "text-green-700" : "text-destructive"} font-semibold`}
-                >
-                  {isOpenNow ? "Open now" : "Closed for now"}
+
+            <h1 className="text-foreground font-heading mt-8 text-4xl font-bold tracking-tight">
+              {displayName}
+            </h1>
+
+            <div className="mt-2.5 flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <RatingStars rating={averageRating} size={24} />
+                <span className="text-foreground">
+                  {averageRating.toFixed(1)}
                 </span>
-              ) : (
-                <span>Hours not set</span>
-              )}
-              {(place.category_name || place.price_range) && <span>•</span>}
-              {(place.category_name || place.price_range) && (
-                <span>
-                  {place.category_name}
-                  {place.category_name && place.price_range ? " • " : ""}
-                  {place.price_range
-                    ? "$".repeat(
-                        Math.min(
-                          Math.max(Number(place.price_range) || 0, 1),
-                          4,
-                        ),
-                      )
-                    : ""}
+                <span className="text-sm">
+                  ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
                 </span>
-              )}
-              {(displayCity || displayState) && <span>•</span>}
-              {(displayCity || displayState) && (
-                <span>
-                  {[displayCity, place.address_line1, place.address_line2]
-                    .filter(Boolean)
-                    .join(", ")}
-                </span>
-              )}
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm">
+                {isOpenNow !== undefined ? (
+                  <span
+                    className={`${isOpenNow ? "text-green-700" : "text-destructive"} font-semibold`}
+                  >
+                    {isOpenNow ? "Open now" : "Closed for now"}
+                  </span>
+                ) : (
+                  <span>Hours not set</span>
+                )}
+                {(place.category_name || place.price_range) && <span>•</span>}
+                {(place.category_name || place.price_range) && (
+                  <span>
+                    {place.category_name}
+                    {place.category_name && place.price_range ? " • " : ""}
+                    {place.price_range
+                      ? "$".repeat(
+                          Math.min(
+                            Math.max(Number(place.price_range) || 0, 1),
+                            4,
+                          ),
+                        )
+                      : ""}
+                  </span>
+                )}
+                {(displayCity || displayState) && <span>•</span>}
+                {(displayCity || displayState) && (
+                  <span>
+                    {[displayCity, place.address_line1, place.address_line2]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          {/* Rating & Quick Info (mobile-first) */}
-          <div className="lg:hidden">
-            <BusinessQuickInfo
-              place={place}
-              branchId={mainBranchId}
-              averageRating={averageRating}
-              reviewCount={reviewCount}
-              isOpenNow={isOpenNow}
-              branches={place.branches}
-            />
-          </div>
-
-          {/* Top review */}
-          {topReview && <TopReview review={topReview} />}
-
-          {/* Photos */}
-          <Section title="Photos">
-            <Gallery
-              placeId={place.id}
-              initialCategories={(photoCategories || []).map((c) => ({
-                id: (c as { id: number | null }).id ?? null,
-                name: (c as { name: string }).name,
-                count: (c as unknown as { count?: number }).count ?? 0,
-              }))}
-              initialPhotos={photos}
-              initialActiveCategoryId={activeCategoryId}
-            />
-          </Section>
-
-          {/* Description + key details */}
-          <div className="border-border border-b py-12">
-            <p className="text-foreground leading-6">{displayDescription}</p>
-          </div>
-
-          {/* Location & Hours */}
-          <Section title="Location & Hours">
-            <Suspense fallback={<LocationHoursSkeleton />}>
-              <Hours
-                placeId={place.id}
-                latitude={
-                  displayLatitude != null ? Number(displayLatitude) : null
-                }
-                longitude={
-                  displayLongitude != null ? Number(displayLongitude) : null
-                }
-                name={displayName}
-                hours={displayHours}
-              />
-            </Suspense>
-          </Section>
-
-          {/* Amenities */}
-          <Section title="Amenities">
-            <Amenities amenities={place.amenities} />
-          </Section>
-
-          {/* Menu */}
-          <Section
-            title="Menu"
-            titleAction={
-              <button
-                className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm font-semibold"
-                onClick={() => setAddOpen(true)}
-                disabled={!resolvedBranchId}
-              >
-                <PlusIcon size={16} /> Add item
-              </button>
-            }
-          >
-            <Menu menu={place.menu} />
-          </Section>
-
-          {/* Similar Places */}
-          <Section title="Similar Places">
-            <SimilarPlaces places={similarPlaces} />
-          </Section>
-
-          {/* Reviews */}
-          <div id="reviews" />
-          <Section title="Reviews">
-            <Reviews reviews={reviews} />
-          </Section>
-        </div>
-
-        <div className="col-span-4">
-          <div className="sticky top-28">
-            <div className="hidden lg:block">
+            {/* Rating & Quick Info (mobile-first) */}
+            <div className="lg:hidden">
               <BusinessQuickInfo
                 place={place}
                 branchId={mainBranchId}
                 averageRating={averageRating}
                 reviewCount={reviewCount}
                 isOpenNow={isOpenNow}
-                showRatingHeader={false}
-                showCategoryAndPrice={false}
-                showOpenStatus={false}
                 branches={place.branches}
               />
             </div>
+
+            {/* Top review */}
+            {topReview && <TopReview review={topReview} />}
+
+            {/* Photos */}
+            <Section id="photos" title="Photos">
+              <Gallery
+                placeId={place.id}
+                initialCategories={(photoCategories || []).map((c) => ({
+                  id: (c as { id: number | null }).id ?? null,
+                  name: (c as { name: string }).name,
+                  count: (c as unknown as { count?: number }).count ?? 0,
+                }))}
+                initialPhotos={photos}
+                initialActiveCategoryId={activeCategoryId}
+              />
+            </Section>
+
+            {/* Description + key details */}
+            <div className="border-border border-b py-12">
+              <p className="text-foreground leading-6">{displayDescription}</p>
+            </div>
+
+            {/* Location & Hours */}
+            <Section id="location-hours" title="Location & Hours">
+              <Suspense fallback={<LocationHoursSkeleton />}>
+                <Hours
+                  placeId={place.id}
+                  latitude={
+                    displayLatitude != null ? Number(displayLatitude) : null
+                  }
+                  longitude={
+                    displayLongitude != null ? Number(displayLongitude) : null
+                  }
+                  name={displayName}
+                  hours={displayHours}
+                />
+              </Suspense>
+            </Section>
+
+            {/* Amenities */}
+            <Section id="amenities" title="Amenities">
+              <Amenities amenities={place.amenities} />
+            </Section>
+
+            {/* Menu */}
+            <Section
+              id="menu"
+              title="Menu"
+              titleAction={
+                <button
+                  className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm font-semibold"
+                  onClick={() => setAddOpen(true)}
+                  disabled={!resolvedBranchId}
+                >
+                  <PlusIcon size={16} /> Add item
+                </button>
+              }
+            >
+              <Menu menu={place.menu} />
+            </Section>
+
+            {/* Similar Places */}
+            <Section id="similar-places" title="Similar Places">
+              <SimilarPlaces places={similarPlaces} />
+            </Section>
+
+            {/* Reviews */}
+            <div id="reviews" />
+            <Section title="Reviews">
+              <Reviews reviews={reviews} />
+            </Section>
+          </div>
+
+          <div className="col-span-4">
+            <div className="sticky top-28">
+              <div className="hidden lg:block">
+                <BusinessQuickInfo
+                  place={place}
+                  branchId={mainBranchId}
+                  averageRating={averageRating}
+                  reviewCount={reviewCount}
+                  isOpenNow={isOpenNow}
+                  showRatingHeader={false}
+                  showCategoryAndPrice={false}
+                  showOpenStatus={false}
+                  branches={place.branches}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Add menu item dialog */}
-      <AddMenuItemDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        branchId={resolvedBranchId}
-        onSaved={() => window.location.reload()}
-      />
+        {/* Add menu item dialog */}
+        <AddMenuItemDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          branchId={resolvedBranchId}
+          onSaved={() => window.location.reload()}
+        />
+      </div>
     </div>
   );
 }

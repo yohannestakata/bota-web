@@ -4,7 +4,9 @@ import CategoriesList from "./categories-list";
 export default function CategoriesSection() {
   return (
     <section className="container mx-auto mt-16 mb-16 max-w-6xl px-4">
-      <h2 className="text-foreground text-xl font-bold">Browse by category</h2>
+      <h2 className="text-foreground text-center text-xl font-bold md:text-left">
+        Browse by category
+      </h2>
       <Suspense
         fallback={
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">

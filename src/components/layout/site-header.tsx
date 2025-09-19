@@ -53,19 +53,19 @@ export default function SiteHeader({
         >
           <Link
             href="/reviews/add"
-            className="hover:text-foreground font-medium transition-colors"
+            className="hover:text-foreground transition-colors"
           >
             Add Review
           </Link>
           <Link
             href="/place/add"
-            className="hover:text-foreground font-medium transition-colors"
+            className="hover:text-foreground transition-colors"
           >
             Add Place
           </Link>
           <Link
             href="/favorites"
-            className="hover:text-foreground font-medium transition-colors"
+            className="hover:text-foreground transition-colors"
           >
             My Favorites
           </Link>

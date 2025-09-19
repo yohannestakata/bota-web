@@ -100,6 +100,12 @@ body {
   @apply text-base;
 }
 
+html {
+  scroll-behavior: smooth;
+  /* align scroll position so anchored sections aren't under the sticky nav (h-18 ~ 72px) */
+  scroll-padding-top: 136px;
+}
+
 .aspect-portrait {
   aspect-ratio: 3 / 4;
 }

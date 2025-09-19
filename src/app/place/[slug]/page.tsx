@@ -53,7 +53,7 @@ export default async function PlacePage({
     in_user: user?.id ?? null,
   });
 
-  if (!pageData || !pageData.place.is_active) {
+  if (!pageData) {
     return notFound();
   }
 

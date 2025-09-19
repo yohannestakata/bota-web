@@ -53,8 +53,8 @@ export default async function BranchPage({
     in_user: user?.id ?? null,
   });
 
-  if (!pageData || !pageData.place.is_active) {
-    console.warn("[BranchPage] place not found or inactive", { slug });
+  if (!pageData) {
+    console.warn("[BranchPage] place not found", { slug });
     return notFound();
   }
 
