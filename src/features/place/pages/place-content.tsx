@@ -458,7 +458,7 @@ export default function PlaceContent({
 
             {/* Reviews (mobile only) - above Photos */}
             <div className="px-0 md:hidden">
-              <div id="reviews" />
+              <div id="reviews-mobile" />
               <Section title="Reviews">
                 <Reviews reviews={reviews} />
               </Section>
@@ -479,7 +479,7 @@ export default function PlaceContent({
             </Section>
 
             {/* Description + key details */}
-            <div className="border-border border-b px-4 py-12">
+            <div className="border-border hidden border-b px-4 py-12">
               <p className="text-foreground leading-6">{displayDescription}</p>
             </div>
 
@@ -557,10 +557,12 @@ export default function PlaceContent({
               </div>
             ) : null}
 
-            {/* Similar Places moved to bottom */}
-            <Section id="similar-places" title="Similar Places">
-              <SimilarPlaces places={similarPlaces} />
-            </Section>
+            {/* Similar Places only on mobile */}
+            <div className="md:hidden">
+              <Section id="similar-places" title="Similar Places">
+                <SimilarPlaces places={similarPlaces} />
+              </Section>
+            </div>
           </div>
 
           <div className="col-span-4">

@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const placeId = searchParams.get("placeId");
+  console.log("[API/photo-categories] params", { placeId });
   if (!placeId) {
     return new Response(JSON.stringify({ error: "placeId is required" }), {
       status: 400,
@@ -11,11 +14,32 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  const cookieStore = cookies();
+  const supabase =
+    supabaseAdmin ||
+    createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set() {},
+          remove() {},
+        },
+      },
+    );
+
   const { data, error } = await supabase
-    .from("place_photos")
-    .select("photo_category_id, photo_categories(name)")
-    .eq("place_id", placeId);
+    .from("branch_photos")
+    .select(
+      "photo_category_id, photo_categories(name), branches!inner(place_id)",
+    )
+    .eq("branches.place_id", placeId);
   if (error) {
+    console.error("[API/photo-categories] query error", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "content-type": "application/json" },

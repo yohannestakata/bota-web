@@ -46,15 +46,20 @@ export default function GalleryTabs({
 
   return (
     <div className="relative">
-      <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <div className="flex w-max gap-6">
+      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 md:overflow-visible">
+        <div className="flex w-max gap-6 md:w-auto md:flex-wrap">
           {tabs.map((t) => {
             const isActive = activeCategoryId === t.id;
             return (
               <button
                 key={t.id ?? -1}
                 type="button"
-                onClick={() => setActiveCategoryId(t.id ?? null)}
+                onClick={() => {
+                  console.log("[GalleryTabs] click", {
+                    setTo: t.id ?? null,
+                  });
+                  setActiveCategoryId(t.id ?? null);
+                }}
                 onMouseEnter={() => {
                   const key = ["placePhotos", placeId, t.id ?? null] as const;
                   void queryClient.prefetchQuery({
@@ -63,13 +68,16 @@ export default function GalleryTabs({
                       const params = new URLSearchParams();
                       params.set("placeId", placeId);
                       if (t.id != null) params.set("categoryId", String(t.id));
-                      const res = await fetch(
-                        `/api/place/photos?${params.toString()}`,
-                        {
-                          cache: "no-store",
-                        },
-                      );
+                      const url = `/api/place/photos?${params.toString()}`;
+                      console.log("[GalleryTabs] prefetch", { key, url });
+                      const res = await fetch(url, {
+                        cache: "no-store",
+                      });
                       const json = (await res.json()) as { photos: Photo[] };
+                      console.log(
+                        "[GalleryTabs] prefetch done",
+                        json?.photos?.length || 0,
+                      );
                       return json.photos || [];
                     },
                     staleTime: 60_000,

@@ -2,25 +2,28 @@ import React from "react";
 import Link from "next/link";
 
 export default function SectionNav() {
-  const linksBase = [
+  const links = [
+    { href: "#reviews", label: "Reviews", hideOn: "desktop" },
     { href: "#photos", label: "Photos" },
     { href: "#location-hours", label: "Location & Hours" },
     { href: "#amenities", label: "Amenities" },
     { href: "#menu", label: "Menu" },
-    { href: "#other-locations", label: "Other Locations" },
+    { href: "#other-locations", label: "Other Locations", hideOn: "desktop" },
     { href: "#similar-places", label: "Similar Places" },
+    { href: "#reviews", label: "Reviews", hideOn: "mobile" },
   ];
-  // On mobile, Reviews appears above Photos, so include Reviews first in the list
-  const links = [{ href: "#reviews", label: "Reviews" }, ...linksBase];
 
   return (
     <nav
       className="border-border bg-background border-b"
       style={{ zIndex: 9998 }}
     >
-      <ul className="no-scrollbar flex h-12 snap-x items-center overflow-x-auto md:h-16 md:justify-between">
+      <ul className="no-scrollbar flex h-12 snap-x items-center gap-1 overflow-x-auto md:h-14 md:flex-wrap">
         {links.map((l) => (
-          <li key={l.href} className="snap-start">
+          <li
+            key={l.href}
+            className={`snap-start ${l.hideOn === "desktop" ? "block md:hidden" : l.hideOn === "mobile" ? "hidden md:block" : ""}`}
+          >
             <Link
               href={l.href}
               className="hover:text-foreground hover:bg-muted px-3 py-1.5 whitespace-nowrap transition-colors"
