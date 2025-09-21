@@ -522,6 +522,13 @@ export default function PlaceContent({
               <Menu menu={place.menu} />
             </Section>
 
+            {/* Similar Places */}
+            <div className="hidden md:block">
+              <Section id="similar-places-desktop" title="Similar Places">
+                <SimilarPlaces places={similarPlaces} />
+              </Section>
+            </div>
+
             {/* Reviews (desktop only) */}
             <div className="hidden md:block">
               <div id="reviews" />
@@ -559,7 +566,7 @@ export default function PlaceContent({
 
             {/* Similar Places only on mobile */}
             <div className="md:hidden">
-              <Section id="similar-places" title="Similar Places">
+              <Section id="similar-places-mobile" title="Similar Places">
                 <SimilarPlaces places={similarPlaces} />
               </Section>
             </div>

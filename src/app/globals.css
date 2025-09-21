@@ -111,7 +111,7 @@ html {
 @media (min-width: 768px) {
   html {
     /* Desktop/tablet: account for taller navs */
-    scroll-padding-top: 136px;
+    scroll-padding-top: 128px;
   }
 }
 

@@ -3,13 +3,22 @@ import Link from "next/link";
 
 export default function SectionNav() {
   const links = [
-    { href: "#reviews", label: "Reviews", hideOn: "desktop" },
+    { href: "#reviews-mobile", label: "Reviews", hideOn: "desktop" },
     { href: "#photos", label: "Photos" },
     { href: "#location-hours", label: "Location & Hours" },
     { href: "#amenities", label: "Amenities" },
     { href: "#menu", label: "Menu" },
     { href: "#other-locations", label: "Other Locations", hideOn: "desktop" },
-    { href: "#similar-places", label: "Similar Places" },
+    {
+      href: "#similar-places-desktop",
+      label: "Similar Places",
+      hideOn: "mobile",
+    },
+    {
+      href: "#similar-places-mobile",
+      label: "Similar Places",
+      hideOn: "desktop",
+    },
     { href: "#reviews", label: "Reviews", hideOn: "mobile" },
   ];
 

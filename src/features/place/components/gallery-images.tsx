@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -99,10 +99,11 @@ export default function GalleryImages({
   }, [activeCategoryId, photos, isFetching]);
 
   // Build mobile carousel as individual tiles (we'll show ~2.5 tiles via width)
-  const [emblaRef] = useEmblaCarousel({
+  const [emblaRef, emblaMobile] = useEmblaCarousel({
     align: "start",
     dragFree: true,
     containScroll: "trimSnaps",
+    loop: true,
   });
 
   // Desktop carousel instance
@@ -154,20 +155,72 @@ export default function GalleryImages({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emblaDesktop, photos?.length]);
 
+  // Mobile autoplay controls
+  const autoplayMobileIntervalRef = useRef<ReturnType<
+    typeof setInterval
+  > | null>(null);
+  const resumeMobileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const stopAutoplayMobile = useCallback(() => {
+    if (autoplayMobileIntervalRef.current) {
+      clearInterval(autoplayMobileIntervalRef.current);
+      autoplayMobileIntervalRef.current = null;
+    }
+  }, []);
+  const startAutoplayMobile = useCallback(() => {
+    stopAutoplayMobile();
+    if (!emblaMobile) return;
+    if (!displayedPhotos || displayedPhotos.length <= 1) return;
+    autoplayMobileIntervalRef.current = setInterval(() => {
+      emblaMobile?.scrollNext();
+    }, AUTOPLAY_INTERVAL_MS);
+  }, [emblaMobile, displayedPhotos, stopAutoplayMobile]);
+  const pauseThenResumeMobile = useCallback(() => {
+    stopAutoplayMobile();
+    if (resumeMobileTimeoutRef.current) {
+      clearTimeout(resumeMobileTimeoutRef.current);
+      resumeMobileTimeoutRef.current = null;
+    }
+    resumeMobileTimeoutRef.current = setTimeout(() => {
+      startAutoplayMobile();
+    }, AUTOPLAY_RESUME_DELAY_MS);
+  }, [startAutoplayMobile, stopAutoplayMobile]);
+  useEffect(() => {
+    startAutoplayMobile();
+    return () => {
+      stopAutoplayMobile();
+      if (resumeMobileTimeoutRef.current)
+        clearTimeout(resumeMobileTimeoutRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emblaMobile, displayedPhotos?.length]);
+  useEffect(() => {
+    if (!emblaMobile) return;
+    const onPointerDown = () => pauseThenResumeMobile();
+    emblaMobile.on("pointerDown", onPointerDown);
+    return () => {
+      emblaMobile.off("pointerDown", onPointerDown);
+    };
+  }, [emblaMobile, pauseThenResumeMobile]);
+
   return (
     <>
       {/* Mobile: horizontal carousel, ~2.5 tiles visible */}
       <div className="md:hidden">
-        <div className="overflow-hidden" ref={emblaRef}>
+        <div className="overflow-hidden pl-4" ref={emblaRef}>
           <div className="flex">
             {displayedPhotos.map((photo: Photo, idx: number) => (
               <div
                 key={photo.id}
-                className="min-w-0 flex-[0_0_40%] pr-2 first:ml-4 last:mr-4"
+                className="min-w-0 flex-[0_0_40%] pr-2 last:pr-0"
               >
                 <button
                   type="button"
-                  onClick={() => openAt(idx)}
+                  onClick={() => {
+                    pauseThenResumeMobile();
+                    openAt(idx);
+                  }}
                   className="aspect-portrait bg-muted relative w-full overflow-hidden"
                   aria-label="View photo"
                 >
