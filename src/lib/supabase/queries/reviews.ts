@@ -142,16 +142,121 @@ export async function getRecentReviewsFood(limit = 9) {
 }
 
 // Get reviews by author
-export async function getReviewsByAuthor(userId: string, limit = 10) {
+export type ReviewsByAuthorRow = {
+  id: string;
+  rating: number;
+  body: string | null;
+  created_at: string;
+  branches?: {
+    name?: string | null;
+    places?: { slug?: string | null; name?: string | null } | null;
+  } | null;
+  review_photos?: Array<{
+    id: string;
+    file_path: string;
+    alt_text: string | null;
+  }>;
+};
+
+export type ReviewsByAuthorClient = {
+  id: string;
+  rating: number;
+  body: string | null;
+  created_at: string;
+  place: { slug: string | null; name: string | null };
+  branch_name: string | null;
+  photos: Array<{ id: string; file_path: string; alt_text: string | null }>;
+  stats: {
+    total_reactions: number;
+    likes_count: number;
+    loves_count: number;
+    mehs_count: number;
+    dislikes_count: number;
+  };
+  my_reaction?: ReactionType | null;
+};
+
+export async function getReviewsByAuthor(
+  userId: string,
+  limit = 10,
+  offset = 0,
+): Promise<ReviewsByAuthorClient[]> {
+  // Fetch reviews with joined branch and place, plus first photo
   const { data, error } = await supabase
-    .from("reviews_with_my_reaction")
-    .select("*")
+    .from("reviews")
+    .select(
+      `
+      id,
+      rating,
+      body,
+      created_at,
+      branches:branches!inner(
+        id,
+        name,
+        places:places!inner(slug, name)
+      ),
+      review_photos(id, file_path, alt_text)
+    `,
+    )
     .eq("author_id", userId)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
-  return data || [];
+
+  const rows = (data || []) as ReviewsByAuthorRow[];
+  const reviewIds = rows.map((r) => r.id);
+  let statsMap = new Map<
+    string,
+    {
+      total_reactions: number;
+      likes_count: number;
+      loves_count: number;
+      mehs_count: number;
+      dislikes_count: number;
+    }
+  >();
+  if (reviewIds.length > 0) {
+    const { data: statsData, error: statsError } = await supabase
+      .from("review_stats")
+      .select(
+        "review_id, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+      )
+      .in("review_id", reviewIds);
+    if (!statsError) {
+      type StatsRow = {
+        review_id: string;
+        total_reactions: number;
+        likes_count: number;
+        loves_count: number;
+        mehs_count: number;
+        dislikes_count: number;
+      };
+      const rows = (statsData || []) as StatsRow[];
+      statsMap = new Map(rows.map((s) => [String(s.review_id), s]));
+    }
+  }
+
+  // Normalize shape for client consumption
+  return rows.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    body: r.body,
+    created_at: r.created_at,
+    place: {
+      slug: r?.branches?.places?.slug || null,
+      name: r?.branches?.places?.name || null,
+    },
+    branch_name: r?.branches?.name || null,
+    photos: Array.isArray(r?.review_photos) ? r.review_photos : [],
+    stats: statsMap.get(String(r.id)) || {
+      total_reactions: 0,
+      likes_count: 0,
+      loves_count: 0,
+      mehs_count: 0,
+      dislikes_count: 0,
+    },
+  }));
 }
 
 // Get replies for review IDs

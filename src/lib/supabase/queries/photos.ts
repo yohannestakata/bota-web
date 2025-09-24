@@ -191,3 +191,34 @@ export async function getLatestCoverForPlaceIds(
 
   return Array.from(photoMap.values());
 }
+
+// Get photos uploaded by a specific user (author)
+export async function getPhotosByAuthor(
+  authorId: string,
+  limit = 24,
+  offset = 0,
+): Promise<
+  Array<{
+    id: string;
+    file_path: string;
+    alt_text?: string | null;
+    created_at: string;
+    review_id?: string;
+  }>
+> {
+  const { data, error } = await supabase
+    .from("review_photos")
+    .select("id, file_path, alt_text, created_at, review_id")
+    .eq("author_id", authorId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+  return (data || []) as Array<{
+    id: string;
+    file_path: string;
+    alt_text?: string | null;
+    created_at: string;
+    review_id?: string;
+  }>;
+}

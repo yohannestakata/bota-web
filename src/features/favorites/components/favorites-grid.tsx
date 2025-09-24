@@ -1,10 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import Link from "next/link";
-import Image from "next/image";
-import { normalizeImageSrc } from "@/lib/utils/images";
+import PlaceListCard from "@/components/places/place-list-card";
 import UnsaveFavoriteButton from "./unsave-favorite-button.client";
-import { RatingStars } from "@/components/ui/rating-stars";
 import { BranchWithDetails, BranchPhoto } from "@/lib/types/database";
 
 export default async function FavoritesGrid() {
@@ -169,59 +166,30 @@ export default async function FavoritesGrid() {
   return (
     <div className="mt-5 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
       {rows.map((p) => (
-        <div
+        <PlaceListCard
           key={p.id}
-          className="border-border flex flex-col justify-between gap-3 border p-6"
-        >
-          <div>
-            <div className="bg-muted relative aspect-video w-full">
-              {p.image_path ? (
-                <Image
-                  src={normalizeImageSrc(p.image_path)}
-                  alt={`${p.placeName} (${p.branchName})`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover"
-                />
-              ) : null}
-            </div>
-            <div className="mt-3 flex-1">
-              <div className="flex flex-col gap-1">
-                <Link
-                  href={`/place/${p.slug}`}
-                  className="text-foreground font-bold underline-offset-4 hover:underline"
-                >
-                  {p.placeName}
-                  {p.branchName && p.branchName !== p.placeName
-                    ? ` (${p.branchName})`
-                    : ""}
-                </Link>
-                <div className="flex items-center gap-2">
-                  <div className="text-sm">
-                    {p.categoryName || "Restaurant"}
-                  </div>
-                  <span>•</span>
-                  {p.isOpenNow !== undefined ? (
-                    <span
-                      className={`${p.isOpenNow ? "text-green-700" : "text-destructive"} text-sm font-semibold`}
-                    >
-                      {p.isOpenNow ? "Open now" : "Closed for now"}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">
-                      Unknown hours
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-1">
-                <RatingStars rating={p.averageRating || 0} size={16} />
-              </div>
-            </div>
-          </div>
-          <UnsaveFavoriteButton userId={user.id} branchId={p.id} />
-        </div>
+          href={`/place/${p.slug}`}
+          imageUrl={p.image_path}
+          title={p.placeName}
+          secondaryTitle={p.branchName}
+          category={p.categoryName || "Restaurant"}
+          rating={p.averageRating}
+          statusText={
+            p.isOpenNow === undefined
+              ? "Unknown hours"
+              : p.isOpenNow
+                ? "Open now"
+                : "Closed for now"
+          }
+          statusTone={
+            p.isOpenNow === undefined
+              ? "muted"
+              : p.isOpenNow
+                ? "success"
+                : "danger"
+          }
+          action={<UnsaveFavoriteButton userId={user.id} branchId={p.id} />}
+        />
       ))}
     </div>
   );

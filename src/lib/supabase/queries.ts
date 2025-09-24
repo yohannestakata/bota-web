@@ -16,6 +16,7 @@ export {
   uploadReviewPhoto,
   getFirstPhotosForReviewIds,
   getLatestCoverForPlaceIds,
+  getPhotosByAuthor,
 } from "./queries/photos";
 
 export {

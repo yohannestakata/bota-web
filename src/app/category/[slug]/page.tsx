@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { normalizeImageSrc } from "@/lib/utils/images";
+import PlaceListCard from "@/components/places/place-list-card";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import {
   getAllCategories,
   getPlacesByCategoryPaged,
 } from "@/lib/supabase/queries";
-import { RatingStars } from "@/components/ui/rating-stars";
-import type { FeaturedPlaceListItem } from "@/lib/supabase/client";
 // import { buildCloudinaryUrl } from "@/lib/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +72,54 @@ export default async function CategoryPage({
     pageSize,
   );
 
+  // Enrich with latest photo from main branch for each place
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    },
+  );
+
+  const placeIds = places.map((p) => p.id);
+  const { data: branches } = await supabase
+    .from("branches")
+    .select("id, place_id")
+    .in("place_id", placeIds)
+    .eq("is_main_branch", true);
+  const placeIdToBranchId = new Map<string, string>(
+    (branches || []).map((b) => [
+      String((b as { place_id: string }).place_id),
+      String((b as { id: string }).id),
+    ]),
+  );
+
+  const mainBranchIds = (branches || []).map((b) =>
+    String((b as { id: string }).id),
+  );
+  const { data: photos } = await supabase
+    .from("branch_photos")
+    .select("branch_id, file_path, created_at")
+    .in("branch_id", mainBranchIds)
+    .order("created_at", { ascending: false });
+  const firstPhotoByBranch = new Map<string, string>();
+  for (const row of photos || []) {
+    const bid = String((row as { branch_id: string }).branch_id);
+    if (!firstPhotoByBranch.has(bid)) {
+      firstPhotoByBranch.set(
+        bid,
+        String((row as { file_path: string }).file_path),
+      );
+    }
+  }
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-10">
       <h1 className="mb-2 text-3xl font-semibold">{category.name}</h1>
@@ -107,43 +154,24 @@ export default async function CategoryPage({
         </div>
       ) : (
         <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {places.map((p) => (
-            <li key={p.id} className="overflow-hidden border">
-              <Link href={`/place/${p.slug}`}>
-                <div className="relative aspect-video">
-                  <Image
-                    src={normalizeImageSrc(
-                      (p as unknown as FeaturedPlaceListItem)
-                        .cover_image_path || "/file.svg",
-                    )}
-                    alt={p.name}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-foreground font-medium">{p.name}</h3>
-                      <p className="text-muted-foreground text-sm">
-                        {category.name}
-                      </p>
-                    </div>
-                    <div className="ml-2 flex items-center gap-1">
-                      <RatingStars
-                        rating={Number(p.place_stats?.average_rating || 0)}
-                        size={16}
-                      />
-                      <span className="text-sm font-medium">
-                        {Number(p.place_stats?.average_rating || 0).toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
+          {places.map((p) => {
+            const branchId = placeIdToBranchId.get(p.id);
+            const imageUrl = branchId
+              ? firstPhotoByBranch.get(branchId) || "/file.svg"
+              : "/file.svg";
+            return (
+              <li key={p.id} className="overflow-hidden">
+                <PlaceListCard
+                  href={`/place/${p.slug}`}
+                  imageUrl={imageUrl}
+                  title={p.name}
+                  category={category.name}
+                  rating={Number(p.place_stats?.average_rating || 0)}
+                  reviewCount={Number(p.place_stats?.review_count || 0)}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
 
