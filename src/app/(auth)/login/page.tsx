@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/app/auth-context";
 import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import GoogleButton from "@/components/ui/google-button";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 
 export default function LoginPage() {
   return (
@@ -16,19 +17,33 @@ export default function LoginPage() {
 }
 
 function LoginInner() {
-  const { signIn } = useAuth();
   const sp = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await signIn(email, password);
-    if (error) setError(error);
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA challenge.");
+      setLoading(false);
+      return;
+    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken },
+    });
+    try {
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(undefined);
+    } catch {}
+    if (error) setError(getFriendlyAuthErrorMessage(error));
     setLoading(false);
   }
 
@@ -59,10 +74,24 @@ function LoginInner() {
             className="border-input bg-background focus:ring-ring w-full border px-3 py-2 focus:ring-2 focus:outline-none"
           />
         </div>
+        <div>
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(undefined)}
+            onError={() => setCaptchaToken(undefined)}
+          />
+          {!captchaToken && (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Complete the CAPTCHA to continue.
+            </p>
+          )}
+        </div>
         {error && <p className="text-destructive text-sm">{error}</p>}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !captchaToken}
           className="bg-primary text-primary-foreground w-full px-4 py-2 font-medium disabled:opacity-60"
         >
           {loading ? "Signing you in…" : "Sign in"}
