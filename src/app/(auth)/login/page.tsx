@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import GoogleButton from "@/components/ui/google-button";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { useRouter } from "next/navigation";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 
 export default function LoginPage() {
@@ -18,6 +19,7 @@ export default function LoginPage() {
 
 function LoginInner() {
   const sp = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,10 @@ function LoginInner() {
       setCaptchaToken(undefined);
     } catch {}
     if (error) setError(getFriendlyAuthErrorMessage(error));
+    else {
+      const dest = sp.get("redirect") || "/";
+      router.replace(dest);
+    }
     setLoading(false);
   }
 

@@ -4,9 +4,10 @@ import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import GoogleButton from "@/components/ui/google-button";
 import { supabase } from "@/lib/supabase/client";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
+import { useToast } from "@/components/ui/toast";
 
 export default function SignupPage() {
   return (
@@ -18,6 +19,8 @@ export default function SignupPage() {
 
 function SignupInner() {
   const sp = useSearchParams();
+  const router = useRouter();
+  const { notify } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,7 @@ function SignupInner() {
       setLoading(false);
       return;
     }
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { captchaToken },
@@ -45,6 +48,12 @@ function SignupInner() {
       setCaptchaToken(undefined);
     } catch {}
     if (error) setError(getFriendlyAuthErrorMessage(error));
+    else {
+      // Supabase signUp may or may not create a session depending on confirm settings
+      notify("Check your email to confirm your account.", "success");
+      const dest = sp.get("redirect") || "/";
+      router.replace(dest);
+    }
     setLoading(false);
   }
 
