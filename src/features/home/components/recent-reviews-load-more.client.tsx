@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import RecentReviewItem, {
   type RecentReviewItemData,
 } from "./recent-review-item";
