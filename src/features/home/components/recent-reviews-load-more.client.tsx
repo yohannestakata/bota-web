@@ -48,7 +48,7 @@ export default function RecentReviewsLoadMore({
   };
 
   const [items, setItems] = useState<RecentReviewItemData[]>([]);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(() => seenIds?.length ?? 0);
   const [loading, setLoading] = useState(false);
   const seenRef = useRef<Set<string>>(new Set((seenIds || []).map(String)));
 
