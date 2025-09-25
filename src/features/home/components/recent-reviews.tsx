@@ -51,12 +51,7 @@ export default function RecentReviews({
         {/* Server wrapper fetches first page; client handles "See more" */}
         <ServerRecentReviewsList filter={filter} lat={lat} lon={lon} />
       </Suspense>
-      <RecentReviewsLoadMore
-        show={!filter || !!filter}
-        filter={(filter || "recent") as "recent" | "trending" | "nearby"}
-        lat={lat}
-        lon={lon}
-      />
+      <ServerSeenWrapper filter={filter} lat={lat} lon={lon} />
     </section>
   );
 }
@@ -135,5 +130,82 @@ async function ServerRecentReviewsList({
 
   return (
     <RecentReviewsList filter={filter} lat={lat} lon={lon} items={dataRows} />
+  );
+}
+
+async function ServerSeenWrapper({
+  filter,
+  lat,
+  lon,
+}: {
+  filter?: string;
+  lat?: number;
+  lon?: number;
+}) {
+  // Fetch the same first page as the list to collect initial IDs for dedupe
+  noStore();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    },
+  );
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let ids: string[] = [];
+  try {
+    if (filter === "nearby" && lat != null && lon != null) {
+      const { data } = await supabase.rpc(
+        "recent_reviews_nearby_with_my_reaction",
+        {
+          in_lat: lat,
+          in_lon: lon,
+          in_radius_meters: 10000,
+          in_limit: 12,
+          in_user: user?.id ?? null,
+        },
+      );
+      ids = (data || []).map((r: { review_id: string }) => String(r.review_id));
+    } else if (filter === "trending") {
+      const { data } = await supabase.rpc(
+        "recent_reviews_popular_with_my_reaction",
+        { in_days: 7, in_limit: 12, in_user: user?.id ?? null },
+      );
+      ids = (data || []).map((r: { review_id: string }) => String(r.review_id));
+    } else if (filter === "recent" || !filter) {
+      const { data } = await supabase.rpc("recent_reviews_with_my_reaction", {
+        in_limit: 12,
+        in_user: user?.id ?? null,
+      });
+      ids = (data || []).map((r: { review_id: string }) => String(r.review_id));
+    } else {
+      const { data } = await supabase.rpc(
+        "recent_reviews_food_with_my_reaction",
+        { in_limit: 12, in_user: user?.id ?? null },
+      );
+      ids = (data || []).map((r: { review_id: string }) => String(r.review_id));
+    }
+  } catch {
+    ids = [];
+  }
+
+  return (
+    <RecentReviewsLoadMore
+      show={!filter || !!filter}
+      filter={(filter || "recent") as "recent" | "trending" | "nearby"}
+      lat={lat}
+      lon={lon}
+      seenIds={ids}
+    />
   );
 }

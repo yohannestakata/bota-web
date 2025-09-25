@@ -18,7 +18,7 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
   const pinIcon = useMemo(() => {
     return divIcon({
       html: renderToString(
-        <MapPin color="#fff" size={40} fill="#ff2056" strokeWidth={1} />,
+        <MapPin color="#fff" size={40} fill="#00a73e" strokeWidth={1} />,
       ),
       className: "",
       iconSize: [32, 32],

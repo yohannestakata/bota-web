@@ -168,7 +168,7 @@ export default function SearchBar({
               {results.map((p) => (
                 <li key={p.id} className="hover:bg-muted px-4">
                   <Link
-                    href={`/reviews/add/${p.slug}`}
+                    href={`/place/${p.slug}`}
                     className="hover:bg-muted flex w-full justify-between py-4 text-sm"
                     onClick={() => setOpen(false)}
                   >

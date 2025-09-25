@@ -11,11 +11,13 @@ export default function RecentReviewsLoadMore({
   filter = "recent",
   lat,
   lon,
+  seenIds = [],
 }: {
   show?: boolean;
   filter?: "recent" | "trending" | "nearby" | string | undefined;
   lat?: number;
   lon?: number;
+  seenIds?: string[];
 }) {
   type ApiPhoto = {
     id: string;
@@ -48,6 +50,7 @@ export default function RecentReviewsLoadMore({
   const [items, setItems] = useState<RecentReviewItemData[]>([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
+  const seenRef = useRef<Set<string>>(new Set((seenIds || []).map(String)));
 
   if (!show) return null;
 
@@ -135,7 +138,11 @@ export default function RecentReviewsLoadMore({
       }
       setItems((prev) => {
         const existing = new Set(prev.map((r) => String(r.reviewId)));
+        // Merge with server-sent initial IDs
+        for (const id of seenRef.current) existing.add(String(id));
         const deduped = next.filter((r) => !existing.has(String(r.reviewId)));
+        // Update global seenRef with newly accepted IDs
+        for (const r of deduped) seenRef.current.add(String(r.reviewId));
         return [...prev, ...deduped];
       });
       setOffset((o) => o + next.length);
