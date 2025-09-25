@@ -29,6 +29,11 @@ function SignupInner() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA challenge.");
+      setLoading(false);
+      return;
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -75,12 +80,19 @@ function SignupInner() {
             ref={captchaRef}
             sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
             onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(undefined)}
+            onError={() => setCaptchaToken(undefined)}
           />
+          {!captchaToken && (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Complete the CAPTCHA to continue.
+            </p>
+          )}
         </div>
         {error && <p className="text-destructive text-sm">{error}</p>}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !captchaToken}
           className="bg-primary text-primary-foreground w-full px-4 py-2 font-medium disabled:opacity-60"
         >
           {loading ? "Creating your account…" : "Sign up"}
