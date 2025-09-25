@@ -36,12 +36,14 @@ export default function ReviewReactions({
   size = 16,
   compact = false,
   initialMyReaction,
+  className,
 }: {
   reviewId: string;
   initialCounts: { like: number; love: number; meh: number; dislike: number };
   size?: number;
   compact?: boolean;
   initialMyReaction?: ReactionType | null;
+  className?: string;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -119,8 +121,8 @@ export default function ReviewReactions({
       >
         <button
           type="button"
-          className={`border-border hover:bg-muted inline-flex min-w-14 flex-1 cursor-pointer items-center justify-center gap-1 ${
-            compact ? "px-2 py-1 text-sm" : "px-3 py-1.5"
+          className={`border-border hover:bg-muted inline-flex min-w-14 flex-1 cursor-pointer items-center justify-center gap-1.5 ${
+            compact ? "px-2 py-1 text-sm" : "px-3 py-2"
           } border ${active ? "bg-muted" : ""}`}
           title={k}
           onClick={handleClick}
@@ -138,7 +140,7 @@ export default function ReviewReactions({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-1.5 ${className}`}>
       <Button k="like" Icon={ThumbsUp} />
       <Button k="love" Icon={Heart} />
       <Button k="meh" Icon={Meh} />

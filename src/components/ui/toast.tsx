@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 
 type ToastVariant = "success" | "error" | "info";
 type ToastItem = { id: number; message: string; variant: ToastVariant };
@@ -31,21 +33,46 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       {toasts.length > 0 && (
-        <div className="pointer-events-none fixed top-4 right-4 z-50 flex flex-col gap-2">
-          {toasts.map((t) => (
-            <div
-              key={t.id}
-              className={`bg-background pointer-events-auto border px-3 py-2 text-sm shadow-sm ${
-                t.variant === "error"
-                  ? "text-destructive"
-                  : t.variant === "success"
-                    ? ""
-                    : ""
-              }`}
-            >
-              {t.message}
-            </div>
-          ))}
+        <div className="pointer-events-none fixed top-22 left-1/2 z-[10000] -translate-x-1/2 transform">
+          <div className="flex flex-col items-center gap-2">
+            <AnimatePresence initial={false}>
+              {toasts.map((t) => {
+                const Icon =
+                  t.variant === "error"
+                    ? AlertCircle
+                    : t.variant === "success"
+                      ? CheckCircle2
+                      : Info;
+                const borderClass =
+                  t.variant === "error"
+                    ? "border-destructive"
+                    : t.variant === "success"
+                      ? "border-green-600"
+                      : "border-border";
+                const textClass =
+                  t.variant === "error"
+                    ? "text-destructive"
+                    : t.variant === "success"
+                      ? "text-green-700"
+                      : "text-foreground";
+                return (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className={`bg-background pointer-events-auto border ${borderClass} ${textClass} rounded-md px-4 py-3 text-sm font-semibold shadow-lg`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <Icon className="mt-[1px] h-4 w-4 opacity-90" />
+                      <span>{t.message}</span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </ToastContext.Provider>

@@ -1,15 +1,22 @@
 import { CategoriesSection } from "@/features/home";
+import MessageToast from "@/components/ui/message-toast.client";
 import RecentReviews from "@/features/home/components/recent-reviews";
 import SearchBar from "@/components/search-bar";
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; lat?: string; lon?: string }>;
+  searchParams: Promise<{
+    filter?: string;
+    lat?: string;
+    lon?: string;
+    message?: string;
+  }>;
 }) {
-  const { filter, lat, lon } = await searchParams;
+  const { filter, lat, lon, message } = await searchParams;
   return (
     <div className="">
+      <MessageToast serverMessage={message} />
       {/* Organization JSON-LD */}
       <script
         type="application/ld+json"

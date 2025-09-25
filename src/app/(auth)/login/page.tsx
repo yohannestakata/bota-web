@@ -89,6 +89,10 @@ function LoginInner() {
         <Link href="/signup" className="underline">
           Create an account
         </Link>
+        <span className="mx-2">·</span>
+        <Link href="/auth/forgot-password" className="underline">
+          Forgot password?
+        </Link>
       </p>
     </div>
   );

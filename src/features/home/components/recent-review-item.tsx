@@ -64,7 +64,7 @@ export default function RecentReviewItem({
     [setOpen, setStartIndex],
   );
   return (
-    <div className="border-border border p-6">
+    <div className="border-border flex flex-col border p-6">
       <div className="flex items-center gap-3.5">
         <div className="bg-muted relative size-12 overflow-hidden rounded-full">
           {review.avatarUrl ? (
@@ -121,7 +121,7 @@ export default function RecentReviewItem({
         )}
       </div>
 
-      <div className="mt-3 flex-1">
+      <div className="mt-3 flex flex-1 flex-col">
         <div className="flex flex-col gap-0.5">
           <Link
             href={review.placeSlug ? `/place/${review.placeSlug}` : "#"}
@@ -139,9 +139,10 @@ export default function RecentReviewItem({
         </div>
 
         {review.reviewId && review.reviewId !== "" && (
-          <div className="mt-3.5">
+          <div className="mt-3.5 flex flex-1 items-end">
             <ReviewReactions
               reviewId={review.reviewId}
+              className="flex-1"
               initialCounts={{
                 like: review.likes,
                 love: review.loves,

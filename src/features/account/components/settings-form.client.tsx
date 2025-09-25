@@ -11,6 +11,7 @@ import { uploadImageToBucket } from "@/lib/supabase/storage";
 import { useToast } from "@/components/ui/toast";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
+import { Upload } from "lucide-react";
 
 const schema = z.object({
   full_name: z.string().max(120).optional().or(z.literal("")),
@@ -48,8 +49,55 @@ export default function SettingsForm() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  // Username availability check
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
+    null,
+  );
+  const watchedUsername = watch("username");
+  useEffect(() => {
+    let cancelled = false;
+    const value = (watchedUsername || "").trim();
+    if (!value) {
+      setUsernameAvailable(null);
+      return;
+    }
+    // If unchanged from current profile, treat as available
+    if (value === (profile?.username || "")) {
+      setUsernameAvailable(true);
+      return;
+    }
+    setUsernameChecking(true);
+    const t = window.setTimeout(async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", value)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          setUsernameAvailable(null);
+        } else {
+          const takenByOther = Boolean(
+            (data as { id?: string } | null)?.id &&
+              (data as { id?: string } | null)?.id !== user?.id,
+          );
+          setUsernameAvailable(!takenByOther);
+        }
+      } finally {
+        if (!cancelled) setUsernameChecking(false);
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [watchedUsername, profile?.username, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -234,31 +282,32 @@ export default function SettingsForm() {
   if (loading) return null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-      <div className="flex items-center gap-4">
-        <div className="bg-muted relative h-20 w-20 overflow-hidden rounded-full">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt="Avatar"
-              fill
-              sizes="80px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-sm">
-              {profile?.full_name?.charAt(0) ?? "U"}
-            </div>
-          )}
-        </div>
-        <div className="space-x-2">
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="py-12">
+        <div className="flex items-center gap-4">
           <button
             type="button"
-            className="border px-3 py-1 text-sm"
             onClick={startAvatarUpload}
-            disabled={avatarUploading}
+            className="group bg-muted relative h-20 w-20 overflow-hidden rounded-full"
           >
-            {avatarUploading ? "Uploading..." : "Change photo"}
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt="Avatar"
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="grid h-full w-full place-items-center text-sm">
+                {profile?.full_name?.charAt(0) ?? "U"}
+              </div>
+            )}
+            <div className="absolute inset-0 hidden items-center justify-center bg-black/40 group-hover:flex">
+              <span className="text-xs text-white">
+                <Upload />
+              </span>
+            </div>
           </button>
           <input
             ref={fileInputRef}
@@ -268,58 +317,70 @@ export default function SettingsForm() {
             onChange={onAvatarSelected}
           />
         </div>
-      </div>
 
-      <div>
-        <label className="mb-1 block text-sm">Full name</label>
-        <input
-          type="text"
-          {...register("full_name")}
-          className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
-        />
-        {errors.full_name?.message ? (
-          <div className="text-destructive mt-1 text-xs">
-            {errors.full_name.message}
+        {/* Name and username in same section */}
+        <div className="mt-6">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-semibold">Full name</label>
+              <input
+                type="text"
+                {...register("full_name")}
+                className="border-border bg-background w-full border p-3 text-sm focus:outline-none"
+              />
+              {errors.full_name?.message ? (
+                <div className="text-destructive mt-1 text-xs">
+                  {errors.full_name.message}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-semibold">Username</label>
+              <input
+                type="text"
+                {...register("username")}
+                className="border-border bg-background w-full border p-3 text-sm focus:outline-none"
+              />
+              <div className="min-h-4 text-xs">
+                {usernameChecking ? (
+                  <span className="text-muted-foreground">Checking...</span>
+                ) : usernameAvailable === true ? (
+                  <span className="text-green-700">Available</span>
+                ) : usernameAvailable === false ? (
+                  <span className="text-destructive">Already taken</span>
+                ) : null}
+              </div>
+              {errors.username?.message ? (
+                <div className="text-destructive mt-1 text-xs">
+                  {errors.username.message}
+                </div>
+              ) : null}
+            </div>
           </div>
-        ) : null}
-      </div>
 
-      <div>
-        <label className="mb-1 block text-sm">Username</label>
-        <input
-          type="text"
-          {...register("username")}
-          className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none"
-        />
-        {errors.username?.message ? (
-          <div className="text-destructive mt-1 text-xs">
-            {errors.username.message}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={saving || !isDirty}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 text-sm"
-        >
-          {saving ? "Saving..." : "Save changes"}
-        </button>
+          <button
+            type="submit"
+            disabled={saving || !isDirty}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 px-4 py-3 text-sm font-semibold"
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
       </div>
 
       <hr className="border-border" />
 
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm">Email</label>
+      <div className="space-y-6 py-12">
+        <div className="flex flex-col gap-2">
+          <label className="text-base font-semibold">Email</label>
           <div className="flex gap-2">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={Boolean(authProvider) && authProvider !== "email"}
-              className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none disabled:opacity-60"
+              className="border-border bg-background w-full border p-3 text-sm focus:outline-none disabled:opacity-60"
             />
             <button
               type="button"
@@ -328,58 +389,64 @@ export default function SettingsForm() {
                 emailUpdating ||
                 (Boolean(authProvider) && authProvider !== "email")
               }
-              className="border px-3 py-2 text-sm"
+              className="border-border border px-4 py-3 text-sm"
             >
               {emailUpdating ? "Updating..." : "Update"}
             </button>
           </div>
           {authProvider && authProvider !== "email" ? (
-            <p className="text-muted-foreground mt-1 text-xs">
+            <p className="mt-1 text-sm">
               Email is managed by your {authProvider} account.
             </p>
           ) : (
-            <p className="text-muted-foreground mt-1 text-xs">
+            <p className="mt-1 text-sm">
               We’ll send a confirmation link to verify changes.
             </p>
           )}
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm">New password</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-base font-semibold">New password</label>
           <div className="flex gap-2">
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="border-input bg-background w-full border px-3 py-2 text-sm focus:outline-none"
+              className="border-border bg-background w-full border p-3 text-sm focus:outline-none"
             />
             <button
               type="button"
               onClick={updatePassword}
               disabled={passwordUpdating || newPassword.length < 6}
-              className="border px-3 py-2 text-sm"
+              className="border-border border px-4 py-3 text-sm"
             >
               {passwordUpdating ? "Updating..." : "Update"}
             </button>
           </div>
-          <p className="text-muted-foreground mt-1 text-xs">
-            Use at least 6 characters.
-          </p>
+          <p className="mt-1 text-sm">Use at least 6 characters.</p>
         </div>
       </div>
 
       <hr className="border-border" />
 
-      <div>
-        <div className="mb-2 text-sm font-medium">Danger zone</div>
+      <div className="py-12">
+        <div className="mb-4 text-lg font-semibold">Danger zone</div>
         <button
           type="button"
           onClick={() => setConfirmOpen(true)}
-          className="text-destructive border px-3 py-2 text-sm"
+          className="text-destructive border-border border px-4 py-3 text-sm"
         >
           Delete my account
         </button>
+        <button
+          type="button"
+          onClick={() => void supabase.auth.signOut()}
+          className="border-border ml-3 border px-4 py-3 text-sm"
+        >
+          Sign out
+        </button>
       </div>
+
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

@@ -7,6 +7,7 @@ import Footer from "@/components/layout/footer";
 import SiteHeader from "@/components/layout/site-header";
 import PageViewTracker from "@/components/analytics/page-view-tracker";
 import { OrganizationJsonLd, WebSiteJsonLd } from "./structured-data";
+import AuthCodeRedirect from "@/components/ui/auth-code-redirect.client";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -92,6 +93,7 @@ export default function RootLayout({
         className={`${manrope.variable} ${inter.className} bg-background antialiased`}
       >
         <Providers>
+          <AuthCodeRedirect />
           <OrganizationJsonLd name={orgName} url={baseUrl} logoUrl={logoUrl} />
           <WebSiteJsonLd name={orgName} url={baseUrl} searchUrl={searchUrl} />
           <PageViewTracker />
