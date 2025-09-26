@@ -5,6 +5,14 @@ export default function Brand() {
   return (
     <Link href="/" aria-label="Bota Home" className="flex items-center gap-2">
       <Image
+        src="/logo-icon.svg"
+        alt="Bota"
+        width={28}
+        height={28}
+        className="sm:hidden"
+        priority
+      />
+      <Image
         src="/logo-icon-and-wordmark.svg"
         alt="Bota"
         width={92}
