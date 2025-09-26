@@ -7,6 +7,7 @@ import {
   Phone,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -15,7 +16,18 @@ export default function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Company Info */}
           <div>
-            <h3 className="text-foreground mb-4 text-lg font-medium">Bota</h3>
+            <Link
+              href="/"
+              aria-label="Bota Home"
+              className="mb-4 inline-flex items-center"
+            >
+              <Image
+                src="/logo-icon-and-wordmark.svg"
+                alt="Bota"
+                width={120}
+                height={28}
+              />
+            </Link>
             <p className="text-muted-foreground mb-4 text-sm">
               Discover the best places around you with authentic reviews from
               real people. Your trusted guide to amazing experiences.
@@ -190,7 +202,7 @@ export default function Footer() {
         <div className="border-border mt-8 border-t pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="text-muted-foreground text-center text-sm md:text-left">
-              © 2024 Bota. All rights reserved.
+              © 2025 Bota Review. All rights reserved.
             </div>
             <div className="flex items-center gap-6 text-sm">
               <div className="text-muted-foreground flex items-center gap-2">
@@ -199,7 +211,7 @@ export default function Footer() {
               </div>
               <div className="text-muted-foreground flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+251 (94) 121-9446</span>
               </div>
             </div>
           </div>

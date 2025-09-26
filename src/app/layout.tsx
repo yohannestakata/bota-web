@@ -41,6 +41,17 @@ export const metadata: Metadata = {
     "coffee",
     "reviews",
   ],
+  manifest: "/site.webmanifest",
+  themeColor: "#0B0B0C",
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: "/apple-touch-icon.png",
+    other: [{ rel: "mask-icon", url: "/logo-icon.svg", color: "#0B0B0C" }],
+  },
   openGraph: {
     type: "website",
     siteName: "Bota",
@@ -83,7 +94,7 @@ export default function RootLayout({
 }>) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
   const orgName = "Bota";
-  const logoUrl = `${baseUrl}/vercel.svg`;
+  const logoUrl = `${baseUrl}/logo-icon.svg`;
   const searchUrl = `${baseUrl}/`;
 
   return (
