@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +10,6 @@ import { useAuth } from "@/app/auth-context";
 import { supabase } from "@/lib/supabase/client";
 import { uploadImageToBucket } from "@/lib/supabase/storage";
 import { useToast } from "@/components/ui/toast";
-import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { getFriendlyAuthErrorMessage } from "@/lib/errors/auth";
 import { Upload } from "lucide-react";
 
@@ -200,38 +200,6 @@ export default function SettingsForm() {
         "error",
       );
     else notify("Password updated.", "success");
-  };
-
-  const deleteAccount = async (): Promise<boolean> => {
-    const session = await supabase.auth.getSession();
-    const access = session.data.session?.access_token;
-    if (!access) return false;
-    const res = await fetch("/api/account/delete", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${access}` },
-    });
-    if (!res.ok) return false;
-    await supabase.auth.signOut();
-    return true;
-  };
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmBusy, setConfirmBusy] = useState(false);
-  const onConfirmDelete = async () => {
-    setConfirmBusy(true);
-    try {
-      const ok = await deleteAccount();
-      if (ok) {
-        notify("Your account was deleted.", "success");
-        window.setTimeout(() => {
-          window.location.href = "/";
-        }, 1200);
-      } else {
-        notify("Couldn’t delete your account.", "error");
-      }
-    } finally {
-      setConfirmBusy(false);
-      setConfirmOpen(false);
-    }
   };
 
   const startAvatarUpload = () => fileInputRef.current?.click();
@@ -431,13 +399,12 @@ export default function SettingsForm() {
 
       <div className="py-12">
         <div className="mb-4 text-lg font-semibold">Danger zone</div>
-        <button
-          type="button"
-          onClick={() => setConfirmOpen(true)}
+        <Link
+          href="/account/delete"
           className="text-destructive border-border border px-4 py-3 text-sm"
         >
           Delete my account
-        </button>
+        </Link>
         <button
           type="button"
           onClick={() => void supabase.auth.signOut()}
@@ -446,18 +413,6 @@ export default function SettingsForm() {
           Sign out
         </button>
       </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title="Delete your account?"
-        description="This will permanently remove your account and all associated data. This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={onConfirmDelete}
-        destructive
-        confirmLoading={confirmBusy}
-      />
     </form>
   );
 }

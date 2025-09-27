@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/toast";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 const schema = z.object({ email: z.string().email("Enter a valid email") });
 type FormValues = z.infer<typeof schema>;
@@ -13,6 +14,8 @@ type FormValues = z.infer<typeof schema>;
 export default function ForgotPasswordPage() {
   const { notify } = useToast();
   const [sending, setSending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaRef = useRef<HCaptcha | null>(null);
   const {
     register,
     handleSubmit,
@@ -22,6 +25,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (values: FormValues) => {
     setSending(true);
     const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+      captchaToken,
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     setSending(false);
@@ -52,9 +56,16 @@ export default function ForgotPasswordPage() {
             </div>
           ) : null}
         </div>
+        <HCaptcha
+          ref={captchaRef}
+          sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+          onVerify={(token) => setCaptchaToken(token)}
+          onExpire={() => setCaptchaToken(undefined)}
+          onError={() => setCaptchaToken(undefined)}
+        />
         <button
           type="submit"
-          disabled={sending}
+          disabled={sending || !captchaToken}
           className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3 text-sm font-semibold"
         >
           {sending ? "Sending..." : "Send reset link"}
