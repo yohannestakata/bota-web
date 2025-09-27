@@ -300,13 +300,10 @@ export default function PrivacyPolicyPage() {
           </p>
           <div className="bg-muted p-4">
             <p className="mb-2">
-              <strong>Email:</strong> privacy@botareview.com
+              <strong>Email:</strong> yohannesmasayuki@gmail.com
             </p>
             <p className="mb-2">
-              <strong>Address:</strong> [Your Business Address]
-            </p>
-            <p className="mb-2">
-              <strong>Phone:</strong> [Your Phone Number]
+              <strong>Phone:</strong> +251 (94) 121-9446
             </p>
           </div>
         </section>
@@ -321,7 +318,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <div className="bg-muted p-4">
             <p className="mb-2">
-              <strong>Email:</strong> dpo@botareview.com
+              <strong>Email:</strong> yohannesmasayuki@gmail.com
             </p>
             <p className="mb-2">
               <strong>Subject Line:</strong> &ldquo;Privacy Inquiry - DPO&rdquo;
