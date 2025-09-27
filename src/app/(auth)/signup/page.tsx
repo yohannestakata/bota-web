@@ -37,7 +37,7 @@ function SignupInner() {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { captchaToken },
@@ -117,6 +117,7 @@ function SignupInner() {
           await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
+              scopes: "openid email profile",
               redirectTo: `${appUrl}/auth/callback?redirect=${encodeURIComponent(
                 redirect,
               )}`,

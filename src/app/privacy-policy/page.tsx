@@ -329,6 +329,73 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
+        <section className="mb-8">
+          <h2 className="mb-4 text-2xl font-semibold">13. Google User Data</h2>
+          <p className="mb-4">
+            If you sign in with Google, we may receive limited Google user data
+            that you authorize during the consent flow. We request only the
+            minimum scopes necessary to enable authentication and improve your
+            experience.
+          </p>
+          <h3 className="mb-3 text-xl font-medium">13.1 Data We Access</h3>
+          <ul className="mb-4 list-disc space-y-2 pl-6">
+            <li>
+              Basic profile information (e.g., name, avatar) when permitted
+            </li>
+            <li>Email address for account creation and communication</li>
+          </ul>
+          <h3 className="mb-3 text-xl font-medium">13.2 How We Use It</h3>
+          <ul className="mb-4 list-disc space-y-2 pl-6">
+            <li>Authenticate your account and keep you signed in</li>
+            <li>Populate your profile and personalize your experience</li>
+            <li>Communicate important service updates (when applicable)</li>
+          </ul>
+          <h3 className="mb-3 text-xl font-medium">13.3 What We Do Not Do</h3>
+          <ul className="mb-4 list-disc space-y-2 pl-6">
+            <li>We do not sell Google user data.</li>
+            <li>
+              We do not share Google user data with third parties except trusted
+              service providers acting on our behalf (e.g., hosting, analytics)
+              under appropriate safeguards.
+            </li>
+            <li>
+              We do not use Google user data for advertising or to build
+              advertising profiles.
+            </li>
+            <li>
+              We do not use Google user data to train standalone AI/ML models.
+            </li>
+          </ul>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="mb-4 text-2xl font-semibold">
+            14. Revoking Access and Data Deletion
+          </h2>
+          <p className="mb-4">
+            You can revoke our access to your Google account at any time via
+            your Google Account settings at{" "}
+            <a
+              href="https://myaccount.google.com/permissions"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              myaccount.google.com/permissions
+            </a>
+            .
+          </p>
+          <p className="mb-4">
+            You can also request deletion of your account and associated data by
+            contacting us at{" "}
+            <a href="mailto:privacy@botareview.com" className="underline">
+              privacy@botareview.com
+            </a>
+            . We will process deletion requests in accordance with applicable
+            laws and our data retention obligations.
+          </p>
+        </section>
+
         <div className="mt-8 border-t pt-6">
           <p className="text-muted-foreground text-sm">
             This Privacy Policy is effective as of the date listed above and

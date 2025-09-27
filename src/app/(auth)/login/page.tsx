@@ -112,6 +112,7 @@ function LoginInner() {
           await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
+              scopes: "openid email profile",
               redirectTo: `${appUrl}/auth/callback?redirect=${encodeURIComponent(
                 redirect,
               )}`,
