@@ -32,8 +32,12 @@ export default function DeleteAccountPage() {
         headers: { Authorization: `Bearer ${access}` },
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error((j as any).error || "Failed to delete account");
+        let message = "Failed to delete account";
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (j && typeof j.error === "string") message = j.error;
+        } catch {}
+        throw new Error(message);
       }
       // Sign out locally and redirect home
       await supabase.auth.signOut();
