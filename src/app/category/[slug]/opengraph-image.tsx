@@ -23,7 +23,7 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          background: "#0B0B0C",
+          background: "linear-gradient(135deg, #0B0B0C 0%, #1c1c1f 100%)",
           color: "white",
           padding: 72,
         }}
@@ -44,4 +44,3 @@ export default async function Image({
     size,
   );
 }
-

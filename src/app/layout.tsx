@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: "/og-default.svg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Bota — Discover the best places in Ethiopia",
@@ -76,14 +76,11 @@ export const metadata: Metadata = {
     title: "Bota — Discover the best places in Ethiopia",
     description:
       "Discover top restaurants, cafes, and places to shop in Ethiopia. See real reviews, photos, menus, and ratings across Addis Ababa and beyond.",
-    images: ["/og-default.svg"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
     follow: true,
-  },
-  alternates: {
-    canonical: "/",
   },
 };
 

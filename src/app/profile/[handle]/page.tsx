@@ -15,6 +15,38 @@ import { formatDistanceToNowStrict } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}) {
+  const { handle } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+  const url = `${baseUrl}/profile/${handle}`;
+  // We can't fetch server-side helpers here without importing queries; keep lightweight
+  const title = `${handle} — Profile on Bota`;
+  const description = `See ${handle}'s reviews and photos on Bota.`;
+  const og = `${baseUrl}/opengraph-image`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "profile",
+      images: [{ url: og, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [og],
+    },
+  } satisfies import("next").Metadata;
+}
+
 export default async function ProfilePage({
   params,
 }: {

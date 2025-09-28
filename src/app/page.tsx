@@ -17,19 +17,6 @@ export default async function Home({
   return (
     <div className="">
       <MessageToast serverMessage={message} />
-      {/* Organization JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: "Bota",
-            url: `${process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com"}/`,
-            logo: `${process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com"}/og-default.svg`,
-          }),
-        }}
-      />
       {/* Page-specific hero */}
       <section className="mx-auto mt-12 max-w-6xl px-4 md:mt-16">
         <h1 className="font-heading text-center text-5xl font-bold text-balance md:text-6xl">
@@ -72,13 +59,13 @@ export const metadata = {
       "Discover top places across Ethiopia with photos, menus, and real reviews.",
     url: "/",
     type: "website",
-    images: [{ url: "/og-default.svg", width: 1200, height: 630 }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Best restaurants, cafes, and places to shop in Ethiopia",
     description:
       "Discover top places across Ethiopia with photos, menus, and real reviews.",
-    images: ["/og-default.svg"],
+    images: ["/opengraph-image"],
   },
 } satisfies import("next").Metadata;

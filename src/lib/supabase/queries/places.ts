@@ -969,9 +969,13 @@ export async function getAllActiveBranchSlugs(
 ): Promise<{ place_slug: string; branch_slug: string; updated_at: string }[]> {
   const { data, error } = await supabase
     .from("branches_with_details")
-    .select("place_slug, branch_slug, updated_at")
+    // Select rating fields to allow ordering by highest rated first
+    .select("place_slug, branch_slug, updated_at, average_rating, review_count")
     .eq("is_active", true)
     .eq("place_is_active", true)
+    // Order by highest rated, then by review volume, then most recently updated
+    .order("average_rating", { ascending: false, nullsFirst: false })
+    .order("review_count", { ascending: false, nullsFirst: false })
     .order("updated_at", { ascending: false })
     .limit(limitPerPage);
 
