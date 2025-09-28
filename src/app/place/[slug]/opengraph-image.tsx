@@ -86,7 +86,7 @@ export default async function Image({
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 100%)",
+              "linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%)",
           }}
         />
         <div style={{ fontSize: 64, fontWeight: 700, textAlign: "center" }}>
