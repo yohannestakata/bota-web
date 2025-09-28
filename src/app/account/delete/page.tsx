@@ -5,10 +5,6 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-export const metadata = {
-  robots: { index: false, follow: false, nocache: true },
-} satisfies import("next").Metadata;
-
 export default function DeleteAccountPage() {
   const router = useRouter();
   const [confirm, setConfirm] = useState("");
