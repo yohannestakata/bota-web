@@ -442,7 +442,7 @@ export async function generateMetadata({
   const place = pageData.place;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com";
   const url = `${baseUrl}/place/${place.slug}/${branchslug}`;
-  const title = `${place.name} - ${place.name}`;
+  const title = `${place.name} — Reviews, photos, menu, location & hours | Bota`;
   const description =
     place.description ||
     `${place.name} — discover reviews, photos, menu, hours, and location.`;

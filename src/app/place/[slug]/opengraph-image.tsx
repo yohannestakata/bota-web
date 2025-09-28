@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getPlaceBySlugWithDetails } from "@/lib/supabase/queries";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
@@ -20,12 +21,34 @@ export default async function Image({
     ? `${place.city}${place.state ? ", " + place.state : ""}`
     : "Reviews, photos, menu & hours";
 
-  // Optional background image: use first available place photo if any, else a gradient
+  // Optional background image: use most recent branch photo if available
   let backgroundImage: string | undefined = undefined;
   try {
-    // branches_with_details exposes photo_count but not image URLs here; rely on a generic bg
-    // If you later pass a photo URL via query or enhance the query, you can swap it in
-    backgroundImage = undefined;
+    if (place?.branch_id) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseKey =
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data: photo } = await supabase
+        .from("branch_photos")
+        .select("file_path")
+        .eq("branch_id", place.branch_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const filePath = (photo as { file_path?: string } | null)?.file_path;
+      if (filePath) {
+        if (/^https?:\/\//i.test(filePath)) {
+          backgroundImage = filePath;
+        } else if (filePath.startsWith("/")) {
+          backgroundImage = `${baseUrl}${filePath}`;
+        } else {
+          const trimmed = filePath.replace(/^\/+/, "");
+          backgroundImage = `${baseUrl}/public-images/${trimmed}`;
+        }
+      }
+    }
   } catch {}
   return new ImageResponse(
     (
@@ -37,14 +60,26 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          background: backgroundImage
-            ? `url(${backgroundImage}) center/cover no-repeat, #0B0B0C`
-            : "linear-gradient(135deg, #0B0B0C 0%, #1c1c1f 100%)",
+          background: "linear-gradient(135deg, #0B0B0C 0%, #1c1c1f 100%)",
           color: "white",
           padding: 72,
           position: "relative",
+          overflow: "hidden",
         }}
       >
+        {backgroundImage ? (
+          <img
+            src={backgroundImage}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: "brightness(0.7)",
+            }}
+          />
+        ) : null}
         {/* Overlay to improve text contrast on busy photos */}
         <div
           style={{
