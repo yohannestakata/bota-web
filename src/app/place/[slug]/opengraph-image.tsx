@@ -69,6 +69,7 @@ export default async function Image({
       >
         {backgroundImage ? (
           <img
+            alt={`${title} - ${subtitle}`}
             src={backgroundImage}
             style={{
               position: "absolute",

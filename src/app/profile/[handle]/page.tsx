@@ -24,7 +24,7 @@ export async function generateMetadata({
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
   const url = `${baseUrl}/profile/${handle}`;
   // We can't fetch server-side helpers here without importing queries; keep lightweight
-  const title = `${handle} — Profile on Bota`;
+  const title = `${handle} - Profile on Bota`;
   const description = `See ${handle}'s reviews and photos on Bota.`;
   const og = `${baseUrl}/opengraph-image`;
   return {

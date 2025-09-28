@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com",
   ),
   title: {
-    default: "Bota — Discover the best places in Ethiopia",
-    template: "%s — Bota",
+    default: "Bota - Discover the best places in Ethiopia",
+    template: "%s - Bota",
   },
   description:
     "Discover top restaurants, cafes, and places to shop in Ethiopia. See real reviews, photos, menus, and ratings across Addis Ababa and beyond.",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Bota",
-    title: "Bota — Discover the best places in Ethiopia",
+    title: "Bota - Discover the best places in Ethiopia",
     description:
       "Discover top restaurants, cafes, and places to shop in Ethiopia. See real reviews, photos, menus, and ratings across Addis Ababa and beyond.",
     url: "/",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@bota",
     creator: "@bota",
-    title: "Bota — Discover the best places in Ethiopia",
+    title: "Bota - Discover the best places in Ethiopia",
     description:
       "Discover top restaurants, cafes, and places to shop in Ethiopia. See real reviews, photos, menus, and ratings across Addis Ababa and beyond.",
     images: ["/opengraph-image"],

@@ -969,18 +969,23 @@ export async function getAllActiveBranchSlugs(
 ): Promise<{ place_slug: string; branch_slug: string; updated_at: string }[]> {
   const { data, error } = await supabase
     .from("branches_with_details")
-    // Select rating fields to allow ordering by highest rated first
-    .select("place_slug, branch_slug, updated_at, average_rating, review_count")
-    .eq("is_active", true)
+    .select(
+      "place_slug, branch_slug, branch_updated_at, average_rating, review_count, is_main_branch",
+    )
+    .eq("branch_is_active", true)
     .eq("place_is_active", true)
-    // Order by highest rated, then by review volume, then most recently updated
+    .eq("is_main_branch", false)
     .order("average_rating", { ascending: false, nullsFirst: false })
     .order("review_count", { ascending: false, nullsFirst: false })
-    .order("updated_at", { ascending: false })
+    .order("branch_updated_at", { ascending: false })
     .limit(limitPerPage);
 
   if (error) throw error;
-  return data || [];
+  return (data || []).map((b) => ({
+    place_slug: (b as { place_slug: string }).place_slug,
+    branch_slug: (b as { branch_slug: string }).branch_slug,
+    updated_at: (b as { branch_updated_at: string }).branch_updated_at,
+  }));
 }
 
 // Flat list of menu items for a place (id + name)

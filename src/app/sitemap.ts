@@ -5,6 +5,10 @@ import {
   getAllActiveBranchSlugs,
 } from "@/lib/supabase/queries";
 
+export const dynamic = "force-dynamic";
+// Or set a TTL instead:
+// export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
 
@@ -33,7 +37,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let categories: Awaited<ReturnType<typeof getAllCategories>> = [];
   try {
     categories = await getAllCategories();
-  } catch {}
+    console.log(
+      "[sitemap] categories fetched:",
+      Array.isArray(categories) ? categories.length : 0,
+    );
+  } catch (e) {
+    console.error("[sitemap] getAllCategories error:", e);
+  }
 
   const categoryRoutes: MetadataRoute.Sitemap = categories.map((c) => ({
     url: `${baseUrl}/category/${c.slug}`,
@@ -46,7 +56,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let places: Awaited<ReturnType<typeof getAllActivePlaceSlugs>> = [];
   try {
     places = await getAllActivePlaceSlugs();
-  } catch {}
+    console.log(
+      "[sitemap] places fetched:",
+      Array.isArray(places) ? places.length : 0,
+      Array.isArray(places) && places.length
+        ? " sample=" +
+            places
+              .slice(0, 3)
+              .map((p) => p.slug)
+              .join(", ")
+        : "",
+    );
+  } catch (e) {
+    console.error("[sitemap] getAllActivePlaceSlugs error:", e);
+  }
 
   const placeRoutes: MetadataRoute.Sitemap = places.map((p) => {
     const lm = p.updated_at || new Date().toISOString();
@@ -62,7 +85,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let branches: Awaited<ReturnType<typeof getAllActiveBranchSlugs>> = [];
   try {
     branches = await getAllActiveBranchSlugs();
-  } catch {}
+    console.log(
+      "[sitemap] branches fetched:",
+      Array.isArray(branches) ? branches.length : 0,
+      Array.isArray(branches) && branches.length
+        ? " sample=" +
+            branches
+              .slice(0, 3)
+              .map((b) => `${b.place_slug}/${b.branch_slug}`)
+              .join(", ")
+        : "",
+    );
+  } catch (e) {
+    console.error("[sitemap] getAllActiveBranchSlugs error:", e);
+  }
 
   const branchRoutes: MetadataRoute.Sitemap = branches.map((b) => {
     const lm = b.updated_at || new Date().toISOString();
