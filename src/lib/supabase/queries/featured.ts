@@ -9,7 +9,7 @@ export async function getFeaturedPlaces(
     const { data, error } = await supabase
       .from("featured_places")
       .select(
-        "id, name, slug, category_id, cover_image_path, tags, review_count, average_rating, last_reviewed_at, photo_count, featured_score",
+        "id, name, slug, category_id, cover_image_path, review_count, average_rating, last_reviewed_at, photo_count, featured_score",
       )
       .order("featured_score", { ascending: false })
       .limit(limit);
@@ -43,7 +43,7 @@ async function getFeaturedPlacesFallback(
     const [placesResult, statsResult, categoriesResult] = await Promise.all([
       supabase
         .from("places")
-        .select("id, name, slug, category_id, tags, is_active")
+        .select("id, name, slug, category_id, is_active")
         .eq("is_active", true)
         .limit(limit * 2), // Get more to filter by stats later
       supabase
@@ -90,7 +90,7 @@ async function getFeaturedPlacesFallback(
         ? categoryMap.get(place.category_id)
         : undefined,
       cover_image_path: undefined, // Would need separate query for this
-      tags: place.tags || [],
+      tags: [],
       review_count: place.stats?.review_count || 0,
       average_rating: place.stats?.average_rating || 0,
       last_reviewed_at: place.stats?.last_reviewed_at,

@@ -9,7 +9,7 @@ export async function getPlaceWithDetails(
     .from("places")
     .select(
       `
-      id, name, slug, description, category_id, tags, 
+      id, name, slug, description, category_id, 
       owner_id, is_active, created_at, updated_at,
       categories(id, name, slug, description, icon_name, created_at)
     `,
@@ -588,7 +588,7 @@ export async function getPlaces(limit = 20): Promise<PlaceWithStats[]> {
     .from("places")
     .select(
       `
-      id, name, slug, description, category_id, tags, 
+      id, name, slug, description, category_id, 
       owner_id, is_active, created_at, updated_at,
       categories(id, name, slug, description, icon_name, created_at)
     `,
@@ -654,7 +654,7 @@ export async function getPlacesByCategory(
     .from("places")
     .select(
       `
-      id, name, slug, description, category_id, tags, 
+      id, name, slug, description, category_id, 
       owner_id, is_active, created_at, updated_at,
       categories(id, name, slug, description, icon_name, created_at)
     `,
@@ -717,10 +717,11 @@ export async function getPlacesByCategoryPaged(
   categoryId: number,
   page = 1,
   pageSize = 20,
+  sort: "rating" | "recent" = "rating",
 ): Promise<{ places: PlaceWithStats[]; total: number }> {
   const offset = (page - 1) * pageSize;
 
-  // Get total count
+  // Get total count of active places in category
   const { count, error: countError } = await supabase
     .from("places")
     .select("*", { count: "exact", head: true })
@@ -729,67 +730,66 @@ export async function getPlacesByCategoryPaged(
 
   if (countError) throw countError;
 
-  // Get places
-  const { data, error } = await supabase
-    .from("places")
-    .select(
-      `
-      id, name, slug, description, category_id, tags, 
-      owner_id, is_active, created_at, updated_at,
-      categories(id, name, slug, description, icon_name, created_at)
-    `,
-    )
+  // Fetch sorted page using branches_with_details for main branches
+  let query = supabase
+    .from("branches_with_details")
+    .select("*")
     .eq("category_id", categoryId)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .eq("is_main_branch", true)
+    .eq("place_is_active", true)
+    .eq("branch_is_active", true);
+
+  if (sort === "rating") {
+    query = query
+      .order("average_rating", { ascending: false, nullsFirst: false })
+      .order("review_count", { ascending: false, nullsFirst: false })
+      .order("place_created_at", { ascending: false });
+  } else {
+    query = query
+      .order("last_reviewed_at", { ascending: false, nullsFirst: false })
+      .order("review_count", { ascending: false, nullsFirst: false })
+      .order("place_created_at", { ascending: false });
+  }
+
+  const { data, error } = await query.range(offset, offset + pageSize - 1);
 
   if (error) throw error;
 
-  // Get main branch IDs for all places
-  const placeIds = (data || []).map((p) => p.id);
-  const { data: branches, error: branchesError } = await supabase
-    .from("branches")
-    .select("id, place_id")
-    .in("place_id", placeIds)
-    .eq("is_main_branch", true);
+  type BranchesWithDetailsListRow = {
+    place_id: string;
+    place_name: string;
+    place_slug: string;
+    place_description: string | null;
+    category_id: number | null;
+    owner_id: string;
+    place_is_active: boolean;
+    place_created_at: string;
+    place_updated_at: string;
+    review_count: number | null;
+    average_rating: number | null;
+    last_reviewed_at: string | null;
+    photo_count: number | null;
+  };
 
-  if (branchesError) throw branchesError;
-
-  // Create a map of place_id to branch_id
-  const branchMap = new Map((branches || []).map((b) => [b.place_id, b.id]));
-
-  // Get stats for all main branches
-  const branchIds = (branches || []).map((b) => b.id);
-  const { data: stats, error: statsError } = await supabase
-    .from("branch_stats")
-    .select(
-      "branch_id, review_count, average_rating, last_reviewed_at, photo_count",
-    )
-    .in("branch_id", branchIds);
-
-  if (statsError) throw statsError;
-
-  // Create a map of branch_id to stats
-  const statsMap = new Map((stats || []).map((s) => [s.branch_id, s]));
-
-  const places = (data || []).map((place) => {
-    const branchId = branchMap.get(place.id);
-    const placeStats = branchId ? statsMap.get(branchId) : null;
-
-    return {
-      ...place,
-      place_stats: placeStats
-        ? {
-            review_count: placeStats.review_count,
-            average_rating: placeStats.average_rating,
-            last_reviewed_at: placeStats.last_reviewed_at,
-            photo_count: placeStats.photo_count,
-          }
-        : undefined,
-      category: place.categories,
-    };
-  });
+  const places: PlaceWithStats[] = (data || []).map(
+    (row: BranchesWithDetailsListRow) => ({
+      id: row.place_id,
+      name: row.place_name,
+      slug: row.place_slug,
+      description: row.place_description ?? undefined,
+      category_id: row.category_id ?? undefined,
+      owner_id: row.owner_id,
+      is_active: row.place_is_active,
+      created_at: row.place_created_at,
+      updated_at: row.place_updated_at,
+      place_stats: {
+        review_count: row.review_count ?? 0,
+        average_rating: row.average_rating ?? 0,
+        last_reviewed_at: row.last_reviewed_at ?? undefined,
+        photo_count: row.photo_count ?? 0,
+      },
+    }),
+  );
 
   return { places, total: count || 0 };
 }
@@ -804,7 +804,7 @@ export async function getSimilarPlaces(
     .from("places")
     .select(
       `
-      id, name, slug, description, category_id, tags, 
+      id, name, slug, description, category_id, 
       owner_id, is_active, created_at, updated_at,
       categories(id, name, slug, description, icon_name, created_at)
     `,
@@ -890,7 +890,7 @@ export async function searchPlaces(
     .from("places")
     .select(
       `
-      id, name, slug, description, category_id, tags, 
+      id, name, slug, description, category_id, 
       owner_id, is_active, created_at, updated_at,
       categories(id, name, slug, description, icon_name, created_at)
     `,

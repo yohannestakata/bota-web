@@ -70,6 +70,7 @@ export default async function CategoryPage({
     category.id,
     page,
     pageSize,
+    sortParam,
   );
 
   // Enrich with latest photo from main branch for each place
