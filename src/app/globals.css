@@ -7,8 +7,8 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: var(--color-green-600);
-  --primary-foreground: var(--color-green-50);
+  --primary: var(--color-emerald-600);
+  --primary-foreground: var(--color-emerald-50);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
@@ -18,7 +18,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
-  --ring: var(--color-green-400);
+  --ring: var(--color-emerald-400);
   --secondary: oklch(76.9% 0.188 70.08);
   --secondary-foreground: oklch(98.7% 0.022 95.277);
 }
@@ -124,7 +124,7 @@ html {
 }
 
 ::selection {
-  @apply bg-blue-700 text-blue-50;
+  @apply bg-emerald-700 text-emerald-50;
 }
 
 /* * {
