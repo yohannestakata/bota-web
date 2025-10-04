@@ -18,7 +18,7 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
   const pinIcon = useMemo(() => {
     return divIcon({
       html: renderToString(
-        <MapPin color="#fff" size={40} fill="#00a73e" strokeWidth={1} />,
+        <MapPin color="#fff" size={40} fill="#009865" strokeWidth={1} />,
       ),
       className: "",
       iconSize: [32, 32],
@@ -27,7 +27,7 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
   }, []);
 
   return (
-    <div className="border-border h-full overflow-hidden border">
+    <div className="border-border relative h-full overflow-hidden border">
       <MapContainer
         center={center}
         zoom={15}
@@ -39,10 +39,12 @@ export default function LeafletMap({ lat, lon, name }: MapProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <RecenterButton lat={lat} lon={lon} />
         <Marker position={center} icon={pinIcon}>
           <Popup>{name}</Popup>
         </Marker>
+        <div className="absolute top-1 right-1" style={{ zIndex: 99999 }}>
+          <RecenterButton lat={lat} lon={lon} />
+        </div>
       </MapContainer>
     </div>
   );
@@ -54,11 +56,10 @@ function RecenterButton({ lat, lon }: { lat: number; lon: number }) {
     <button
       type="button"
       onClick={() => map.setView([lat, lon], map.getZoom())}
-      className="leaflet-top leaflet-right m-2 rounded bg-white/90 px-2 py-1 text-xs shadow"
-      style={{ position: "absolute", zIndex: 1000 }}
+      className="bg-primary text-primary-foreground m-2 cursor-pointer rounded p-2 shadow"
       aria-label="Recenter to place"
     >
-      Recenter
+      <MapPin size={20} />
     </button>
   );
 }

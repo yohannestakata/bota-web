@@ -100,7 +100,7 @@ export default async function AddReviewPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      <div className="grid grid-cols-12 gap-24">
+      <div className="grid grid-cols-1 md:grid-cols-12 md:gap-24">
         <div className="col-span-12 lg:col-span-7">
           <AddReviewHeader placeSlug={place.slug} placeName={place.name} />
           <Suspense fallback={null}>
@@ -113,29 +113,31 @@ export default async function AddReviewPage({
             />
           </Suspense>
         </div>
-        <WhatPeopleLoved
-          reviews={
-            popular as unknown as Array<{
-              id: string;
-              rating: number;
-              body?: string | null;
-              created_at: string;
-              author?: {
+        <div className="col-span-12 mt-12 md:mt-0 lg:col-span-5">
+          <WhatPeopleLoved
+            reviews={
+              popular as unknown as Array<{
                 id: string;
-                username?: string | null;
-                full_name?: string | null;
-                avatar_url?: string | null;
-              };
-              review_stats?: {
-                total_reactions: number;
-                likes_count: number;
-                loves_count: number;
-                mehs_count: number;
-                dislikes_count: number;
-              };
-            }>
-          }
-        />
+                rating: number;
+                body?: string | null;
+                created_at: string;
+                author?: {
+                  id: string;
+                  username?: string | null;
+                  full_name?: string | null;
+                  avatar_url?: string | null;
+                };
+                review_stats?: {
+                  total_reactions: number;
+                  likes_count: number;
+                  loves_count: number;
+                  mehs_count: number;
+                  dislikes_count: number;
+                };
+              }>
+            }
+          />
+        </div>
       </div>
     </div>
   );

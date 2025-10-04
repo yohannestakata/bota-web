@@ -40,7 +40,7 @@ export default function WhatPeopleLoved({
     .slice(0, 5);
 
   return (
-    <aside className="col-span-12 lg:col-span-5">
+    <aside className="">
       <div className="text-xl font-semibold">What people loved</div>
       {popular.length === 0 ? (
         <div className="text-muted-foreground text-sm">No reviews yet</div>

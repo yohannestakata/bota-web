@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   ),
   title: {
     default: "Bota - Discover the best places in Ethiopia",
-    template: "%s - Bota",
+    template: "%s | Bota",
   },
   description:
     "Discover top restaurants, cafes, and places to shop in Ethiopia. See real reviews, photos, menus, and ratings across Addis Ababa and beyond.",

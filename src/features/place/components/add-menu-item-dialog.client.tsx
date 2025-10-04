@@ -48,25 +48,47 @@ export default function AddMenuItemDialog({
       if (!open || !branchId) return;
       setLoadingSections(true);
       try {
+        // Try Supabase join with explicit foreign key reference
         const { data, error } = await supabase
           .from("branch_menu_sections")
-          .select(`id, position, is_active, menu_sections ( id, name )`)
+          .select(
+            `
+            id,
+            position,
+            is_active,
+            menu_sections!menu_section_id(
+              id,
+              name
+            )
+          `,
+          )
           .eq("branch_id", branchId)
           .eq("is_active", true)
           .order("position");
-        if (error) throw error;
-        if (!mounted) return;
+
+        console.log("📊 Raw query result:", { data, error });
+
         const opts = (
           (data ?? []) as Array<{
             id: string;
             position: number;
             is_active: boolean;
-            menu_sections?: Array<{ id: string; name: string }>;
+            menu_sections: { id: string; name: string }[];
           }>
-        ).map((row) => ({
-          id: row.id,
-          name: row.menu_sections?.[0]?.name ?? "Section",
-        }));
+        ).map((row, index) => {
+          console.log(`🔍 Processing row ${index}:`, {
+            row,
+            menu_sections: row.menu_sections,
+            section_name: row.menu_sections?.[0]?.name,
+          });
+
+          return {
+            id: row.id,
+            name: row.menu_sections?.[0]?.name ?? "Section",
+          };
+        });
+
+        console.log("🎯 Final section options:", opts);
         setSectionOptions(opts);
         setSelectedSectionId(opts[0]?.id ?? "");
       } catch (e) {

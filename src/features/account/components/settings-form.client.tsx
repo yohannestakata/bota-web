@@ -330,7 +330,7 @@ export default function SettingsForm() {
           <button
             type="submit"
             disabled={saving || !isDirty}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 px-4 py-3 text-sm font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 px-4 py-3 text-sm font-semibold disabled:opacity-40"
           >
             {saving ? "Saving..." : "Save changes"}
           </button>
@@ -357,7 +357,7 @@ export default function SettingsForm() {
                 emailUpdating ||
                 (Boolean(authProvider) && authProvider !== "email")
               }
-              className="border-border border px-4 py-3 text-sm"
+              className="border-border border px-4 py-3 text-sm disabled:opacity-40"
             >
               {emailUpdating ? "Updating..." : "Update"}
             </button>
@@ -386,7 +386,7 @@ export default function SettingsForm() {
               type="button"
               onClick={updatePassword}
               disabled={passwordUpdating || newPassword.length < 6}
-              className="border-border border px-4 py-3 text-sm"
+              className="border-border border px-4 py-3 text-sm disabled:opacity-40"
             >
               {passwordUpdating ? "Updating..." : "Update"}
             </button>

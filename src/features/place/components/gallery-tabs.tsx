@@ -46,7 +46,7 @@ export default function GalleryTabs({
 
   return (
     <div className="relative">
-      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 md:overflow-visible">
+      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-2 md:overflow-visible">
         <div className="flex w-max gap-6 md:w-auto md:flex-wrap">
           {tabs.map((t) => {
             const isActive = activeCategoryId === t.id;
