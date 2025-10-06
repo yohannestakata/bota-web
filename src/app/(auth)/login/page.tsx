@@ -61,7 +61,7 @@ function LoginInner() {
       </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm">Email</label>
+          <label className="mb-2 block font-semibold">Email</label>
           <input
             type="email"
             value={email}
@@ -71,7 +71,7 @@ function LoginInner() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm">Password</label>
+          <label className="mb-2 block font-semibold">Password</label>
           <input
             type="password"
             value={password}
@@ -81,13 +81,15 @@ function LoginInner() {
           />
         </div>
         <div>
-          <HCaptcha
-            ref={captchaRef}
-            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
-            onVerify={(token) => setCaptchaToken(token)}
-            onExpire={() => setCaptchaToken(undefined)}
-            onError={() => setCaptchaToken(undefined)}
-          />
+          <div className="w-full">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(undefined)}
+              onError={() => setCaptchaToken(undefined)}
+            />
+          </div>
           {!captchaToken && (
             <p className="text-muted-foreground mt-2 text-xs">
               Complete the CAPTCHA to continue.

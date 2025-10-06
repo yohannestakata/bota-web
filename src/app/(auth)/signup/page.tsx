@@ -21,6 +21,7 @@ function SignupInner() {
   const sp = useSearchParams();
   const router = useRouter();
   const { notify } = useToast();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,12 @@ function SignupInner() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { captchaToken },
+      options: {
+        captchaToken,
+        data: {
+          full_name: name,
+        },
+      },
     });
     // Reset captcha after attempt
     try {
@@ -65,7 +71,18 @@ function SignupInner() {
       </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm">Email</label>
+          <label className="mb-2 block font-semibold">Full Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="border-input bg-background focus:ring-ring w-full border px-3 py-2 focus:ring-2 focus:outline-none"
+            placeholder="Enter your full name"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block font-semibold">Email</label>
           <input
             type="email"
             value={email}
@@ -75,7 +92,7 @@ function SignupInner() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm">Password</label>
+          <label className="mb-2 block font-semibold">Password</label>
           <input
             type="password"
             value={password}
@@ -85,13 +102,15 @@ function SignupInner() {
           />
         </div>
         <div>
-          <HCaptcha
-            ref={captchaRef}
-            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
-            onVerify={(token) => setCaptchaToken(token)}
-            onExpire={() => setCaptchaToken(undefined)}
-            onError={() => setCaptchaToken(undefined)}
-          />
+          <div className="w-full">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(undefined)}
+              onError={() => setCaptchaToken(undefined)}
+            />
+          </div>
           {!captchaToken && (
             <p className="text-muted-foreground mt-2 text-xs">
               Complete the CAPTCHA to continue.
