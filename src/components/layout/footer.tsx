@@ -13,196 +13,41 @@ export default function Footer() {
   return (
     <footer className="bg-muted border-border border-t">
       <div className="container mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Company Info */}
-          <div>
-            <Link
-              href="/"
-              aria-label="Bota Home"
-              className="mb-4 inline-flex items-center"
-            >
-              <Image
-                src="/logo-icon-and-wordmark.svg"
-                alt="Bota"
-                width={120}
-                height={28}
-              />
-            </Link>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Discover the best places around you with authentic reviews from
-              real people. Your trusted guide to amazing experiences.
-            </p>
-            <div className="flex gap-4">
-              <Link
-                href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Facebook className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Linkedin className="h-5 w-5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-foreground mb-4 text-lg font-medium">
-              Quick Links
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/about"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/how-it-works"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/reviews"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  All Reviews
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/places"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Popular Places
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="text-foreground mb-4 text-lg font-medium">
-              Support
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/help"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/report"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Report Issue
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/feedback"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Send Feedback
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h3 className="text-foreground mb-4 text-lg font-medium">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/privacy-policy"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms-of-service"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cookies"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Cookie Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/guidelines"
-                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                >
-                  Community Guidelines
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
         {/* Bottom Section */}
         <div className="border-border mt-8 border-t pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="text-muted-foreground text-center text-sm md:text-left">
-              © 2025 Bota Review. All rights reserved.
+            <div className="flex flex-col items-center gap-4">
+              <Link
+                href="/"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                aria-label="Bota Home"
+              >
+                <Image
+                  src="/logo-icon-and-wordmark.svg"
+                  alt="Bota"
+                  width={120}
+                  height={28}
+                />
+              </Link>
+              <div className="text-muted-foreground text-center text-sm md:text-left">
+                © 2025 Bota Review. All rights reserved.
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/privacy-policy"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                aria-label="Privacy Policy"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms-of-service"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                aria-label="Terms of Service"
+              >
+                Terms of Service
+              </Link>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <div className="text-muted-foreground flex items-center gap-2">

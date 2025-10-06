@@ -39,6 +39,48 @@ export async function GET(req: NextRequest) {
       },
     );
 
+  // Special case: categoryId = -1 means "Reviews" tab; return review photos
+  if (categoryId && Number(categoryId) === -1) {
+    // Get all branch ids for the place
+    const { data: branches, error: branchesErr } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("place_id", placeId);
+    if (branchesErr) {
+      console.error("[API/photos] branches error", branchesErr);
+      return new Response(JSON.stringify({ error: branchesErr.message }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    const branchIds = (branches || []).map((b: { id: string }) => b.id);
+    if (branchIds.length === 0) {
+      return new Response(JSON.stringify({ photos: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const { data: rphotos, error: rperr } = await supabase
+      .from("review_photos")
+      .select("id, file_path, alt_text, created_at, reviews!inner(branch_id)")
+      .in("reviews.branch_id", branchIds)
+      .order("created_at", { ascending: false })
+      .limit(12);
+    if (rperr) {
+      console.error("[API/photos] review_photos error", rperr);
+      return new Response(JSON.stringify({ error: rperr.message }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ photos: rphotos || [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // Default: branch photos (optionally filtered by photo_category_id)
   let query = supabase
     .from("branch_photos")
     .select(

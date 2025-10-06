@@ -63,10 +63,38 @@ export async function GET(req: NextRequest) {
     counts.set(id, { id, name: existing.name, count: existing.count + 1 });
   }
 
-  return new Response(
-    JSON.stringify({
-      categories: Array.from(counts.values()).sort((a, b) => b.count - a.count),
-    }),
-    { status: 200, headers: { "content-type": "application/json" } },
+  // Compute review photos count (across all branches of this place)
+  let reviewsCount = 0;
+  try {
+    const { data: branches, error: branchesErr } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("place_id", placeId);
+    if (branchesErr) throw branchesErr;
+    const branchIds = (branches || []).map((b: { id: string }) => b.id);
+    if (branchIds.length > 0) {
+      const { data: rphotos, error: rperr } = await supabase
+        .from("review_photos")
+        .select("id, reviews!inner(branch_id)")
+        .in("reviews.branch_id", branchIds);
+      if (rperr) throw rperr;
+      reviewsCount = (rphotos || []).length;
+    }
+  } catch (e) {
+    // Best-effort; leave reviewsCount as 0 on failure
+  }
+
+  const sortedCategories = Array.from(counts.values()).sort(
+    (a, b) => b.count - a.count,
   );
+  // Append Reviews tab at the end with id = -1 sentinel
+  const categoriesWithReviews = [
+    ...sortedCategories,
+    { id: -1, name: `Reviews (${reviewsCount})`, count: reviewsCount },
+  ];
+
+  return new Response(JSON.stringify({ categories: categoriesWithReviews }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
 }
