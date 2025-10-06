@@ -200,6 +200,7 @@ export default function PlaceContent({
   // Get the main branch ID for favorites
   const mainBranch = place.branches?.find((b) => b.is_main_branch);
   const mainBranchId = mainBranch?.id;
+  const mainBranchSlug = mainBranch?.slug;
 
   // Resolve a usable branch id (prefer provided branch, then main, else fetch)
   useEffect(() => {
@@ -368,7 +369,9 @@ export default function PlaceContent({
                 >
                   <Link
                     href={
-                      place.slug ? `/reviews/add/${place.slug}` : "/reviews/add"
+                      branch?.slug || mainBranchSlug
+                        ? `/reviews/add/${branch?.slug || mainBranchSlug}`
+                        : "/reviews/add"
                     }
                     className="bg-primary text-primary-foreground flex items-center justify-center gap-2 p-3 text-sm"
                   >
