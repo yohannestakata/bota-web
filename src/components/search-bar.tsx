@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchIcon } from "lucide-react";
-import {
-  getSearchHistory,
-  saveSearchQuery,
-  searchPlaces,
-} from "@/lib/supabase/queries";
+import { getSearchHistory, saveSearchQuery } from "@/lib/supabase/queries";
+import { searchBranches } from "@/lib/supabase/queries/places";
 import Link from "next/link";
 import { useAnalytics } from "@/hooks/use-analytics";
 
@@ -54,13 +51,13 @@ export default function SearchBar({
       }
       setLoading(true);
       try {
-        const places = await searchPlaces(q, 10);
+        const branches = await searchBranches(q, 10);
         setResults(
-          (places || []).map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            city: p.city,
+          (branches || []).map((b) => ({
+            id: b.id,
+            name: b.name,
+            slug: `${b.place_slug}/${b.slug}`,
+            city: b.city,
           })),
         );
       } finally {

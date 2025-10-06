@@ -948,6 +948,63 @@ export async function searchPlaces(
   });
 }
 
+// Search branches (used by web search bars)
+export async function searchBranches(
+  query: string,
+  limit = 20,
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    slug: string;
+    city?: string | null;
+    place_slug: string;
+  }>
+> {
+  const q = query.trim();
+  if (!q) return [];
+
+  // First: find matching branches
+  const { data: branches, error: branchesErr } = await supabase
+    .from("branches")
+    .select("id, name, slug, city, place_id, is_active")
+    .or(`name.ilike.%${q}%,city.ilike.%${q}%`)
+    .eq("is_active", true)
+    .limit(limit);
+
+  if (branchesErr) throw branchesErr;
+  const branchRows = (branches || []) as Array<{
+    id: string;
+    name: string;
+    slug: string;
+    city?: string | null;
+    place_id: string;
+  }>;
+
+  if (branchRows.length === 0) return [];
+
+  // Then: fetch place slugs for those branches
+  const placeIds = Array.from(new Set(branchRows.map((b) => b.place_id)));
+  const { data: places, error: placesErr } = await supabase
+    .from("places")
+    .select("id, slug")
+    .in("id", placeIds);
+  if (placesErr) throw placesErr;
+  const placeSlugById = new Map(
+    (places || []).map((p: { id: string; slug: string }) => [p.id, p.slug]),
+  );
+
+  return branchRows
+    .map((b) => ({
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      city: b.city ?? null,
+      place_slug: placeSlugById.get(b.place_id) || "",
+    }))
+    .filter((r) => r.place_slug);
+}
+
 // Get all active place slugs for sitemap
 export async function getAllActivePlaceSlugs(
   limitPerPage = 1000,
