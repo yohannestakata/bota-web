@@ -1047,6 +1047,56 @@ export async function searchBranchesFromPlaceQuery(
   }));
 }
 
+// Fetch a branch by its slug only, including parent place slug and name
+export async function getPlaceAndBranchByBranchSlug(
+  branchSlug: string,
+): Promise<{
+  branch: { id: string; name: string; slug: string; isMain: boolean };
+  place: { id: string; name: string; slug: string };
+} | null> {
+  const { data, error } = await supabase
+    .from("branches")
+    .select(
+      `id, name, slug, is_main_branch, place_id, places:place_id ( id, name, slug, is_active )`,
+    )
+    .eq("slug", branchSlug)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as unknown as {
+    id: string;
+    name: string;
+    slug: string;
+    is_main_branch: boolean;
+    place_id: string;
+    places: {
+      id: string;
+      name: string;
+      slug: string;
+      is_active: boolean;
+    } | null;
+  };
+  if (!row.places || row.places.is_active === false)
+    return {
+      branch: {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        isMain: !!row.is_main_branch,
+      },
+      place: { id: row.place_id, name: "", slug: "" },
+    };
+  return {
+    branch: {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      isMain: !!row.is_main_branch,
+    },
+    place: { id: row.places.id, name: row.places.name, slug: row.places.slug },
+  };
+}
+
 // Get all active place slugs for sitemap
 export async function getAllActivePlaceSlugs(
   limitPerPage = 1000,

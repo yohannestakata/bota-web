@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import {
-  getPlaceBySlugWithDetails,
   getMenuItemsForPlace,
   getPhotoCategories,
   getReviewsForPlace,
-  getPlacePageData,
 } from "@/lib/supabase/queries";
+import { getPlaceAndBranchByBranchSlug } from "@/lib/supabase/queries/places";
 import { Suspense } from "react";
 import AddReviewForm from "@/features/reviews/components/add-review-form.client";
 import AddReviewHeader from "@/features/reviews/components/add-review-header";
@@ -18,17 +17,23 @@ export default async function AddReviewPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const place = await getPlaceBySlugWithDetails(slug);
-  if (!place) return notFound();
+  const { slug } = await params; // now branch slug
+  const ref = await getPlaceAndBranchByBranchSlug(slug);
+  if (!ref) return notFound();
+  const place = {
+    id: ref.place.id,
+    name: ref.place.name,
+    slug: ref.place.slug,
+  };
+  const branchId = ref.branch.id;
 
   const [menuItemsRaw, categories, reviewsRawInitial] = await Promise.all([
-    getMenuItemsForPlace(place.branch_id || place.id).catch(() => []),
+    getMenuItemsForPlace(branchId).catch(() => []),
     getPhotoCategories().catch(() => []),
-    getReviewsForPlace(place.branch_id || place.id, 12).catch(() => []),
+    getReviewsForPlace(branchId, 12).catch(() => []),
   ]);
-  let menuItems = menuItemsRaw as Array<{ id: string; name: string }>;
-  let reviewsRaw = reviewsRawInitial as Array<{
+  const menuItems = menuItemsRaw as Array<{ id: string; name: string }>;
+  const reviewsRaw = reviewsRawInitial as Array<{
     id: string;
     rating: number;
     body?: string | null;
@@ -48,43 +53,7 @@ export default async function AddReviewPage({
     };
   }>;
 
-  // Fallback: if menu or reviews are empty for this branch, try consolidated page data
-  if ((menuItems?.length ?? 0) === 0 || (reviewsRaw?.length ?? 0) === 0) {
-    try {
-      const pageData = await getPlacePageData(place.slug, null, {
-        reviewLimit: 12,
-        photoLimit: 0,
-      });
-      if (pageData) {
-        if ((menuItems?.length ?? 0) === 0) {
-          const flatMenu = (pageData.place.menu?.items || []).map((it) => ({
-            id: String(it.id),
-            name: String(it.name),
-          }));
-          if (flatMenu.length) menuItems = flatMenu;
-        }
-        if ((reviewsRaw?.length ?? 0) === 0) {
-          // Normalize RPC reviews to match getReviewsForPlace shape
-          reviewsRaw = (pageData.reviews || []).map((r) => ({
-            id: r.id,
-            rating: r.rating,
-            body: r.body,
-            created_at: r.created_at,
-            author: r.author,
-            review_stats: {
-              total_reactions: r.stats?.total_reactions || 0,
-              likes_count: r.stats?.likes_count || 0,
-              loves_count: r.stats?.loves_count || 0,
-              mehs_count: r.stats?.mehs_count || 0,
-              dislikes_count: r.stats?.dislikes_count || 0,
-            },
-          }));
-        }
-      }
-    } catch (e) {
-      // swallow fallback errors
-    }
-  }
+  // No fallback: page uses branch context; leave lists as-is on empty
 
   const popular = (reviewsRaw || [])
     .slice()
@@ -102,11 +71,17 @@ export default async function AddReviewPage({
     <div className="mx-auto max-w-6xl px-4 py-12">
       <div className="grid grid-cols-1 md:grid-cols-12 md:gap-24">
         <div className="col-span-12 lg:col-span-7">
-          <AddReviewHeader placeSlug={place.slug} placeName={place.name} />
+          <AddReviewHeader
+            placeSlug={place.slug}
+            placeName={place.name}
+            branchName={ref.branch.name}
+            branchSlug={ref.branch.slug}
+            isMainBranch={ref.branch.isMain}
+          />
           <Suspense fallback={null}>
             {/* Client component handles auth gate and submission */}
             <AddReviewForm
-              placeId={place.branch_id || place.id}
+              placeId={branchId}
               placeSlug={place.slug}
               menuItems={menuItems}
               categories={categories}

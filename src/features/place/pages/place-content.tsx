@@ -179,6 +179,17 @@ export default function PlaceContent({
   }, [trackPlaceView, place, branch]);
   // Use branch data if provided, otherwise use place data
   const displayName = branch?.name || place.name;
+  const titleText = (() => {
+    const branchNameFromRpc = (place as unknown as { branch_name?: string })
+      .branch_name;
+    if (
+      branchNameFromRpc &&
+      branchNameFromRpc.trim().toLowerCase() !== place.name.trim().toLowerCase()
+    ) {
+      return `${place.name} (${branchNameFromRpc})`;
+    }
+    return place.name;
+  })();
   const displayDescription = branch?.description || place.description;
   const displayCity = branch?.city || place.city;
   const displayState = branch?.state || place.state;
@@ -280,7 +291,7 @@ export default function PlaceContent({
             </div>
 
             <h1 className="text-foreground font-heading mt-8 px-4 text-3xl font-bold tracking-tight md:text-4xl">
-              {displayName}
+              {titleText}
             </h1>
 
             <div className="mt-2.5 flex flex-col gap-1 px-4">
