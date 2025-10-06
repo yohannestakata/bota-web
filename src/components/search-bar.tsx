@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchIcon } from "lucide-react";
 import { getSearchHistory, saveSearchQuery } from "@/lib/supabase/queries";
-import { searchBranches } from "@/lib/supabase/queries/places";
+import { searchBranchesFromPlaceQuery } from "@/lib/supabase/queries/places";
 import Link from "next/link";
 import { useAnalytics } from "@/hooks/use-analytics";
 
@@ -51,7 +51,7 @@ export default function SearchBar({
       }
       setLoading(true);
       try {
-        const branches = await searchBranches(q, 10);
+        const branches = await searchBranchesFromPlaceQuery(q, 10);
         setResults(
           (branches || []).map((b) => ({
             id: b.id,

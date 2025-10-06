@@ -1005,6 +1005,44 @@ export async function searchBranches(
     .filter((r) => r.place_slug);
 }
 
+// Unified search by place context (place name, categories, tags) returning branches
+export async function searchBranchesFromPlaceQuery(
+  query: string,
+  limit = 20,
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    slug: string;
+    city?: string | null;
+    place_slug: string;
+  }>
+> {
+  const q = query.trim();
+  if (!q) return [];
+
+  const { data, error } = await supabase.rpc("search_branches", {
+    q,
+    max_results: limit,
+  });
+  if (error) throw error;
+  const rows = (data || []) as Array<{
+    branch_id: string;
+    branch_name: string;
+    branch_slug: string;
+    branch_city: string | null;
+    place_slug: string;
+  }>;
+
+  return rows.map((r) => ({
+    id: r.branch_id,
+    name: r.branch_name,
+    slug: r.branch_slug,
+    city: r.branch_city,
+    place_slug: r.place_slug,
+  }));
+}
+
 // Get all active place slugs for sitemap
 export async function getAllActivePlaceSlugs(
   limitPerPage = 1000,
