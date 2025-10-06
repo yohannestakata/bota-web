@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 export default function AuthCodeRedirect() {
   useEffect(() => {
@@ -11,11 +12,33 @@ export default function AuthCodeRedirect() {
       if (url.hash) {
         const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
         const type = hashParams.get("type");
+        const access_token = hashParams.get("access_token");
+        const refresh_token = hashParams.get("refresh_token");
+
         if (type === "recovery") {
           // Send to reset-password and keep the hash so the page can set the session
           const resetUrl = new URL("/auth/reset-password", url.origin);
           resetUrl.hash = url.hash;
           window.location.replace(resetUrl.toString());
+          return;
+        }
+
+        // Case 1b: Email verification with session tokens in hash
+        if (access_token && refresh_token && !type) {
+          // Set the session directly from the hash tokens
+          supabase.auth
+            .setSession({ access_token, refresh_token })
+            .then(({ error }) => {
+              if (error) {
+                console.error("Failed to set session from hash:", error);
+              } else {
+                console.log("Session established from email verification");
+                // Clean up the URL by removing the hash
+                const cleanUrl = new URL(url.toString());
+                cleanUrl.hash = "";
+                window.history.replaceState({}, "", cleanUrl.toString());
+              }
+            });
           return;
         }
       }
