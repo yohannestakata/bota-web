@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +34,7 @@ type Profile = {
 
 export default function SettingsForm() {
   const { user, setAvatarUrl } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -407,7 +409,10 @@ export default function SettingsForm() {
         </Link>
         <button
           type="button"
-          onClick={() => void supabase.auth.signOut()}
+          onClick={async () => {
+            await supabase.auth.signOut();
+            router.replace("/login");
+          }}
           className="border-border ml-3 border px-4 py-3 text-sm"
         >
           Sign out
