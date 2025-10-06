@@ -1032,6 +1032,7 @@ export async function searchBranchesFromPlaceQuery(
     branch_slug: string;
     branch_city: string | null;
     place_slug: string;
+    place_name: string;
   }>;
 
   return rows.map((r) => ({
@@ -1040,6 +1041,9 @@ export async function searchBranchesFromPlaceQuery(
     slug: r.branch_slug,
     city: r.branch_city,
     place_slug: r.place_slug,
+    // include place_name in the object for UI display
+    // Type remains compatible with callers selecting fields they need
+    place_name: r.place_name,
   }));
 }
 

@@ -24,7 +24,13 @@ export default function SearchBar({
     [],
   );
   const [results, setResults] = useState<
-    Array<{ id: string; name: string; slug: string; city?: string | null }>
+    Array<{
+      id: string;
+      name: string;
+      slug: string;
+      city?: string | null;
+      place_name?: string;
+    }>
   >([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const enableHistory =
@@ -58,6 +64,7 @@ export default function SearchBar({
             name: b.name,
             slug: `${b.place_slug}/${b.slug}`,
             city: b.city,
+            place_name: (b as unknown as { place_name?: string }).place_name,
           })),
         );
       } finally {
@@ -169,7 +176,9 @@ export default function SearchBar({
                     className="hover:bg-muted flex w-full justify-between py-4 text-sm"
                     onClick={() => setOpen(false)}
                   >
-                    <span className="font-medium">{p.name}</span>
+                    <span className="font-medium">
+                      {p.place_name ? `${p.place_name} (${p.name})` : p.name}
+                    </span>
                     <span className="text-muted-foreground">
                       {p.city || ""}
                     </span>
