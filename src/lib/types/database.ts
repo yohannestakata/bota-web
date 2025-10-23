@@ -423,6 +423,8 @@ export interface Database {
         Row: {
           review_id: string;
           branch_id: string;
+          branch_slug: string | null;
+          is_main_branch: boolean | null;
           author_id: string;
           rating: number;
           body: string | null;

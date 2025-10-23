@@ -74,6 +74,8 @@ export default async function RecentReviewsList({
       id: number;
       reviewId: string;
       placeSlug: string;
+      branchSlug?: string;
+      isMainBranch?: boolean;
       authorHandle: string;
       place: string;
       category: string;
@@ -126,6 +128,12 @@ export default async function RecentReviewsList({
           : Math.floor(Math.random() * 1e8),
         reviewId: rid,
         placeSlug: review.place_slug || "",
+        branchSlug:
+          (review as unknown as { branch_slug?: string | null }).branch_slug ||
+          undefined,
+        isMainBranch:
+          (review as unknown as { is_main_branch?: boolean | null })
+            .is_main_branch ?? undefined,
         authorHandle: review.author_username || review.author_id || "",
         place: placeName,
         category: category,

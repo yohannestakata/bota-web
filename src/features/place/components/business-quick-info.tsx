@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  PhoneIcon,
-  GlobeIcon,
   MessageCircleIcon,
   PencilIcon,
   ImagePlusIcon,
@@ -11,11 +9,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/app/auth-context";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getFriendlyErrorMessage } from "@/lib/errors";
 import Link from "next/link";
-import Image from "next/image";
 import LocationsDialog from "./locations-dialog";
 import AuthGate from "@/components/ui/auth-gate";
 
@@ -24,6 +21,7 @@ interface BusinessQuickInfoProps {
     id: string;
     name: string;
     slug?: string;
+    branch_slug?: string;
     my_saved?: boolean;
     phone?: string | null;
     website_url?: string | null;
@@ -58,6 +56,7 @@ interface BusinessQuickInfoProps {
     address_line2?: string | null;
     is_main_branch: boolean;
   }>;
+  hasMyReview?: boolean;
 }
 
 export default function BusinessQuickInfo({
@@ -66,6 +65,7 @@ export default function BusinessQuickInfo({
   branches,
   averageRating,
   reviewCount,
+  hasMyReview = false,
 }: BusinessQuickInfoProps) {
   const { notify } = useToast();
   const { user } = useAuth();
@@ -244,13 +244,10 @@ export default function BusinessQuickInfo({
             <div className="space-y-3 pb-6">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold">Other Locations</span>
-                <span className="text-base">
-                  ({branches.filter((branch) => !branch.is_main_branch).length})
-                </span>
+                <span className="text-base">({branches.length - 1})</span>
               </div>
               <div className="space-y-2">
                 {branches
-                  .filter((branch) => !branch.is_main_branch)
                   .slice(0, 2) // Show max 2 other branches
                   .map((branch) => {
                     const branchAddress = [
@@ -278,15 +275,13 @@ export default function BusinessQuickInfo({
                       </Link>
                     );
                   })}
-                {branches.filter((branch) => !branch.is_main_branch).length >
-                  2 && (
+                {branches.length > 2 && (
                   <button
                     type="button"
                     onClick={() => setLocationsOpen(true)}
                     className="mt-0.5 text-sm font-semibold underline-offset-4 hover:underline"
                   >
-                    View all locations (+
-                    {branches.filter((b) => !b.is_main_branch).length - 2})
+                    View all locations (+{branches.length - 2})
                   </button>
                 )}
               </div>
@@ -297,11 +292,13 @@ export default function BusinessQuickInfo({
         {/* Quick Actions */}
         <div className="space-y-2">
           <Link
-            href={place.slug ? `/reviews/add/${place.slug}` : "/reviews/add"}
+            href={
+              place.slug ? `/reviews/add/${place.branch_slug}` : "/reviews/add"
+            }
             className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-2 px-6 py-3 font-semibold transition-colors"
           >
             <MessageCircleIcon size={16} className="text-primary-foreground" />
-            Write a Review
+            {hasMyReview ? "Update Review" : "Write a Review"}
           </Link>
 
           <Link

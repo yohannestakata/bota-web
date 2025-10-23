@@ -48,6 +48,57 @@ export async function createReview(input: {
   return data;
 }
 
+// Update an existing review (only by its author)
+export async function updateReview(input: {
+  reviewId: string;
+  rating: number;
+  body?: string;
+  visitedAt?: string;
+}) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({
+      rating: input.rating,
+      body: input.body,
+      visited_at: input.visitedAt,
+    })
+    .eq("id", input.reviewId)
+    .eq("author_id", user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Delete an existing review photo (only by review author)
+export async function deleteReviewPhoto(input: {
+  photoId: string;
+  reviewId: string;
+}) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const { error } = await supabase
+    .from("review_photos")
+    .delete()
+    .eq("id", input.photoId)
+    .eq("review_id", input.reviewId);
+
+  if (error) throw error;
+  return true;
+}
+
 // Get reviews for a place
 export async function getReviewsForPlace(placeId: string, limit = 10) {
   const { data, error } = await supabase
@@ -55,18 +106,11 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
     .select(
       `
       *,
-      profiles!inner(
+      profiles!reviews_author_id_fkey(
         id,
         username,
         full_name,
         avatar_url
-      ),
-      review_stats(
-        total_reactions,
-        likes_count,
-        loves_count,
-        mehs_count,
-        dislikes_count
       )
     `,
     )
@@ -76,11 +120,81 @@ export async function getReviewsForPlace(placeId: string, limit = 10) {
 
   if (error) throw error;
 
+  const rows = (data || []) as Array<
+    Review & {
+      profiles?: {
+        id: string;
+        username: string | null;
+        full_name: string | null;
+        avatar_url: string | null;
+      } | null;
+    }
+  >;
+
+  // Fetch stats separately (no FK relationship from view)
+  const reviewIds = rows.map((r) => r.id);
+  let statsMap = new Map<
+    string,
+    {
+      total_reactions: number;
+      likes_count: number;
+      loves_count: number;
+      mehs_count: number;
+      dislikes_count: number;
+    }
+  >();
+  if (reviewIds.length) {
+    const { data: statsData } = await supabase
+      .from("review_stats")
+      .select(
+        "review_id, total_reactions, likes_count, loves_count, mehs_count, dislikes_count",
+      )
+      .in("review_id", reviewIds);
+    type StatsRow = {
+      review_id: string;
+      total_reactions: number;
+      likes_count: number;
+      loves_count: number;
+      mehs_count: number;
+      dislikes_count: number;
+    };
+    statsMap = new Map(
+      ((statsData || []) as StatsRow[]).map((s) => [String(s.review_id), s]),
+    );
+  }
+
+  // Fetch photos separately and group by review_id for prefill/edit flows
+  let photosMap = new Map<
+    string,
+    Array<{ id: string; file_path: string; alt_text: string | null }>
+  >();
+  if (reviewIds.length) {
+    const { data: photosData } = await supabase
+      .from("review_photos")
+      .select("id, review_id, file_path, alt_text")
+      .in("review_id", reviewIds)
+      .order("created_at", { ascending: true });
+    photosMap = new Map();
+    for (const p of (photosData || []) as Array<{
+      id: string;
+      review_id: string;
+      file_path: string;
+      alt_text: string | null;
+    }>) {
+      const key = String(p.review_id);
+      if (!photosMap.has(key)) photosMap.set(key, []);
+      photosMap
+        .get(key)!
+        .push({ id: p.id, file_path: p.file_path, alt_text: p.alt_text });
+    }
+  }
+
   // Transform the data to match the expected format
-  return (data || []).map((review) => ({
+  return rows.map((review) => ({
     ...review,
     author: review.profiles,
-    review_stats: review.review_stats?.[0] || {
+    photos: photosMap.get(String(review.id)) || [],
+    review_stats: statsMap.get(String(review.id)) || {
       total_reactions: 0,
       likes_count: 0,
       loves_count: 0,

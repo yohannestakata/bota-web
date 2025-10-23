@@ -27,10 +27,75 @@ export default async function AddReviewPage({
   };
   const branchId = ref.branch.id;
 
+  // Fetch existing review by this user for this branch
+  type MyReviewPhoto = {
+    id: string;
+    file_path: string;
+    alt_text: string | null;
+  };
+  type MyReviewShape = {
+    id: string;
+    rating: number;
+    body: string | null;
+    created_at: string;
+    author?: { id: string };
+    photos?: MyReviewPhoto[];
+  } | null;
+  let myReview: MyReviewShape = null;
+  try {
+    const my = await getReviewsForPlace(branchId, 50);
+    console.log("[add-review] fetched reviews for branch", {
+      branchId,
+      count: Array.isArray(my) ? my.length : "n/a",
+      sample: Array.isArray(my) ? my.slice(0, 1) : [],
+    });
+    const cookieStore = await (await import("next/headers")).cookies();
+    const { createServerClient } = await import("@supabase/ssr");
+    const supa = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {},
+        },
+      },
+    );
+    const {
+      data: { user },
+    } = await supa.auth.getUser();
+    if (user) {
+      const first = (my as Array<MyReviewShape | Record<string, unknown>>).find(
+        (r) => (r as MyReviewShape)?.author?.id === user.id,
+      ) as MyReviewShape | null;
+      if (first) {
+        myReview = first;
+        console.log("[add-review] detected myReview", {
+          id: first.id,
+          hasPhotos: Array.isArray(first.photos) ? first.photos.length : 0,
+        });
+      }
+    }
+  } catch (e) {
+    console.log("[add-review] myReview fetch error", e);
+  }
+
   const [menuItemsRaw, categories, reviewsRawInitial] = await Promise.all([
-    getMenuItemsForPlace(branchId).catch(() => []),
-    getPhotoCategories().catch(() => []),
-    getReviewsForPlace(branchId, 12).catch(() => []),
+    getMenuItemsForPlace(branchId).catch((e) => {
+      console.log("[add-review] menu items error", e);
+      return [];
+    }),
+    getPhotoCategories().catch((e) => {
+      console.log("[add-review] categories error", e);
+      return [];
+    }),
+    getReviewsForPlace(branchId, 12).catch((e: unknown) => {
+      console.log("[add-review] initial reviews error", e);
+      return [];
+    }),
   ]);
   const menuItems = menuItemsRaw as Array<{ id: string; name: string }>;
   const reviewsRaw = reviewsRawInitial as Array<{
@@ -83,6 +148,22 @@ export default async function AddReviewPage({
             <AddReviewForm
               placeId={branchId}
               placeSlug={place.slug}
+              branchSlug={ref.branch.slug}
+              initialReview={
+                myReview
+                  ? {
+                      id: myReview.id,
+                      rating: myReview.rating,
+                      body: myReview.body || "",
+                      visitedAt: undefined,
+                      photos: (myReview.photos || []).map((p) => ({
+                        id: p.id,
+                        file_path: p.file_path,
+                        alt_text: p.alt_text,
+                      })),
+                    }
+                  : undefined
+              }
               menuItems={menuItems}
               categories={categories}
             />

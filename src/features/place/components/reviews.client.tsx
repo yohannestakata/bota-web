@@ -63,9 +63,15 @@ function ReviewItem({ review }: ReviewItemProps) {
   const [replies, setReplies] = useState(review.replies || []);
 
   const name = review.author?.full_name || review.author?.username || "User";
-  const avatar =
-    review.author?.avatar_url ||
-    "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=128&auto=format&fit=crop&q=60";
+  const avatar = review.author?.avatar_url || null;
+  const initials = (name || "?")
+    .toString()
+    .trim()
+    .split(/\s+/)
+    .map((s) => s.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const profileHref = `/profile/${review.author?.username || review.author?.id || "user"}`;
 
   const [emblaRef] = useEmblaCarousel({
@@ -80,13 +86,19 @@ function ReviewItem({ review }: ReviewItemProps) {
           href={profileHref}
           className="relative h-12 w-12 overflow-hidden rounded-full"
         >
-          <Image
-            src={avatar}
-            alt={name}
-            fill
-            sizes="(max-width: 640px) 48px, 48px"
-            className="object-cover"
-          />
+          {avatar ? (
+            <Image
+              src={avatar}
+              alt={name}
+              fill
+              sizes="(max-width: 640px) 48px, 48px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="bg-muted text-muted-foreground flex h-full w-full items-center justify-center rounded-full font-medium">
+              {initials}
+            </div>
+          )}
         </Link>
         <div className="flex-1">
           <Link
@@ -273,9 +285,15 @@ function ReviewItem({ review }: ReviewItemProps) {
           {replies.map((rep) => {
             const rname =
               rep.author?.full_name || rep.author?.username || "User";
-            const ravatar =
-              rep.author?.avatar_url ||
-              "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=64&auto=format&fit=crop&q=60";
+            const ravatar = rep.author?.avatar_url || null;
+            const rinitials = (rname || "?")
+              .toString()
+              .trim()
+              .split(/\s+/)
+              .map((s) => s.charAt(0))
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
 
             return (
               <div
@@ -286,13 +304,19 @@ function ReviewItem({ review }: ReviewItemProps) {
                   href={`/profile/${rep.author?.username || rep.author?.id || "user"}`}
                   className="relative mt-0.5 h-12 w-12 shrink-0 overflow-hidden rounded-full"
                 >
-                  <Image
-                    src={ravatar}
-                    alt={rname}
-                    fill
-                    sizes="(max-width: 640px) 48px, 48px"
-                    className="object-cover"
-                  />
+                  {ravatar ? (
+                    <Image
+                      src={ravatar}
+                      alt={rname}
+                      fill
+                      sizes="(max-width: 640px) 48px, 48px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="bg-muted text-muted-foreground flex h-full w-full items-center justify-center rounded-full font-medium">
+                      {rinitials}
+                    </div>
+                  )}
                 </Link>
 
                 <div className="min-w-0 flex-1">

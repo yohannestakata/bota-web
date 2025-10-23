@@ -1,7 +1,13 @@
 "use client";
 
 import { useAuth } from "@/app/auth-context";
-import { createReview, uploadReviewPhoto } from "@/lib/supabase/queries";
+import {
+  createReview,
+  updateReview,
+  uploadReviewPhoto,
+  deleteReviewPhoto,
+} from "@/lib/supabase/queries";
+import { normalizeImageSrc } from "@/lib/utils/images";
 import { useRouter } from "next/navigation";
 import PhotoPickerGrid from "@/components/media/photo-picker-grid.client";
 import { type PendingPhotoFile } from "@/components/media/types";
@@ -14,6 +20,7 @@ import AuthGate from "@/components/ui/auth-gate";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { uploadImageToBucket } from "@/lib/supabase/storage";
 import PhotoEditorDialog from "./photo-editor-dialog.client";
+import { useToast } from "@/components/ui/toast";
 
 type MenuItemOption = { id: string; name: string };
 type CategoryOption = { id: number; name: string };
@@ -21,19 +28,30 @@ type CategoryOption = { id: number; name: string };
 export default function AddReviewForm({
   placeId,
   placeSlug,
+  branchSlug,
   menuItems,
   categories,
+  initialReview,
 }: {
   placeId: string; // This is now actually the branch ID
-  placeSlug: string;
+  placeSlug: string; // Parent place slug
+  branchSlug: string; // Branch slug for routing
   menuItems: MenuItemOption[];
   categories: CategoryOption[];
+  initialReview?: {
+    id: string;
+    rating: number;
+    body?: string;
+    visitedAt?: string;
+    photos?: Array<{ id: string; file_path: string; alt_text?: string | null }>;
+  };
 }) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { trackReviewSubmitted } = useAnalytics();
+  const { notify } = useToast();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -53,7 +71,11 @@ export default function AddReviewForm({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { rating: 5, visitedAt: today, body: "" },
+    defaultValues: {
+      rating: initialReview?.rating ?? 5,
+      visitedAt: initialReview?.visitedAt?.slice(0, 10) ?? today,
+      body: initialReview?.body ?? "",
+    },
   });
 
   const rating = watch("rating");
@@ -62,18 +84,35 @@ export default function AddReviewForm({
   watch("body");
 
   // Local queue of files to upload with optional links
-  type PendingFile = PendingPhotoFile;
-  const [files, setFiles] = useState<PendingFile[]>([]);
+  type ExistingPhoto = {
+    id: string;
+    previewUrl: string;
+    isExisting: true;
+  };
+  type PendingFile = PendingPhotoFile | ExistingPhoto;
+  const [files, setFiles] = useState<PendingFile[]>(
+    (initialReview?.photos || []).map((p) => ({
+      id: p.id,
+      previewUrl: normalizeExistingPreview(p.file_path),
+      isExisting: true,
+    })) as PendingFile[],
+  );
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[add-review-form] initialReview", {
+      hasInitial: !!initialReview,
+      photoCount: initialReview?.photos?.length || 0,
+    });
+  }
   const [activePhotoId, setActivePhoto] = useState<string | null>(null);
   const activePhoto = files.find((f) => f.id === activePhotoId) || null;
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace(
-        `/login?redirect=/reviews/add/${encodeURIComponent(placeSlug)}`,
+        `/login?redirect=/reviews/add/${encodeURIComponent(branchSlug)}`,
       );
     }
-  }, [isLoading, user, placeSlug, router]);
+  }, [isLoading, user, branchSlug, router]);
 
   function addFiles(incoming: File[]) {
     const next: PendingFile[] = incoming.map((f) => ({
@@ -87,19 +126,31 @@ export default function AddReviewForm({
     setFiles((prev) => [...prev, ...next]);
   }
 
+  function normalizeExistingPreview(filePath: string): string {
+    return normalizeImageSrc(filePath);
+  }
+
   const onSubmit = handleSubmit(async (values) => {
     if (!user) return; // AuthGate will handle this
     setSubmitting(true);
     setError(null);
     try {
-      const review = await createReview({
-        branchId: placeId,
-        rating: values.rating,
-        body: (values.body || "").trim(),
-        visitedAt: values.visitedAt
-          ? new Date(values.visitedAt).toISOString().slice(0, 10)
-          : undefined,
-      });
+      const effectiveVisited = values.visitedAt
+        ? new Date(values.visitedAt).toISOString().slice(0, 10)
+        : undefined;
+      const review = initialReview
+        ? await updateReview({
+            reviewId: initialReview.id,
+            rating: values.rating,
+            body: (values.body || "").trim(),
+            visitedAt: effectiveVisited,
+          })
+        : await createReview({
+            branchId: placeId,
+            rating: values.rating,
+            body: (values.body || "").trim(),
+            visitedAt: effectiveVisited,
+          });
 
       // Track review submission
       trackReviewSubmitted(
@@ -111,7 +162,28 @@ export default function AddReviewForm({
         },
       );
 
+      // Sync photos: delete removed existing, upload new ones
+      const existingIds = new Set(
+        (initialReview?.photos || []).map((p) => String(p.id)),
+      );
+      const keptExistingIds = new Set(
+        files
+          .filter(
+            (f): f is ExistingPhoto =>
+              "isExisting" in f && (f as ExistingPhoto).isExisting === true,
+          )
+          .map((f) => f.id),
+      );
+      // Delete removed existing photos
+      for (const id of Array.from(existingIds)) {
+        if (!keptExistingIds.has(id)) {
+          await deleteReviewPhoto({ photoId: id, reviewId: review.id });
+        }
+      }
+      // Upload new photos
       for (const pf of files) {
+        // Only upload newly added files; existing photos are skipped
+        if ("isExisting" in pf) continue;
         const ext = (pf.file.name.split(".").pop() || "jpg").toLowerCase();
         const safeName = `${Date.now()}-${Math.random()
           .toString(36)
@@ -131,9 +203,30 @@ export default function AddReviewForm({
           photoCategoryId: pf.photoCategoryId ?? undefined,
         });
       }
-      router.replace(`/place/${placeSlug}#reviews`);
+      // Success: show toast and go back to the specific branch page
+      notify(
+        initialReview ? "Your review was updated." : "Thanks for your review!",
+        "success",
+      );
+      const to = branchSlug
+        ? `/place/${placeSlug}/${branchSlug}#reviews`
+        : `/place/${placeSlug}#reviews`;
+      router.replace(to);
     } catch (err) {
-      setError((err as Error)?.message || "Failed to submit review");
+      const anyErr = err as { code?: string; message?: string };
+      const msg = (anyErr?.message || "").toLowerCase();
+      if (
+        anyErr?.code === "23505" ||
+        /duplicate key/.test(msg) ||
+        /already exists/.test(msg) ||
+        /unique/.test(msg)
+      ) {
+        setError(
+          "Looks like you already reviewed this place. You can update your existing review instead.",
+        );
+      } else {
+        setError("We couldn’t post your review right now. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +300,7 @@ export default function AddReviewForm({
           />
         </div>
 
-        <div className="mt-12 flex items-center justify-end gap-3">
+        <div className="mt-12 flex items-center gap-3">
           <button
             type="button"
             className="border-border hover:bg-muted border px-4 py-3"

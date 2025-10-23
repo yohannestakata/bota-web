@@ -75,10 +75,19 @@ export async function uploadPlacePhoto(input: {
   altText?: string;
   photoCategoryId?: number;
 }) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data, error } = await supabase
     .from("branch_photos")
     .insert({
       branch_id: input.branchId,
+      author_id: user.id,
       file_path: input.filePath,
       alt_text: input.altText,
       photo_category_id: input.photoCategoryId,

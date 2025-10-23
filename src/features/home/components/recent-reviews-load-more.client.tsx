@@ -28,6 +28,8 @@ export default function RecentReviewsLoadMore({
   type ApiRecentRow = {
     review_id: string;
     created_at: string;
+    branch_slug?: string | null;
+    is_main_branch?: boolean | null;
     place_name?: string | null;
     place_slug?: string | null;
     author_full_name?: string | null;
@@ -89,6 +91,8 @@ export default function RecentReviewsLoadMore({
         id: idNum,
         reviewId: rid,
         placeSlug: review.place_slug || "",
+        branchSlug: review.branch_slug || undefined,
+        isMainBranch: review.is_main_branch ?? undefined,
         authorHandle: review.author_username || review.author_id || "",
         avatarUrl,
         place: placeName,

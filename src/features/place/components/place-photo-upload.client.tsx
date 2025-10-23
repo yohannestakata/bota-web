@@ -19,11 +19,13 @@ type PendingFile = PendingPhotoFile;
 export default function PlacePhotoUpload({
   placeId,
   placeSlug,
+  branchSlug,
   menuItems,
   categories,
 }: {
   placeId: string;
   placeSlug: string;
+  branchSlug?: string;
   menuItems: MenuItemOption[];
   categories: CategoryOption[];
 }) {
@@ -87,7 +89,10 @@ export default function PlacePhotoUpload({
         });
       }
       notify("Upload complete. Thanks for sharing!", "success");
-      router.replace(`/place/${placeSlug}#photos`);
+      const to = branchSlug
+        ? `/place/${placeSlug}/${branchSlug}#photos`
+        : `/place/${placeSlug}#photos`;
+      router.replace(to);
     } catch (err) {
       setError((err as Error)?.message || "Upload failed");
     } finally {

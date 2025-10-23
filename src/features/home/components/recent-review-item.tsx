@@ -3,7 +3,7 @@ import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { RatingStars } from "@/components/ui/rating-stars";
 import Link from "next/link";
-import { User } from "lucide-react";
+//
 import ReviewReactions from "@/features/reviews/components/review-reactions.client";
 import { useCallback, useMemo, useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
@@ -13,6 +13,8 @@ export interface RecentReviewItemData {
   id: number;
   reviewId?: string;
   placeSlug?: string;
+  branchSlug?: string;
+  isMainBranch?: boolean;
   authorHandle?: string;
   avatarUrl?: string;
   place: string;
@@ -63,6 +65,15 @@ export default function RecentReviewItem({
     },
     [setOpen, setStartIndex],
   );
+  const initials = (review.user || "?")
+    .toString()
+    .trim()
+    .split(/\s+/)
+    .map((s) => s.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="border-border flex flex-col border p-6">
       <div className="flex items-center gap-3.5">
@@ -76,8 +87,8 @@ export default function RecentReviewItem({
               className="object-cover"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center">
-              <User size={12} className="text-muted-foreground" />
+            <div className="text-muted-foreground flex h-full w-full items-center justify-center text-sm font-semibold">
+              {initials}
             </div>
           )}
         </div>
@@ -124,7 +135,13 @@ export default function RecentReviewItem({
       <div className="mt-3 flex flex-1 flex-col">
         <div className="flex flex-col gap-0.5">
           <Link
-            href={review.placeSlug ? `/place/${review.placeSlug}` : "#"}
+            href={
+              review.placeSlug
+                ? review.isMainBranch || !review.branchSlug
+                  ? `/place/${review.placeSlug}`
+                  : `/place/${review.placeSlug}/${review.branchSlug}`
+                : "#"
+            }
             className="text-foreground font-bold underline-offset-4 hover:underline"
           >
             {review.place}

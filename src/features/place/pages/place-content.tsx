@@ -40,6 +40,8 @@ interface PlaceContentProps {
     id: string;
     name: string;
     slug: string;
+    branch_slug: string;
+    branch_name: string;
     description: string | null;
     my_saved?: boolean;
     category_name?: string | null;
@@ -146,6 +148,7 @@ interface PlaceContentProps {
   showBackLink?: boolean;
   backLinkText?: string;
   backLinkHref?: string;
+  hasMyReview?: boolean;
 }
 
 export default function PlaceContent({
@@ -159,9 +162,7 @@ export default function PlaceContent({
   activeCategoryId = null,
   similarPlaces = [],
   reviews = [],
-  showBackLink = false,
-  backLinkText,
-  backLinkHref,
+  hasMyReview = false,
 }: PlaceContentProps) {
   console.log("place", place);
   const { trackPlaceView } = useAnalytics();
@@ -179,17 +180,6 @@ export default function PlaceContent({
   }, [trackPlaceView, place, branch]);
   // Use branch data if provided, otherwise use place data
   const displayName = branch?.name || place.name;
-  const titleText = (() => {
-    const branchNameFromRpc = (place as unknown as { branch_name?: string })
-      .branch_name;
-    if (
-      branchNameFromRpc &&
-      branchNameFromRpc.trim().toLowerCase() !== place.name.trim().toLowerCase()
-    ) {
-      return `${place.name} (${branchNameFromRpc})`;
-    }
-    return place.name;
-  })();
   const displayDescription = branch?.description || place.description;
   const displayCity = branch?.city || place.city;
   const displayState = branch?.state || place.state;
@@ -200,7 +190,6 @@ export default function PlaceContent({
   // Get the main branch ID for favorites
   const mainBranch = place.branches?.find((b) => b.is_main_branch);
   const mainBranchId = mainBranch?.id;
-  const mainBranchSlug = mainBranch?.slug;
 
   // Resolve a usable branch id (prefer provided branch, then main, else fetch)
   useEffect(() => {
@@ -292,7 +281,7 @@ export default function PlaceContent({
             </div>
 
             <h1 className="text-foreground font-heading mt-8 px-4 text-3xl font-bold tracking-tight md:text-4xl">
-              {titleText}
+              {`${place.name} (${place.branch_name})`}
             </h1>
 
             <div className="mt-2.5 flex flex-col gap-1 px-4">
@@ -368,15 +357,13 @@ export default function PlaceContent({
                   description="Create an account to write reviews."
                 >
                   <Link
-                    href={
-                      branch?.slug || mainBranchSlug
-                        ? `/reviews/add/${branch?.slug || mainBranchSlug}`
-                        : "/reviews/add"
-                    }
+                    href={`/reviews/add/${place.branch_slug}`}
                     className="bg-primary text-primary-foreground flex items-center justify-center gap-2 p-3 text-sm"
                   >
                     <MessageCircleIcon size={16} />
-                    <span>Write review</span>
+                    <span>
+                      {hasMyReview ? "Update review" : "Write review"}
+                    </span>
                   </Link>
                 </AuthGate>
                 <AuthGate
@@ -599,6 +586,7 @@ export default function PlaceContent({
                   showCategoryAndPrice={false}
                   showOpenStatus={false}
                   branches={place.branches}
+                  hasMyReview={hasMyReview}
                 />
               </div>
             </div>

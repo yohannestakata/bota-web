@@ -46,6 +46,7 @@ export default function AddMenuItemDialog({
     let mounted = true;
     async function loadSections() {
       if (!open || !branchId) return;
+      console.log("[menu] loadSections ->", { open, branchId });
       setLoadingSections(true);
       try {
         // Try Supabase join with explicit foreign key reference
@@ -54,6 +55,7 @@ export default function AddMenuItemDialog({
           .select(
             `
             id,
+            menu_section_id,
             position,
             is_active,
             menu_sections!menu_section_id(
@@ -66,33 +68,70 @@ export default function AddMenuItemDialog({
           .eq("is_active", true)
           .order("position");
 
-        console.log("📊 Raw query result:", { data, error });
-
-        const opts = (
-          (data ?? []) as Array<{
-            id: string;
-            position: number;
-            is_active: boolean;
-            menu_sections: { id: string; name: string }[];
-          }>
-        ).map((row, index) => {
-          console.log(`🔍 Processing row ${index}:`, {
-            row,
-            menu_sections: row.menu_sections,
-            section_name: row.menu_sections?.[0]?.name,
-          });
-
-          return {
-            id: row.id,
-            name: row.menu_sections?.[0]?.name ?? "Section",
-          };
+        console.log("[menu] raw sections:", {
+          count: (data || []).length,
+          error,
         });
+
+        const rows = (data ?? []) as Array<{
+          id: string;
+          position: number;
+          is_active: boolean;
+          menu_section_id?: string;
+          menu_sections?: { id: string; name: string }[];
+        }>;
+
+        // Collect missing names to backfill
+        const missing: Array<{ id: string; menu_section_id?: string }> = [];
+        const pre: SectionOption[] = rows.map((row) => {
+          const sectionName = row.menu_sections?.[0]?.name;
+          if (!sectionName) {
+            missing.push({ id: row.id, menu_section_id: row.menu_section_id });
+          }
+          return { id: row.id, name: sectionName ?? "Section" };
+        });
+
+        if (missing.length) {
+          const ids = Array.from(
+            new Set(
+              missing.map((m) => m.menu_section_id).filter(Boolean) as string[],
+            ),
+          );
+          if (ids.length) {
+            const { data: secData, error: secErr } = await supabase
+              .from("menu_sections")
+              .select("id, name")
+              .in("id", ids);
+            if (secErr) {
+              console.warn("[menu] fallback fetch menu_sections error", secErr);
+            } else {
+              const map = new Map(
+                (secData || []).map((s: { id: string; name: string }) => [
+                  s.id,
+                  s.name,
+                ]),
+              );
+              // Patch names
+              for (const m of missing) {
+                const name = m.menu_section_id
+                  ? map.get(m.menu_section_id)
+                  : null;
+                if (name) {
+                  const idx = pre.findIndex((p) => p.id === m.id);
+                  if (idx >= 0) pre[idx] = { id: pre[idx].id, name };
+                }
+              }
+            }
+          }
+        }
+
+        const opts = pre;
 
         console.log("🎯 Final section options:", opts);
         setSectionOptions(opts);
         setSelectedSectionId(opts[0]?.id ?? "");
       } catch (e) {
-        console.error("Failed to load menu sections", e);
+        console.error("[menu] failed to load sections", e);
         if (mounted) {
           setSectionOptions([]);
           setSelectedSectionId("");

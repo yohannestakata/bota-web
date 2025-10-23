@@ -1141,11 +1141,23 @@ export async function getAllActiveBranchSlugs(
 export async function getMenuItemsForPlace(
   placeId: string,
 ): Promise<{ id: string; name: string }[]> {
+  // menu_items link to branch via branch_menu_sections → branch_id
   const { data, error } = await supabase
     .from("menu_items")
-    .select("id, name")
-    .eq("branch_id", placeId)
+    .select(
+      `
+      id,
+      name,
+      branch_menu_sections!inner(
+        branch_id
+      )
+    `,
+    )
+    .eq("branch_menu_sections.branch_id", placeId)
     .order("name");
   if (error) throw error;
-  return (data || []) as { id: string; name: string }[];
+  return ((data || []) as Array<{ id: string; name: string }>).map((r) => ({
+    id: r.id,
+    name: r.name,
+  }));
 }

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     "reviews",
   ],
   manifest: "/site.webmanifest",
-  themeColor: "#0B0B0C",
+  // themeColor moved to viewport export per Next.js recommendation
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -82,6 +82,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport = {
+  themeColor: "#0B0B0C",
 };
 
 export default function RootLayout({

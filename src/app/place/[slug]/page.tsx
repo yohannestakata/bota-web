@@ -43,7 +43,7 @@ export default async function PlacePage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: pageData, error } = await supabase.rpc("get_place_page_data", {
+  const { data: pageData } = await supabase.rpc("get_place_page_data", {
     in_place_slug: slug,
     in_branch_slug: null,
     in_photo_limit: 12,
@@ -58,6 +58,19 @@ export default async function PlacePage({
   }
 
   const place = pageData.place;
+  // Compute if current user has a review for the main branch (for CTA label)
+  let hasMyReview = false;
+  try {
+    if (user?.id && place.branch_id) {
+      const { data } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("branch_id", place.branch_id)
+        .eq("author_id", user.id)
+        .maybeSingle();
+      hasMyReview = !!data;
+    }
+  } catch {}
   const avg = place.average_rating ?? 0;
   const reviews = place.review_count ?? 0;
 
@@ -302,6 +315,8 @@ export default async function PlacePage({
             id: string;
             name: string;
             slug: string;
+            branch_slug: string;
+            branch_name: string;
             description: string | null;
             category_name?: string | null;
             category_slug?: string | null;
@@ -378,6 +393,7 @@ export default async function PlacePage({
         activeCategoryId={activeCategoryId}
         similarPlaces={pageData.similar_places as unknown as PlaceWithStats[]}
         reviews={enrichedReviews}
+        hasMyReview={hasMyReview}
       />
     </>
   );
