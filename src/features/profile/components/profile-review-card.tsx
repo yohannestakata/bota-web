@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatDistanceToNowStrict } from "date-fns";
 import { RatingStars } from "@/components/ui/rating-stars";
 import ReviewReactions from "@/features/reviews/components/review-reactions.client";
+import Image from "next/image";
 
 export default function ProfileReviewCard({
   reviewId,
@@ -12,7 +13,7 @@ export default function ProfileReviewCard({
   rating,
   date,
   body,
-  photos: _photos = [],
+  photos = [],
   initialReactions,
   initialMyReaction,
 }: {
@@ -51,6 +52,25 @@ export default function ProfileReviewCard({
 
         {body ? (
           <p className="text-foreground mt-2 line-clamp-3">{body}</p>
+        ) : null}
+
+        {photos.length ? (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {photos.slice(0, 3).map((p) => (
+              <div
+                key={p.id}
+                className="relative aspect-square overflow-hidden"
+              >
+                <Image
+                  src={p.file_path}
+                  alt={p.alt_text || "review photo"}
+                  fill
+                  sizes="(max-width: 640px) 33vw, 96px"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
         ) : null}
 
         <div className="mt-1.5 flex items-center gap-1">

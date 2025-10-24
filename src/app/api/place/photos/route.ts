@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function GET(req: NextRequest) {
@@ -18,9 +19,9 @@ export async function GET(req: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  const supabase =
-    supabaseAdmin ||
-    createServerClient(
+  const supabase: SupabaseClient =
+    (supabaseAdmin as SupabaseClient | null) ||
+    (createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL as string,
       (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string,
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-    );
+    ) as unknown as SupabaseClient);
 
   // Special case: categoryId = -1 means "Reviews" tab; return review photos
   if (categoryId && Number(categoryId) === -1) {
