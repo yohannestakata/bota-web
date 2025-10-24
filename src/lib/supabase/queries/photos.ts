@@ -50,12 +50,14 @@ export async function getPlacePhotos(
       id,
       file_path,
       alt_text,
+      is_active,
       photo_category_id,
       created_at,
       photo_categories(id, name)
     `,
     )
     .eq("branch_id", placeId)
+    .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -138,7 +140,10 @@ export async function getFirstPhotosForReviewIds(
 
   const { data, error } = await supabase
     .from("review_photos")
-    .select("id, review_id, author_id, file_path, alt_text, created_at")
+    .select(
+      "id, review_id, author_id, file_path, alt_text, created_at, is_active",
+    )
+    .eq("is_active", true)
     .in("review_id", reviewIds)
     .order("created_at", { ascending: false });
 
@@ -175,8 +180,9 @@ export async function getLatestCoverForPlaceIds(
 
   const { data, error } = await supabase
     .from("branch_photos")
-    .select("branch_id, file_path, created_at")
+    .select("branch_id, file_path, created_at, is_active")
     .in("branch_id", branchIds)
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

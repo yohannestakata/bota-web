@@ -63,8 +63,11 @@ export async function GET(req: NextRequest) {
 
     const { data: rphotos, error: rperr } = await supabase
       .from("review_photos")
-      .select("id, file_path, alt_text, created_at, reviews!inner(branch_id)")
+      .select(
+        "id, file_path, alt_text, created_at, is_active, reviews!inner(branch_id)",
+      )
       .in("reviews.branch_id", branchIds)
+      .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(12);
     if (rperr) {
@@ -84,9 +87,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("branch_photos")
     .select(
-      "id, file_path, alt_text, created_at, photo_category_id, branches!inner(place_id)",
+      "id, file_path, alt_text, created_at, is_active, photo_category_id, branches!inner(place_id)",
     )
     .eq("branches.place_id", placeId)
+    .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(12);
 

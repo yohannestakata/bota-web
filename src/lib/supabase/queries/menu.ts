@@ -26,7 +26,8 @@ export async function getPlaceMenu(placeId: string) {
         menu_item_photos(
           id,
           file_path,
-          alt_text
+          alt_text,
+          is_active
         )
       )
     `,
@@ -57,6 +58,7 @@ export async function getPlaceMenu(placeId: string) {
           id: string;
           file_path: string;
           alt_text: string | null;
+          is_active?: boolean | null;
         }>;
       }) => ({
         id: item.id,
@@ -66,7 +68,9 @@ export async function getPlaceMenu(placeId: string) {
         currency: item.currency,
         is_available: item.is_available,
         created_at: item.created_at,
-        menu_item_photos: item.menu_item_photos || [],
+        menu_item_photos: (item.menu_item_photos || []).filter(
+          (p: any) => p.is_active !== false,
+        ),
       }),
     ),
   }));
