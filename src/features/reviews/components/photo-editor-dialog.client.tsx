@@ -91,7 +91,17 @@ export default function PhotoEditorDialog({
                 ))}
               </select>
             </div>
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                className="text-destructive text-sm hover:underline"
+                onClick={() => {
+                  onRemove(file.id);
+                  onOpenChange(false);
+                }}
+              >
+                Delete photo
+              </button>
               <button
                 type="button"
                 className="border-border hover:bg-muted border px-4 py-3"

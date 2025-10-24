@@ -28,10 +28,8 @@ interface AmenityFromRPC {
 }
 
 export default function Amenities({
-  placeId,
   amenities,
 }: {
-  placeId?: string;
   amenities?: Amenity[] | AmenityFromRPC[];
 }) {
   const amenitiesData = amenities || [];

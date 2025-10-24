@@ -5,7 +5,7 @@ import { useAuth } from "@/app/auth-context";
 import Image from "next/image";
 
 export default function UserActions() {
-  const { user, signOut, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const initials = (() => {
     const src = user?.email || user?.id || "U";
     const namePart = (src || "U").split("@")[0];

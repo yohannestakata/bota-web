@@ -38,7 +38,7 @@ export default function SettingsForm() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [, setAvatarUploading] = useState(false);
   const [emailUpdating, setEmailUpdating] = useState(false);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [authProvider, setAuthProvider] = useState<string | undefined>(

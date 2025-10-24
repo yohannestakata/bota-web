@@ -3,10 +3,8 @@
 import ReviewsClient, { type ReviewItemProps } from "./reviews.client";
 
 export default function Reviews({
-  placeId,
   reviews,
 }: {
-  placeId?: string;
   reviews?: ReviewItemProps["review"][];
 }) {
   if (!reviews || !reviews.length) {

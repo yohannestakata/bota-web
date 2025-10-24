@@ -4,7 +4,7 @@ import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { Reply } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { RatingStars } from "@/components/ui/rating-stars";
@@ -55,7 +55,7 @@ export interface ReviewItemProps {
 }
 
 function ReviewItem({ review }: ReviewItemProps) {
-  const router = useRouter();
+  // const router = useRouter();
   const { user } = useAuth();
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");

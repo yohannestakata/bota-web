@@ -40,11 +40,7 @@ interface SimilarPlacesProps {
   places?: SimilarPlace[];
 }
 
-export default function SimilarPlaces({
-  categoryId,
-  excludePlaceId,
-  places,
-}: SimilarPlacesProps) {
+export default function SimilarPlaces({ places }: SimilarPlacesProps) {
   const placesData: SimilarPlace[] = places || [];
 
   if (!placesData.length) return null;

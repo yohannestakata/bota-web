@@ -12,7 +12,7 @@ export default function ProfileReviewCard({
   rating,
   date,
   body,
-  photos = [],
+  photos: _photos = [],
   initialReactions,
   initialMyReaction,
 }: {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { normalizeImageSrc } from "@/lib/utils/images";
 import { MenuItemWithPhotos, MenuSection } from "@/lib/types/database";
-import { PlusIcon, ImageOff } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import MenuGallery from "./menu-gallery.client";
