@@ -103,8 +103,8 @@ export default function RecentReviewItem({
         </div>
       </div>
 
-      <div className="relative mt-3 aspect-video w-full">
-        {photos.length > 0 ? (
+      {photos.length > 0 && (
+        <div className="relative mt-3 aspect-video w-full">
           <button
             type="button"
             onClick={() => openDialogAt(0)}
@@ -120,17 +120,8 @@ export default function RecentReviewItem({
               unoptimized={false}
             />
           </button>
-        ) : (
-          <Image
-            src={review.image}
-            alt={review.place}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
-            unoptimized={false}
-          />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-1 flex-col">
         <div className="flex flex-col gap-0.5">

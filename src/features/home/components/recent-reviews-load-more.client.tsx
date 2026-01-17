@@ -70,9 +70,7 @@ export default function RecentReviewsLoadMore({
       const date = formatDistanceToNowStrict(new Date(review.created_at), {
         addSuffix: true,
       });
-      const image =
-        review.display_image ||
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80";
+      const image = review.display_image || "";
 
       const reviewPhotos = (review.review_photos || []).map((p) => ({
         id: p.id,
@@ -165,10 +163,14 @@ export default function RecentReviewsLoadMore({
   return (
     <>
       {items.length > 0 && (
-        <div className="mt-5 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((review) => (
-            <RecentReviewItem key={String(review.reviewId)} review={review} />
-          ))}
+        <div className="mt-5 max-w-6xl">
+          <div className="columns-1 md:columns-2 lg:columns-3 [column-gap:1.5rem]">
+            {items.map((review) => (
+              <div key={String(review.reviewId)} className="mb-6 break-inside-avoid">
+                <RecentReviewItem review={review} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -150,9 +150,7 @@ export default async function RecentReviewsList({
         dislikes: review.dislikes_count || 0,
         myReaction,
         comments: 0, // TODO: Add comments table and count
-        image:
-          review.display_image ||
-          "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+        image: review.display_image || "",
         reviewPhotos: (review.review_photos || []).map(
           (photo: {
             id: string;
@@ -184,15 +182,19 @@ export default async function RecentReviewsList({
   );
 
   return (
-    <div className="mt-5 grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="mt-5 max-w-6xl">
       {!!error ? (
-        <div className="text-muted-foreground col-span-full text-center text-sm">
+        <div className="text-muted-foreground mb-6 text-center text-sm">
           Unable to load some review details. Showing cached/partial data.
         </div>
       ) : null}
-      {transformedReviews.map((review) => (
-        <RecentReviewItem key={review.id} review={review} />
-      ))}
+      <div className="columns-1 md:columns-2 lg:columns-3 [column-gap:1.5rem]">
+        {transformedReviews.map((review) => (
+          <div key={review.id} className="mb-6 break-inside-avoid">
+            <RecentReviewItem review={review} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
