@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 export async function GET(req: Request) {
   try {
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
           getAll() {
             return cookieStore.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
             // propagate auth cookie updates if any
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),

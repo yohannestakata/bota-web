@@ -13,7 +13,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
           // Write refreshed cookies to both the request (for Server Components)
           // and the response (for the browser) per Supabase docs
           cookiesToSet.forEach(({ name, value }) =>
