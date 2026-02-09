@@ -13,7 +13,7 @@ import { RatingStars } from "@/components/ui/rating-stars";
 import ProfileTabs from "@/features/profile/components/profile-tabs.client";
 import { formatDistanceToNowStrict } from "date-fns";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600; // revalidate every 10 minutes for SEO crawlers
 
 export async function generateMetadata({
   params,
@@ -23,10 +23,16 @@ export async function generateMetadata({
   const { handle } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
   const url = `${baseUrl}/profile/${handle}`;
-  // We can't fetch server-side helpers here without importing queries; keep lightweight
-  const title = `${handle} - Profile on Bota`;
-  const description = `See ${handle}'s reviews and photos on Bota.`;
-  const og = `${baseUrl}/opengraph-image`;
+
+  // Fetch profile data for richer metadata
+  const profile = await getProfileByHandle(handle);
+  const displayName = profile?.full_name || profile?.username || handle;
+  const title = `${displayName} — Profile & Reviews on Bota`;
+  const description = profile?.bio
+    ? `${displayName}: ${profile.bio}`
+    : `See ${displayName}'s reviews, ratings, and photos on Bota — Ethiopia's place discovery platform.`;
+  const ogImage = profile?.avatar_url || `${baseUrl}/opengraph-image`;
+
   return {
     title,
     description,
@@ -35,14 +41,19 @@ export async function generateMetadata({
       title,
       description,
       url,
+      siteName: "Bota",
       type: "profile",
-      images: [{ url: og, width: 1200, height: 630 }],
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [og],
+      images: [ogImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   } satisfies import("next").Metadata;
 }

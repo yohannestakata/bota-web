@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import SettingsForm from "@/features/account/components/settings-form.client";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Account Settings",
+  description: "Manage your Bota account settings, profile, and preferences.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function AccountSettingsPage() {
   return (

@@ -3,15 +3,15 @@ import {
   getAllCategories,
   getAllActivePlaceSlugs,
   getAllActiveBranchSlugs,
+  getAllPublicProfiles,
 } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
-// Or set a TTL instead:
-// export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
 
+  // ── Static routes ──────────────────────────────────────────────
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
@@ -20,9 +20,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
     },
     {
-      url: `${baseUrl}/favorites`,
-      changeFrequency: "weekly",
-      priority: 0.4,
+      url: `${baseUrl}/login`,
+      changeFrequency: "monthly",
+      priority: 0.3,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/signup`,
+      changeFrequency: "monthly",
+      priority: 0.3,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/privacy-policy`,
+      changeFrequency: "yearly",
+      priority: 0.2,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/terms-of-service`,
+      changeFrequency: "yearly",
+      priority: 0.2,
       lastModified: new Date(),
     },
     {
@@ -33,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Categories
+  // ── Categories ─────────────────────────────────────────────────
   let categories: Awaited<ReturnType<typeof getAllCategories>> = [];
   try {
     categories = await getAllCategories();
@@ -52,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  // Full set of active place slugs via paged fetch
+  // ── Places ─────────────────────────────────────────────────────
   let places: Awaited<ReturnType<typeof getAllActivePlaceSlugs>> = [];
   try {
     places = await getAllActivePlaceSlugs();
@@ -81,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  // Full set of active branch slugs for sitemap
+  // ── Branches ───────────────────────────────────────────────────
   let branches: Awaited<ReturnType<typeof getAllActiveBranchSlugs>> = [];
   try {
     branches = await getAllActiveBranchSlugs();
@@ -110,5 +128,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...categoryRoutes, ...placeRoutes, ...branchRoutes];
+  // ── Profiles / Accounts ────────────────────────────────────────
+  let profiles: Awaited<ReturnType<typeof getAllPublicProfiles>> = [];
+  try {
+    profiles = await getAllPublicProfiles();
+    console.log(
+      "[sitemap] profiles fetched:",
+      Array.isArray(profiles) ? profiles.length : 0,
+    );
+  } catch (e) {
+    console.error("[sitemap] getAllPublicProfiles error:", e);
+  }
+
+  const profileRoutes: MetadataRoute.Sitemap = profiles.map((p) => {
+    const lm = p.updated_at || new Date().toISOString();
+    return {
+      url: `${baseUrl}/profile/${p.username}`,
+      changeFrequency: "weekly",
+      priority: 0.5,
+      lastModified: new Date(lm),
+    };
+  });
+
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...placeRoutes,
+    ...branchRoutes,
+    ...profileRoutes,
+  ];
 }

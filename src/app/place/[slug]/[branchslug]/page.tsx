@@ -3,7 +3,7 @@ import { getPlacePageData } from "@/lib/supabase/queries";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import PlaceContent from "@/features/place/pages/place-content";
-import { PlaceJsonLd } from "../structured-data";
+import { PlaceJsonLd, BreadcrumbJsonLd } from "../structured-data";
 import {
   ReviewWithAuthor,
   MenuSection,
@@ -348,6 +348,23 @@ export default async function BranchPage({
         openingHours={openingHours}
         servesCuisine={servesCuisine}
         menuUrl={canonicalUrl}
+        websiteUrl={place.website_url || undefined}
+      />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: baseUrl },
+          ...(place.category_name && place.category_slug
+            ? [
+                {
+                  name: place.category_name,
+                  url: `${baseUrl}/category/${place.category_slug}`,
+                },
+              ]
+            : []),
+          { name: place.name, url: `${baseUrl}/place/${place.slug}` },
+          { name: branchData.name, url: canonicalUrl },
+        ]}
       />
 
       <PlaceContent
@@ -458,14 +475,50 @@ export async function generateMetadata({
   const place = pageData.place;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://botareview.com";
   const url = `${baseUrl}/place/${place.slug}/${branchslug}`;
-  const title = `${place.name} - Reviews, photos, menu, location & hours`;
+
+  // Location-aware title
+  const locationParts = [place.city, place.country]
+    .filter(Boolean)
+    .join(", ");
+  const titleLocation = locationParts ? `, ${locationParts}` : "";
+  const title = `${place.name}${titleLocation} — Reviews, Photos & Menu`;
+
+  // Rich description with rating + review count
+  const avg = place.average_rating ?? 0;
+  const reviewCount = place.review_count ?? 0;
+  const ratingStr =
+    avg > 0 && reviewCount > 0
+      ? `★ ${avg.toFixed(1)} (${reviewCount} ${reviewCount === 1 ? "review" : "reviews"}) — `
+      : "";
+  const categoryStr = place.category_name
+    ? `${place.category_name.toLowerCase()} in `
+    : "";
+  const locationStr = locationParts || "Ethiopia";
   const description =
     place.description ||
-    `${place.name} — discover reviews, photos, menu, hours, and location.`;
+    `${ratingStr}${place.name} is a ${categoryStr}${locationStr}. See photos, full menu, hours & location on Bota.`;
+
   const ogImage = `${baseUrl}/place/${place.slug}/opengraph-image`;
+
+  const keywords = [
+    place.name,
+    ...(place.city ? [`${place.name} ${place.city}`] : []),
+    ...(place.category_name
+      ? [
+          `${place.category_name} ${place.city || "Ethiopia"}`,
+          `best ${place.category_name.toLowerCase()} ${place.city || "Ethiopia"}`,
+        ]
+      : []),
+    "reviews",
+    "menu",
+    "photos",
+    "Ethiopia",
+  ];
+
   return {
     title,
     description,
+    keywords,
     alternates: { canonical: url },
     openGraph: {
       title,
@@ -473,6 +526,7 @@ export async function generateMetadata({
       url,
       siteName: "Bota",
       type: "website",
+      locale: "en_US",
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
@@ -480,6 +534,16 @@ export async function generateMetadata({
       title,
       description,
       images: [ogImage],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
   };
 }

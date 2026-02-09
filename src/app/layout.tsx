@@ -40,9 +40,15 @@ export const metadata: Metadata = {
     "food",
     "coffee",
     "reviews",
+    "Ethiopian food",
+    "restaurant reviews Ethiopia",
+    "Addis Ababa restaurants",
+    "best cafes Addis Ababa",
   ],
   manifest: "/site.webmanifest",
-  // themeColor moved to viewport export per Next.js recommendation
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -81,6 +87,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

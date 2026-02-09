@@ -1,3 +1,27 @@
+import type { Metadata } from "next";
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Learn how Bota collects, uses, and protects your personal information. Read our privacy policy for details on data handling and your rights.",
+  alternates: {
+    canonical: `${baseUrl}/privacy-policy`,
+  },
+  openGraph: {
+    title: "Privacy Policy | Bota",
+    description:
+      "Learn how Bota collects, uses, and protects your personal information.",
+    url: `${baseUrl}/privacy-policy`,
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

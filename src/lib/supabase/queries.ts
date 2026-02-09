@@ -57,6 +57,7 @@ export {
 
 export {
   getProfileByHandle,
+  getAllPublicProfiles,
   getSearchHistory,
   saveSearchQuery,
 } from "./queries/profiles";

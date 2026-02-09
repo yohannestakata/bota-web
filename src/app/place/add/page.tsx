@@ -1,5 +1,24 @@
+import type { Metadata } from "next";
 import AddPlaceForm from "@/features/place/components/add-place-form.client";
 import { getAllCategories } from "@/lib/supabase/queries";
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+
+export const metadata: Metadata = {
+  title: "Add a Place",
+  description:
+    "Add a new restaurant, cafe, or business to Bota. Help others discover great places in Ethiopia.",
+  alternates: {
+    canonical: `${baseUrl}/place/add`,
+  },
+  openGraph: {
+    title: "Add a Place | Bota",
+    description:
+      "Submit a new restaurant, cafe, or business listing to Bota.",
+    url: `${baseUrl}/place/add`,
+    type: "website",
+  },
+};
 
 export default async function AddPlacePage() {
   const categories = await getAllCategories();

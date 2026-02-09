@@ -1,3 +1,27 @@
+import type { Metadata } from "next";
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://botareview.com";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Read the Bota Terms of Service governing your use of our platform for discovering, reviewing, and sharing places in Ethiopia.",
+  alternates: {
+    canonical: `${baseUrl}/terms-of-service`,
+  },
+  openGraph: {
+    title: "Terms of Service | Bota",
+    description:
+      "Read the terms governing your use of the Bota platform.",
+    url: `${baseUrl}/terms-of-service`,
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
 export default function TermsOfServicePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

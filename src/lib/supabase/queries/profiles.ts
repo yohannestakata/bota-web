@@ -29,6 +29,25 @@ export async function getProfileByHandle(
   return data;
 }
 
+// Get all public profiles for sitemap (only profiles with a username)
+export async function getAllPublicProfiles(
+  limitPerPage = 1000,
+): Promise<{ username: string; updated_at: string }[]> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username, updated_at")
+    .not("username", "is", null)
+    .neq("username", "")
+    .order("updated_at", { ascending: false })
+    .limit(limitPerPage);
+
+  if (error) throw error;
+  return (data || []).filter((p) => !!p.username) as {
+    username: string;
+    updated_at: string;
+  }[];
+}
+
 // Get search history
 export async function getSearchHistory(limit = 8): Promise<SearchHistoryRow[]> {
   const userId = await getCurrentUserId();

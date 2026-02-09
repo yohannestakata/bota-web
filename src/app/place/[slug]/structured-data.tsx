@@ -13,6 +13,7 @@ export function PlaceJsonLd({
   openingHours,
   servesCuisine,
   menuUrl,
+  websiteUrl,
 }: {
   name: string;
   description?: string | null;
@@ -38,10 +39,20 @@ export function PlaceJsonLd({
   }> | null;
   servesCuisine?: string | string[] | null;
   menuUrl?: string | null;
+  websiteUrl?: string | null;
 }) {
+  // Build sameAs links (official website, Google Maps, etc.)
+  const sameAs: string[] = [];
+  if (websiteUrl) sameAs.push(websiteUrl);
+
+  // Build hasMap URL from geo coordinates
+  const hasMap =
+    geo && geo.latitude && geo.longitude
+      ? `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`
+      : undefined;
+
   const data = {
     "@context": "https://schema.org",
-    // Default to LocalBusiness; allow overriding with a more specific type (e.g., "Restaurant")
     "@type": businessType || "LocalBusiness",
     name,
     description: description || undefined,
@@ -60,11 +71,14 @@ export function PlaceJsonLd({
             longitude: geo.longitude || undefined,
           }
         : undefined,
+    hasMap,
     aggregateRating:
       averageRating && reviewCount
         ? {
             "@type": "AggregateRating",
             ratingValue: averageRating,
+            bestRating: 5,
+            worstRating: 1,
             reviewCount,
           }
         : undefined,
@@ -86,7 +100,36 @@ export function PlaceJsonLd({
         : undefined,
     servesCuisine: servesCuisine || undefined,
     menu: menuUrl || undefined,
+    sameAs: sameAs.length ? sameAs : undefined,
   } as const;
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * BreadcrumbList structured data — helps Google display breadcrumbs in SERPs
+ * e.g. Bota > Restaurants > Hilton Hotel
+ */
+export function BreadcrumbJsonLd({
+  items,
+}: {
+  items: Array<{ name: string; url: string }>;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
 
   return (
     <script
